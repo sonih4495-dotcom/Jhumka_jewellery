@@ -43,6 +43,19 @@ export async function updateOrderStatus(orderId: string, formData: FormData) {
       },
     });
 
+    // Restore inventory if status is changed to CANCELLED or REFUNDED
+    if (['CANCELLED', 'REFUNDED'].includes(validatedData.status)) {
+      for (const item of order.orderItems) {
+        await prisma.inventory.updateMany({
+          where: { productId: item.productId },
+          data: {
+            available: { increment: item.quantity },
+            quantity: { increment: item.quantity },
+          },
+        });
+      }
+    }
+
     // Send email notification for certain status changes
     if (['SHIPPED', 'DELIVERED'].includes(validatedData.status)) {
       await sendOrderConfirmation({
@@ -68,6 +81,7 @@ export async function updateOrderStatus(orderId: string, formData: FormData) {
     }
 
     revalidateTag('orders', 'max');
+    revalidateTag('products', 'max');
 
     return { success: true, order };
   } catch (error) {

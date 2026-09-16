@@ -116,30 +116,30 @@ export default async function AdminInventoryPage(props: AdminInventoryPageProps)
           />
         </div>
 
-        <Select defaultValue={searchParams.category}>
+        <Select defaultValue={searchParams.category || 'all'}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Categories</SelectItem>
-            <SelectItem value="electronics">Electronics</SelectItem>
-            <SelectItem value="clothing">Clothing</SelectItem>
-            <SelectItem value="books">Books</SelectItem>
-            <SelectItem value="home">Home & Garden</SelectItem>
-            <SelectItem value="sports">Sports</SelectItem>
+            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="rings">Rings</SelectItem>
+            <SelectItem value="earrings">Earrings</SelectItem>
+            <SelectItem value="necklaces">Necklaces</SelectItem>
+            <SelectItem value="anklets">Anklets</SelectItem>
+            <SelectItem value="bracelets">Bracelets</SelectItem>
+            <SelectItem value="combos">Combos</SelectItem>
           </SelectContent>
         </Select>
 
-        <Select defaultValue={searchParams.stockLevel}>
+        <Select defaultValue={searchParams.stockLevel || 'all'}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Stock Level" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Levels</SelectItem>
+            <SelectItem value="all">All Levels</SelectItem>
             <SelectItem value="in-stock">In Stock</SelectItem>
             <SelectItem value="low-stock">Low Stock</SelectItem>
             <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-            <SelectItem value="overstock">Overstock</SelectItem>
           </SelectContent>
         </Select>
 

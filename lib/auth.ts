@@ -1,9 +1,7 @@
 // lib/auth.ts
 import { NextAuthOptions, Session, User } from 'next-auth';
 import { JWT } from 'next-auth/jwt';
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import GoogleProvider from 'next-auth/providers/google';
-import EmailProvider from 'next-auth/providers/email';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import prisma from './prisma';
@@ -38,22 +36,14 @@ declare module 'next-auth/jwt' {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    EmailProvider({
-      server: {
-        host: process.env.EMAIL_SERVER_HOST,
-        port: process.env.EMAIL_SERVER_PORT,
-        auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD,
-        },
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      allowDangerousEmailAccountLinking: true,
+      httpOptions: {
+        timeout: 15000,
       },
-      from: process.env.EMAIL_FROM,
     }),
     CredentialsProvider({
       name: 'credentials',
@@ -87,7 +77,76 @@ export const authOptions: NextAuthOptions = {
   ],
   session: { strategy: 'jwt' },
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account, profile }) {
+      try {
+        if (account?.provider === 'google') {
+          if (!user.email) return false;
+
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            include: { accounts: true },
+          });
+
+          if (!existingUser) {
+            // Create new user & link account
+            const newUser = await prisma.user.create({
+              data: {
+                email: user.email,
+                name: user.name || (profile as any)?.name || 'User',
+                image: user.image || (profile as any)?.picture || null,
+                role: 'USER',
+                accounts: {
+                  create: {
+                    type: account.type,
+                    provider: account.provider,
+                    providerAccountId: account.providerAccountId,
+                    refresh_token: account.refresh_token,
+                    access_token: account.access_token,
+                    expires_at: account.expires_at,
+                    token_type: account.token_type,
+                    scope: account.scope,
+                    id_token: account.id_token,
+                    session_state: typeof account.session_state === 'string' ? account.session_state : undefined,
+                  },
+                },
+              },
+            });
+            user.id = newUser.id;
+            (user as any).role = newUser.role;
+          } else {
+            // User exists: link account if not already linked
+            const isLinked = existingUser.accounts.some(
+              acc => acc.provider === 'google' && acc.providerAccountId === account.providerAccountId
+            );
+
+            if (!isLinked) {
+              await prisma.account.create({
+                data: {
+                  userId: existingUser.id,
+                  type: account.type,
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                  refresh_token: account.refresh_token,
+                  access_token: account.access_token,
+                  expires_at: account.expires_at,
+                  token_type: account.token_type,
+                  scope: account.scope,
+                  id_token: account.id_token,
+                  session_state: typeof account.session_state === 'string' ? account.session_state : undefined,
+                },
+              });
+            }
+            user.id = existingUser.id;
+            (user as any).role = existingUser.role;
+          }
+        }
+        return true;
+      } catch (error) {
+        console.error('Error during signIn callback:', error);
+        return true;
+      }
+    },
+    async jwt({ token, user, account, profile }) {
       if (user) {
         token.sub = user.id;
         token.role = (user as any).role || 'USER';
@@ -97,7 +156,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub!;
-        session.user.role = token.role as string;
+        session.user.role = (token.role as string) || 'USER';
       }
       return session;
     },

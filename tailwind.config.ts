@@ -18,6 +18,10 @@ const config: Config = {
       },
     },
     extend: {
+      fontFamily: {
+        display: ['var(--font-cormorant)', 'Georgia', 'serif'],
+        sans: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -52,6 +56,49 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        /* ── Oxidised Jewellery Brand Palette ── */
+        oxidised: {
+          50:  '#f5f3f0',
+          100: '#e8e2d8',
+          200: '#d0c5b2',
+          300: '#b3a38a',
+          400: '#978469',
+          500: '#7a6850',
+          600: '#5c4d3a',
+          700: '#3f342a',
+          800: '#2a221b',
+          900: '#1a140f',
+          950: '#0d0a07',
+        },
+        antique: {
+          DEFAULT: '#8A8A7A',
+          light:   '#b8b8a5',
+          dark:    '#5c5c50',
+        },
+        rani: {
+          DEFAULT: '#C2185B',
+          light:   '#e91e8c',
+          dark:    '#880e4f',
+        },
+        mustard: {
+          DEFAULT: '#C9940A',
+          light:   '#F0B429',
+          dark:    '#926B04',
+        },
+        maroon: {
+          DEFAULT: '#7D1A1A',
+          light:   '#A52828',
+          dark:    '#4E0F0F',
+        },
+        cream: {
+          DEFAULT: '#F8F3EC',
+          dark:    '#EDE3D5',
+          darker:  '#E0D3C0',
+        },
+        parchment: {
+          DEFAULT: '#F2EBE0',
+          dark:    '#E8DCCF',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -83,14 +130,24 @@ const config: Config = {
           from: { transform: 'translateX(0)' },
           to: { transform: 'translateX(-100%)' },
         },
+        shimmer: {
+          '0%':   { backgroundPosition: '-200% center' },
+          '100%': { backgroundPosition: '200% center' },
+        },
+        'grain-shift': {
+          '0%, 100%': { transform: 'translate(0, 0)' },
+          '50%':      { transform: 'translate(-1%, -1%)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-        'fade-in': 'fade-in 0.3s ease-out',
-        'fade-out': 'fade-out 0.2s ease-out',
-        'slide-in': 'slide-in 0.3s ease-out',
-        'slide-out': 'slide-out 0.3s ease-out',
+        'accordion-up':   'accordion-up 0.2s ease-out',
+        'fade-in':        'fade-in 0.3s ease-out',
+        'fade-out':       'fade-out 0.2s ease-out',
+        'slide-in':       'slide-in 0.3s ease-out',
+        'slide-out':      'slide-out 0.3s ease-out',
+        shimmer:          'shimmer 2.2s linear infinite',
+        'grain-shift':    'grain-shift 8s ease-in-out infinite',
       },
     },
   },

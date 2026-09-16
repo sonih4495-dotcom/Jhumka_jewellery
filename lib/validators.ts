@@ -101,12 +101,13 @@ export const updateCategorySchema = createCategorySchema.partial();
 
 // Order schemas
 export const shippingAddressSchema = z.object({
-  line1: z.string().min(1, 'Address line 1 is required'),
+  line1: z.string().min(1, 'Flat/House No and Building is required'),
   line2: z.string().optional(),
+  landmark: z.string().optional(),
   city: z.string().min(1, 'City is required'),
   state: z.string().min(1, 'State is required'),
-  postalCode: z.string().min(1, 'Postal code is required'),
-  country: z.string().min(1, 'Country is required'),
+  postalCode: z.string().regex(/^[1-9][0-9]{5}$/, 'Enter a valid 6-digit Indian PIN code'),
+  country: z.string().default('IN'),
 });
 
 export const checkoutSchema = z.object({
@@ -116,6 +117,8 @@ export const checkoutSchema = z.object({
         productId: z.string(),
         quantity: z.number().int().min(1),
         price: z.number().min(0),
+        variantId: z.string().optional(),
+        size: z.string().optional(),
       })
     )
     .min(1, 'Cart cannot be empty'),
@@ -125,9 +128,11 @@ export const checkoutSchema = z.object({
     email: z.string().email(),
     firstName: z.string().min(1),
     lastName: z.string().min(1),
-    phone: z.string().optional(),
+    phone: z.string().min(10, 'Enter valid 10-digit mobile number'),
   }),
   shippingMethod: z.string().min(1, 'Shipping method is required'),
+  paymentMethod: z.enum(['UPI', 'RAZORPAY', 'COD', 'STRIPE']).default('UPI'),
+  couponCode: z.string().optional(),
   notes: z.string().optional(),
 });
 

@@ -109,26 +109,27 @@ export default async function AdminProductsPage(props: AdminProductsPageProps) {
           />
         </div>
 
-        <Select defaultValue={searchParams.category}>
+        <Select defaultValue={searchParams.category || 'all'}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Categories</SelectItem>
-            <SelectItem value="electronics">Electronics</SelectItem>
-            <SelectItem value="clothing">Clothing</SelectItem>
-            <SelectItem value="books">Books</SelectItem>
-            <SelectItem value="home">Home & Garden</SelectItem>
-            <SelectItem value="sports">Sports</SelectItem>
+            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="rings">Rings</SelectItem>
+            <SelectItem value="earrings">Earrings</SelectItem>
+            <SelectItem value="necklaces">Necklaces</SelectItem>
+            <SelectItem value="anklets">Anklets</SelectItem>
+            <SelectItem value="bracelets">Bracelets</SelectItem>
+            <SelectItem value="combos">Combos</SelectItem>
           </SelectContent>
         </Select>
 
-        <Select defaultValue={searchParams.status}>
+        <Select defaultValue={searchParams.status || 'all'}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="published">Published</SelectItem>
             <SelectItem value="draft">Draft</SelectItem>
             <SelectItem value="archived">Archived</SelectItem>

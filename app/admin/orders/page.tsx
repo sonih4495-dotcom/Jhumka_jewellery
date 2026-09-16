@@ -105,12 +105,12 @@ export default async function AdminOrdersPage(props: AdminOrdersPageProps) {
           />
         </div>
 
-        <Select defaultValue={searchParams.status}>
+        <Select defaultValue={searchParams.status || 'all'}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="PENDING">Pending</SelectItem>
             <SelectItem value="PROCESSING">Processing</SelectItem>
             <SelectItem value="SHIPPED">Shipped</SelectItem>

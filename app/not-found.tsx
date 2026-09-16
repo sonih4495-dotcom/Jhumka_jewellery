@@ -1,47 +1,37 @@
+// Location: app/not-found.tsx
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Sparkles, ArrowRight, Home } from 'lucide-react';
 
 export default function NotFound() {
   return (
-    <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[60vh]">
-      <Card className="max-w-2xl w-full p-8 md:p-12 text-center space-y-6">
+    <div className="container mx-auto px-4 py-20 flex items-center justify-center min-h-[60vh]">
+      <Card className="max-w-md w-full p-8 text-center space-y-6 rounded-3xl border border-gray-200/80 shadow-lg bg-white">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+          <Sparkles className="h-8 w-8" />
+        </div>
+
         <div className="space-y-2">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
-            Demo Project
+          <h1 className="text-3xl font-black text-gray-900 font-sans">
+            Page Not Found
           </h1>
-          <p className="text-xl text-gray-600">
-            Practice E-commerce Application
+          <p className="text-sm text-gray-500">
+            The jewellery piece or page you are looking for does not exist or has moved.
           </p>
         </div>
 
-        <div className="space-y-4 text-left bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-blue-900">
-            ℹ️ About This Project
-          </h2>
-          <ul className="space-y-2 text-sm text-blue-800">
-            <li>• This is a <strong>demonstration project</strong> built for learning and practice purposes</li>
-            <li>• It showcases a modern Next.js e-commerce application with TypeScript, Prisma, and PostgreSQL</li>
-            <li>• Not all features are fully implemented or connected to real services</li>
-            <li>• This is <strong>not a production-ready application</strong> for actual purchases</li>
-          </ul>
-        </div>
-
-        <div className="pt-4">
-          <p className="text-gray-600 mb-4">
-            You can explore the home page to see the available demo features.
-          </p>
-          <Link href="/">
-            <Button size="lg" className="w-full md:w-auto">
-              Return to Home Page
-            </Button>
-          </Link>
-        </div>
-
-        <div className="pt-4 border-t border-gray-200">
-          <p className="text-xs text-gray-500">
-            Built with Next.js 15 · React 18 · TypeScript · Prisma · PostgreSQL
-          </p>
+        <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+          <Button asChild size="lg" className="rounded-full bg-gray-900 hover:bg-black text-white text-xs font-bold px-6">
+            <Link href="/">
+              <Home className="mr-2 h-4 w-4" /> Return to Home
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="rounded-full text-xs font-bold px-6">
+            <Link href="/products">
+              Explore Drops <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Link>
+          </Button>
         </div>
       </Card>
     </div>

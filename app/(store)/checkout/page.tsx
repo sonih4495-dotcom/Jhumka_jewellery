@@ -7,6 +7,8 @@ import { getSavedAddressForCurrentUser } from '@/server/actions/orders';
 import { getShippingMethods } from '@/server/actions/checkout';
 import { CheckoutForm } from '@/components/checkout/checkout-form';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Checkout',
   description: 'Complete your order.',

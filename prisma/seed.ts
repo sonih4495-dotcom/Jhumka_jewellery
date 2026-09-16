@@ -1,420 +1,304 @@
 // Location: prisma/seed.ts
-
-import { PrismaClient, ProductStatus, UserRole } from '@prisma/client';
-import { hash } from 'bcryptjs';
+import { PrismaClient, UserRole, ProductStatus } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seed...');
+  console.log('🌱 Starting Jhumka Junction Fashion & Oxidised Jewellery Database Seeding...');
 
-  // Create admin user
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
-  const adminPassword = await hash('admin123', 12);
+  // 1. Clean existing products and categories
+  await prisma.review.deleteMany({});
+  await prisma.wishlist.deleteMany({});
+  await prisma.cartItem.deleteMany({});
+  await prisma.orderItem.deleteMany({});
+  await prisma.productImage.deleteMany({});
+  await prisma.inventory.deleteMany({});
+  await prisma.product.deleteMany({});
+  await prisma.category.deleteMany({});
+  await prisma.coupon.deleteMany({});
 
+  // 2. Upsert Admin User
+  const adminPassword = await bcrypt.hash('admin123', 12);
   const admin = await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: {},
+    where: { email: 'admin@example.com' },
+    update: { role: UserRole.ADMIN, password: adminPassword },
     create: {
-      email: adminEmail,
-      name: 'Admin User',
+      email: 'admin@example.com',
+      name: 'Jhumka Junction Admin',
       role: UserRole.ADMIN,
       password: adminPassword,
+      phone: '+919876543210',
     },
   });
+  console.log('✅ Admin user created/updated:', admin.email);
 
-  console.log(`👤 Created admin user: ${admin.email}`);
-
-  // Create test customer
-  const customerPassword = await hash('customer123', 12);
+  // 3. Upsert Demo Customer
+  const customerPassword = await bcrypt.hash('customer123', 12);
   const customer = await prisma.user.upsert({
-    where: { email: 'customer@example.com' },
-    update: {},
+    where: { email: 'ananya.deshmukh@gmail.com' },
+    update: { password: customerPassword },
     create: {
-      email: 'customer@example.com',
-      name: 'John Doe',
+      email: 'ananya.deshmukh@gmail.com',
+      name: 'Ananya Deshmukh',
       role: UserRole.USER,
       password: customerPassword,
+      phone: '+919820098200',
     },
   });
+  console.log('✅ Demo Customer created:', customer.email);
 
-  console.log(`👤 Created customer: ${customer.email}`);
-
-  // Create categories
-  const electronicsCategory = await prisma.category.create({
+  // 4. Create Categories
+  const ringsCat = await prisma.category.create({
     data: {
-      name: 'Electronics',
-      slug: 'electronics',
-      description: 'Electronic devices and gadgets',
-      image: '/images/categories/electronics.svg',
+      name: 'Statement Rings',
+      slug: 'rings',
+      description: 'Dainty, stackable, and adjustable fashion rings.',
+      image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80',
     },
   });
 
-  const clothingCategory = await prisma.category.create({
+  const earringsCat = await prisma.category.create({
     data: {
-      name: 'Clothing',
-      slug: 'clothing',
-      description: 'Fashion and apparel',
-      image: '/images/categories/clothing.svg',
+      name: 'Oxidised Earrings & Jhumkas',
+      slug: 'earrings',
+      description: 'Viral Chandbali jhumkas, lightweight studs, and Navratri oxidised statement drops.',
+      image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=800&auto=format&fit=crop&q=80',
     },
   });
 
-  const homeCategory = await prisma.category.create({
+  const necklacesCat = await prisma.category.create({
     data: {
-      name: 'Home & Garden',
-      slug: 'home-garden',
-      description: 'Home improvement and garden supplies',
-      image: '/images/categories/home-garden.svg',
+      name: 'Pendants & Chokers',
+      slug: 'necklaces',
+      description: 'Layered evil eye charms, choker sets, and college daily chains.',
+      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80',
     },
   });
 
-  console.log('📂 Created categories');
-
-  // Create subcategories
-  const smartphonesCategory = await prisma.category.create({
+  const ankletsCat = await prisma.category.create({
     data: {
-      name: 'Smartphones',
-      slug: 'smartphones',
-      description: 'Latest smartphones and mobile devices',
-      parentId: electronicsCategory.id,
+      name: 'Ghungroo Payal (Anklets)',
+      slug: 'anklets',
+      description: 'Traditional tribal ghungroo anklets and sleek daily payal pairs.',
+      image: 'https://images.unsplash.com/photo-1611591475155-426477a20026?w=800&auto=format&fit=crop&q=80',
     },
   });
 
-  const laptopsCategory = await prisma.category.create({
+  const braceletsCat = await prisma.category.create({
     data: {
-      name: 'Laptops',
-      slug: 'laptops',
-      description: 'Laptops and notebooks',
-      parentId: electronicsCategory.id,
+      name: 'Charm Bracelets & Bangles',
+      slug: 'bracelets',
+      description: 'Aesthetic charm bracelets and adjustable open cuffs.',
+      image: 'https://images.unsplash.com/photo-1611591475155-426477a20026?w=800&auto=format&fit=crop&q=80',
     },
   });
 
-  const mensClothingCategory = await prisma.category.create({
+  const combosCat = await prisma.category.create({
     data: {
-      name: "Men's Clothing",
-      slug: 'mens-clothing',
-      description: 'Clothing for men',
-      parentId: clothingCategory.id,
+      name: 'Festive Gift Combos',
+      slug: 'combos',
+      description: 'Bestie twinning sets and complete Navratri jewellery gift boxes.',
+      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&auto=format&fit=crop&q=80',
     },
   });
 
-  console.log('📂 Created subcategories');
+  console.log('✅ 6 Categories created.');
 
-  // Create products
-  const products = [
+  // 5. Seed Products
+  const productsData = [
     {
-      name: 'iPhone 15 Pro',
-      slug: 'iphone-15-pro',
-      description: 'Latest iPhone with advanced camera system',
-      content:
-        'The iPhone 15 Pro features a titanium design, advanced camera system, and A17 Pro chip.',
-      price: 999.99,
-      comparePrice: 1099.99,
-      costPrice: 750.0,
-      categoryId: smartphonesCategory.id,
+      name: 'Chandbali Oxidised Jhumkas',
+      slug: 'chandbali-oxidised-silver-jhumkas',
+      description: 'Iconic crescent-moon Chandbali jhumkas featuring delicate floral filigree and soft bell hangings. Crafted in premium antique oxidised metal with protective polish.',
+      price: 1199,
+      comparePrice: 1999,
+      costPrice: 600,
+      sku: 'JJ-EAR-001',
       status: ProductStatus.PUBLISHED,
-      sku: 'IPH15PRO-128-NT',
-      tags: ['smartphone', 'apple', 'ios', 'premium'],
-      seoTitle: 'iPhone 15 Pro - Premium Smartphone | Your Store',
-      seoDescription:
-        'Get the latest iPhone 15 Pro with titanium design and advanced camera system.',
-    },
-    {
-      name: 'MacBook Air M2',
-      slug: 'macbook-air-m2',
-      description: 'Lightweight laptop with M2 chip',
-      content:
-        'The MacBook Air with M2 chip delivers incredible performance in a thin and light design.',
-      price: 1199.99,
-      comparePrice: 1299.99,
-      costPrice: 900.0,
-      categoryId: laptopsCategory.id,
-      status: ProductStatus.PUBLISHED,
-      sku: 'MBA-M2-256-SG',
-      tags: ['laptop', 'apple', 'macos', 'm2'],
-      seoTitle: 'MacBook Air M2 - Ultra-thin Laptop | Your Store',
-      seoDescription:
-        'Experience incredible performance with the MacBook Air M2.',
+      categoryId: earringsCat.id,
+      material: 'Oxidised Alloy',
+      silverPurity: 'Antique Finish',
+      weight: 12.5,
+      adjustability: 'Standard Post & Push Back',
+      badge: 'BESTSELLER',
+      vibe: 'Garba & Festive Glam',
+      tags: ['garba', 'jhumka', 'oxidised', 'chandbali', 'navratri', 'statement'],
+      images: [
+        'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80',
+      ],
     },
     {
-      name: 'Samsung Galaxy S24',
-      slug: 'samsung-galaxy-s24',
-      description: 'Flagship Android smartphone',
-      content:
-        'The Galaxy S24 features AI-powered camera, long-lasting battery, and stunning display.',
-      price: 899.99,
-      comparePrice: 999.99,
-      costPrice: 650.0,
-      categoryId: smartphonesCategory.id,
+      name: 'Dainty Sparkling Solitaire Adjustable Ring',
+      slug: 'dainty-sparkling-925-solitaire-ring',
+      description: 'A brilliant-cut AAA Zircon center stone embedded in polished silver-tone alloy with rhodium anti-tarnish coating. Features a free-size adjustable band.',
+      price: 899,
+      comparePrice: 1499,
+      costPrice: 400,
+      sku: 'JJ-RNG-001',
       status: ProductStatus.PUBLISHED,
-      sku: 'SGS24-256-PH',
-      tags: ['smartphone', 'samsung', 'android', 'galaxy'],
-      seoTitle: 'Samsung Galaxy S24 - AI-Powered Smartphone | Your Store',
-      seoDescription:
-        'Discover the Samsung Galaxy S24 with AI-powered features.',
+      categoryId: ringsCat.id,
+      material: 'Silver-Tone Alloy',
+      silverPurity: 'AAA Zircon Polish',
+      weight: 3.2,
+      adjustability: 'Adjustable / Free Size',
+      badge: 'NEW_DROP',
+      vibe: 'Minimalist Everyday',
+      tags: ['solitaire', 'ring', 'adjustable', 'college daily', 'zircon'],
+      images: [
+        'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=800&auto=format&fit=crop&q=80',
+      ],
     },
     {
-      name: 'Premium Cotton T-Shirt',
-      slug: 'premium-cotton-tshirt',
-      description: 'Comfortable and stylish cotton t-shirt',
-      content:
-        'Made from 100% organic cotton, this t-shirt offers comfort and style.',
-      price: 29.99,
-      comparePrice: 39.99,
-      costPrice: 15.0,
-      categoryId: mensClothingCategory.id,
+      name: 'Layered Evil Eye Pendant & Chain',
+      slug: 'layered-evil-eye-pure-silver-pendant',
+      description: 'Ward off negative energy and look effortless with this handcrafted turquoise-enamel evil eye charm on an adjustable 16-18 inch delicate chain.',
+      price: 1499,
+      comparePrice: 2299,
+      costPrice: 700,
+      sku: 'JJ-NEC-001',
       status: ProductStatus.PUBLISHED,
-      sku: 'TSHIRT-COT-M-BLU',
-      tags: ['clothing', 'cotton', 'casual', 'organic'],
-      seoTitle: 'Premium Cotton T-Shirt - Organic & Comfortable | Your Store',
-      seoDescription:
-        'Shop our premium organic cotton t-shirt for ultimate comfort.',
+      categoryId: necklacesCat.id,
+      material: 'Brass & Enamel Alloy',
+      silverPurity: 'Anti-Tarnish Polish',
+      weight: 5.8,
+      adjustability: '16 + 2 Inch Extender',
+      badge: 'TRENDING',
+      vibe: 'Evil Eye & Spiritual',
+      tags: ['evil eye', 'pendant', 'chain', 'spiritual', 'aesthetic', 'daily glow'],
+      images: [
+        'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&auto=format&fit=crop&q=80',
+      ],
     },
     {
-      name: 'Wireless Headphones',
-      slug: 'wireless-headphones',
-      description: 'High-quality wireless headphones with noise cancellation',
-      content:
-        'Experience superior sound quality with active noise cancellation and 30-hour battery life.',
-      price: 199.99,
-      comparePrice: 249.99,
-      costPrice: 120.0,
-      categoryId: electronicsCategory.id,
+      name: 'Boho Tribal Ghungroo Anklet Pair',
+      slug: 'boho-tribal-ghungroo-silver-anklet',
+      description: 'Traditional Gujarati ghungroo payal with melodic soft chimes. Intricate tribal engraving in premium oxidised finish with secure S-hook closure.',
+      price: 1799,
+      comparePrice: 2599,
+      costPrice: 850,
+      sku: 'JJ-ANK-001',
       status: ProductStatus.PUBLISHED,
-      sku: 'WH-NC-BLK-BT',
-      tags: ['headphones', 'wireless', 'bluetooth', 'noise-cancelling'],
-      seoTitle: 'Wireless Noise-Cancelling Headphones | Your Store',
-      seoDescription:
-        'Premium wireless headphones with active noise cancellation.',
+      categoryId: ankletsCat.id,
+      material: 'Oxidised Alloy',
+      silverPurity: 'Tribal Finish',
+      weight: 22.0,
+      adjustability: '9.5 + 1 Inch Extender',
+      badge: 'BESTSELLER',
+      vibe: 'Garba & Festive Glam',
+      tags: ['payal', 'anklet', 'ghungroo', 'boho', 'gujarati', 'garba'],
+      images: [
+        'https://images.unsplash.com/photo-1611591475155-426477a20026?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&auto=format&fit=crop&q=80',
+      ],
+    },
+    {
+      name: 'Garba Queen Festive Gift Combo',
+      slug: 'garba-queen-festive-gift-combo',
+      description: 'The ultimate Navratri gifting box! Includes Chandbali Jhumkas, Ghungroo Payal, adjustable Nose Pin, and matching Boho ring in a signature pink gift box.',
+      price: 3499,
+      comparePrice: 5299,
+      costPrice: 1800,
+      sku: 'JJ-CMB-001',
+      status: ProductStatus.PUBLISHED,
+      categoryId: combosCat.id,
+      material: 'Oxidised Jewellery Set',
+      silverPurity: 'Artisan Finish',
+      weight: 48.0,
+      adjustability: 'Free Size Set',
+      badge: 'BESTSELLER',
+      vibe: 'Bestie Gifting Combos',
+      isCombo: true,
+      tags: ['combo', 'gift box', 'navratri set', 'bestie', 'garba queen', 'full set'],
+      images: [
+        'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=800&auto=format&fit=crop&q=80',
+      ],
+    },
+    {
+      name: 'Shimmering Charm Bracelet',
+      slug: 'shimmering-charm-bracelet',
+      description: 'Handcrafted link bracelet with star and moon charms with sparkling crystal insets.',
+      price: 1299,
+      comparePrice: 1999,
+      costPrice: 600,
+      sku: 'JJ-BRC-001',
+      status: ProductStatus.PUBLISHED,
+      categoryId: braceletsCat.id,
+      material: 'Polished Alloy',
+      silverPurity: 'Rhodium Coating',
+      weight: 6.5,
+      adjustability: '7 + 1 Inch Extender',
+      badge: 'NEW_DROP',
+      vibe: 'Date Night Sparkle',
+      tags: ['bracelet', 'charm', 'date night', 'crystals'],
+      images: [
+        'https://images.unsplash.com/photo-1611591475155-426477a20026?w=800&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80',
+      ],
     },
   ];
 
-  // Product image mapping with local images
-  const productImages: Record<string, string[]> = {
-    'iphone-15-pro': [
-      '/images/products/iphone-15-pro.svg',
-      '/images/products/iphone-15-pro-alt.svg',
-    ],
-    'macbook-air-m2': [
-      '/images/products/macbook-air-m2.svg',
-      '/images/products/macbook-air-m2-alt.svg',
-    ],
-    'samsung-galaxy-s24': [
-      '/images/products/samsung-galaxy-s24.svg',
-      '/images/products/samsung-galaxy-s24-alt.svg',
-    ],
-    'premium-cotton-tshirt': [
-      '/images/products/premium-cotton-tshirt.svg',
-      '/images/products/premium-cotton-tshirt-alt.svg',
-    ],
-    'wireless-headphones': [
-      '/images/products/wireless-headphones.svg',
-      '/images/products/wireless-headphones-alt.svg',
-    ],
-  };
-
-  for (const productData of products) {
-    const product = await prisma.product.create({
-      data: productData,
-    });
-
-    // Get images for this product or use generic placeholders
-    const images = productImages[product.slug] || [
-      '/images/placeholder.svg',
-      '/images/placeholder.svg',
-    ];
-
-    // Create product images
-    await prisma.productImage.createMany({
-      data: [
-        {
-          productId: product.id,
-          url: images[0]!,
-          altText: `${product.name} - Main Image`,
-          position: 0,
-        },
-        {
-          productId: product.id,
-          url: images[1]!,
-          altText: `${product.name} - Secondary Image`,
-          position: 1,
-        },
-      ],
-    });
-
-    // Create inventory
-    await prisma.inventory.create({
+  for (const item of productsData) {
+    const { images, ...productData } = item;
+    const createdProduct = await prisma.product.create({
       data: {
-        productId: product.id,
-        quantity: Math.floor(Math.random() * 100) + 10,
-        reserved: 0,
-        available: Math.floor(Math.random() * 100) + 10,
+        ...productData,
+        images: {
+          create: images.map((url, index) => ({
+            url,
+            isPrimary: index === 0,
+            position: index,
+          })),
+        },
+        inventory: {
+          create: {
+            quantity: 50,
+            available: 50,
+            reserved: 0,
+          },
+        },
       },
     });
-
-    // Create product variants for some products
-    if (product.slug === 'iphone-15-pro') {
-      await prisma.productVariant.createMany({
-        data: [
-          {
-            productId: product.id,
-            name: 'Storage',
-            value: '128GB',
-            position: 0,
-          },
-          {
-            productId: product.id,
-            name: 'Storage',
-            value: '256GB',
-            price: 100,
-            position: 1,
-          },
-          {
-            productId: product.id,
-            name: 'Storage',
-            value: '512GB',
-            price: 300,
-            position: 2,
-          },
-          {
-            productId: product.id,
-            name: 'Color',
-            value: 'Natural Titanium',
-            position: 0,
-          },
-          {
-            productId: product.id,
-            name: 'Color',
-            value: 'Blue Titanium',
-            position: 1,
-          },
-          {
-            productId: product.id,
-            name: 'Color',
-            value: 'White Titanium',
-            position: 2,
-          },
-        ],
-      });
-    }
-
-    if (product.slug === 'premium-cotton-tshirt') {
-      await prisma.productVariant.createMany({
-        data: [
-          { productId: product.id, name: 'Size', value: 'S', position: 0 },
-          { productId: product.id, name: 'Size', value: 'M', position: 1 },
-          { productId: product.id, name: 'Size', value: 'L', position: 2 },
-          {
-            productId: product.id,
-            name: 'Size',
-            value: 'XL',
-            price: 5,
-            position: 3,
-          },
-          { productId: product.id, name: 'Color', value: 'Blue', position: 0 },
-          { productId: product.id, name: 'Color', value: 'Black', position: 1 },
-          { productId: product.id, name: 'Color', value: 'White', position: 2 },
-        ],
-      });
-    }
-
-    console.log(`📦 Created product: ${product.name}`);
+    console.log(`✨ Seeded product: ${createdProduct.name}`);
   }
 
-  // Create sample reviews
-  const reviewProducts = await prisma.product.findMany({ take: 3 });
-
-  for (const product of reviewProducts) {
-    await prisma.review.create({
-      data: {
-        rating: 5,
-        title: 'Excellent product!',
-        content:
-          'Really happy with this purchase. Great quality and fast shipping.',
-        verified: true,
-        userId: customer.id,
-        productId: product.id,
+  // 6. Seed Promo Coupons
+  await prisma.coupon.createMany({
+    data: [
+      {
+        code: 'DRIP10',
+        discountPercent: 10,
+        minOrderAmount: 499,
+        maxDiscount: 500,
+        isActive: true,
       },
-    });
-  }
-
-  console.log('⭐ Created sample reviews');
-
-  // Create sample cart items
-  const customerCart = await prisma.cart.upsert({
-    where: { userId: customer.id },
-    update: {},
-    create: { userId: customer.id },
+      {
+        code: 'BESTIE20',
+        discountPercent: 20,
+        minOrderAmount: 999,
+        maxDiscount: 1000,
+        isActive: true,
+      },
+      {
+        code: 'FESTIVE500',
+        discountAmount: 500,
+        minOrderAmount: 1999,
+        isActive: true,
+      },
+    ],
   });
 
-  const sampleProducts = await prisma.product.findMany({ take: 2 });
-
-  for (const product of sampleProducts) {
-    await prisma.cartItem.create({
-      data: {
-        quantity: Math.floor(Math.random() * 3) + 1,
-        cartId: customerCart.id,
-        productId: product.id,
-      },
-    });
-  }
-
-  console.log('🛒 Created sample cart items');
-
-  // Create sample orders
-  const orderProducts = await prisma.product.findMany({ take: 2 });
-  const orderTotal = orderProducts.reduce((sum, p) => sum + Number(p.price), 0);
-
-  const order = await prisma.order.create({
-    data: {
-      orderNumber: 'ORD-' + Date.now(),
-      subtotal: orderTotal,
-      tax: orderTotal * 0.08, // 8% tax
-      shipping: 9.99,
-      total: orderTotal + orderTotal * 0.08 + 9.99,
-      customerEmail: customer.email,
-      customerPhone: '+1234567890',
-      shippingName: customer.name || 'John Doe',
-      shippingAddress: '123 Main St',
-      shippingCity: 'New York',
-      shippingState: 'NY',
-      shippingZip: '10001',
-      shippingCountry: 'US',
-      userId: customer.id,
-    },
-  });
-
-  // Create order items
-  for (const product of orderProducts) {
-    await prisma.orderItem.create({
-      data: {
-        quantity: 1,
-        price: product.price,
-        productName: product.name,
-        productSku: product.sku,
-        orderId: order.id,
-        productId: product.id,
-      },
-    });
-  }
-
-  console.log(`📋 Created sample order: ${order.orderNumber}`);
-
-  console.log('✅ Database seeding completed successfully!');
-  console.log('\n📊 Summary:');
-  console.log(`👤 Users: ${await prisma.user.count()}`);
-  console.log(`📂 Categories: ${await prisma.category.count()}`);
-  console.log(`📦 Products: ${await prisma.product.count()}`);
-  console.log(`📋 Orders: ${await prisma.order.count()}`);
-  console.log(`⭐ Reviews: ${await prisma.review.count()}`);
-  console.log('\n🔐 Admin Login:');
-  console.log(`Email: ${adminEmail}`);
-  console.log('Password: admin123');
+  console.log('✅ Coupons seeded (DRIP10, BESTIE20, FESTIVE500).');
+  console.log('🎉 Seeding completed successfully!');
 }
 
 main()
-  .catch(e => {
-    console.error('❌ Error seeding database:', e);
+  .catch((e) => {
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {

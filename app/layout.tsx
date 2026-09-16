@@ -1,6 +1,6 @@
 // File: app/layout.tsx
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Cormorant_Garamond, DM_Sans } from 'next/font/google';
 import '@/styles/globals.css';
 import { Providers } from '@/components/providers';
 import { Header } from '@/components/header';
@@ -8,9 +8,20 @@ import { Footer } from '@/components/footer';
 import { CartProvider } from '@/components/cart-provider';
 import { Toaster } from '@/components/ui/toaster';
 
-const inter = Inter({ subsets: ['latin'] });
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-cormorant',
+  display: 'swap',
+});
 
-export const dynamic = 'force-dynamic';
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
+
 
 export const metadata: Metadata = {
   title: {
@@ -57,8 +68,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning className={`${cormorant.variable} ${dmSans.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+      </head>
+      <body className={`${dmSans.className} antialiased`}>
         <Providers>
           <CartProvider>
             <div className="flex min-h-screen flex-col">

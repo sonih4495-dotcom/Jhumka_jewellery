@@ -15,7 +15,7 @@ import { mapAuthError } from './auth-error';
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/profile';
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
 
   const [error, setError] = useState<string | null>(
     mapAuthError(searchParams.get('error'))

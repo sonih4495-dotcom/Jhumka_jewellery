@@ -69,25 +69,30 @@ export async function getOrderById(orderId: string) {
 // checkout for returning customers. Returns null for guests or first-time
 // customers with no prior order.
 export async function getSavedAddressForCurrentUser() {
-  const user = await getCurrentUser();
-  if (!user) return null;
+  try {
+    const user = await getCurrentUser();
+    if (!user) return null;
 
-  const lastOrder = await prisma.order.findFirst({
-    where: { userId: user.id },
-    orderBy: { createdAt: 'desc' },
-    select: {
-      shippingName: true,
-      shippingAddress: true,
-      shippingCity: true,
-      shippingState: true,
-      shippingZip: true,
-      shippingCountry: true,
-      customerEmail: true,
-      customerPhone: true,
-    },
-  });
+    const lastOrder = await prisma.order.findFirst({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        shippingName: true,
+        shippingAddress: true,
+        shippingCity: true,
+        shippingState: true,
+        shippingZip: true,
+        shippingCountry: true,
+        customerEmail: true,
+        customerPhone: true,
+      },
+    });
 
-  return lastOrder;
+    return lastOrder;
+  } catch (error) {
+    console.error('Failed to get saved address for user:', error);
+    return null;
+  }
 }
 
 // Order confirmation is reachable right after guest checkout (no session

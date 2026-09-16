@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatCurrency(
   amount: number | string | { toString(): string },
-  currency: string = 'USD'
+  currency: string = 'INR'
 ): string {
   let numericAmount: number;
 
@@ -19,6 +19,16 @@ export function formatCurrency(
     numericAmount = amount;
   } else {
     numericAmount = parseFloat(amount.toString());
+  }
+
+  if (isNaN(numericAmount)) return '₹0';
+
+  if (currency === 'INR') {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(numericAmount);
   }
 
   return new Intl.NumberFormat('en-US', {
@@ -271,4 +281,55 @@ export function generateRandomId(length: number = 8): string {
   }
 
   return result;
+}
+
+export const INDIAN_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+  'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+  'Delhi', 'Jammu & Kashmir', 'Ladakh', 'Chandigarh', 'Puducherry'
+];
+
+export const JEWELLERY_VIBES = [
+  { id: 'garba-glam', name: 'Garba & Festive Glam', icon: '✨', description: 'Heavy oxidised & statement pieces for Dandiya nights & festivities' },
+  { id: 'minimal-daily', name: 'Minimalist Everyday', icon: '☁️', description: 'Clean, lightweight pieces for college, office & everyday glow' },
+  { id: 'date-night', name: 'Date Night Sparkle', icon: '💖', description: 'AAA Zircon & sparkling stones for romantic dinners' },
+  { id: 'evil-eye', name: 'Evil Eye & Spiritual', icon: '🧿', description: 'Protective talismans, charms, and spiritual protection pieces' },
+  { id: 'bestie-gifting', name: 'Bestie Gifting Combos', icon: '👯‍♀️', description: 'Curated sets & gift boxes to match with your best friends' },
+];
+
+export const RING_SIZES = [
+  { size: '6', diameterMm: '14.5', circumferenceMm: '45.5' },
+  { size: '7', diameterMm: '14.9', circumferenceMm: '46.8' },
+  { size: '8', diameterMm: '15.3', circumferenceMm: '48.0' },
+  { size: '9', diameterMm: '15.7', circumferenceMm: '49.3' },
+  { size: '10', diameterMm: '16.1', circumferenceMm: '50.6' },
+  { size: '11', diameterMm: '16.5', circumferenceMm: '51.9' },
+  { size: '12', diameterMm: '16.9', circumferenceMm: '53.1' },
+  { size: '13', diameterMm: '17.3', circumferenceMm: '54.4' },
+  { size: '14', diameterMm: '17.7', circumferenceMm: '55.7' },
+  { size: '15', diameterMm: '18.1', circumferenceMm: '57.0' },
+  { size: '16', diameterMm: '18.5', circumferenceMm: '58.3' },
+  { size: '17', diameterMm: '18.9', circumferenceMm: '59.5' },
+  { size: '18', diameterMm: '19.3', circumferenceMm: '60.8' },
+  { size: '19', diameterMm: '19.8', circumferenceMm: '62.1' },
+  { size: '20', diameterMm: '20.2', circumferenceMm: '63.4' },
+  { size: 'Free Size', diameterMm: 'Adjustable', circumferenceMm: 'Adjustable' },
+];
+
+export function calculateGst(subtotal: number, state: string = 'Gujarat') {
+  // 3% GST on Silver Jewellery
+  const gstRate = 0.03;
+  const isGujarat = state.toLowerCase() === 'gujarat';
+  const totalGst = Math.round(subtotal * gstRate);
+  
+  if (isGujarat) {
+    const cgst = +(totalGst / 2).toFixed(2);
+    const sgst = +(totalGst / 2).toFixed(2);
+    return { totalGst, cgst, sgst, igst: 0, gstRate: '3%' };
+  } else {
+    return { totalGst, cgst: 0, sgst: 0, igst: totalGst, gstRate: '3%' };
+  }
 }
