@@ -69,11 +69,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${cormorant.variable} ${dmSans.variable}`}>
-      <head>
+      <body className={`${dmSans.className} antialiased`}>
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
-      </head>
-      <body className={`${dmSans.className} antialiased`}>
         <Providers>
           <CartProvider>
             <div className="flex min-h-screen flex-col">
