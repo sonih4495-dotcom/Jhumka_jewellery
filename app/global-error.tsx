@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 export default function GlobalError({
   error,
@@ -9,7 +9,20 @@ export default function GlobalError({
 }) {
   return (
     <html lang="en">
-      <body>
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Something went wrong</title>
+      </head>
+      <body
+        style={{
+          margin: 0,
+          fontFamily:
+            'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif',
+          backgroundColor: '#fafafa',
+          color: '#18181b',
+        }}
+      >
         <div
           style={{
             minHeight: '100vh',
@@ -18,13 +31,12 @@ export default function GlobalError({
             alignItems: 'center',
             justifyContent: 'center',
             padding: '20px',
-            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             textAlign: 'center',
-            backgroundColor: '#fafafa',
-            color: '#18181b',
           }}
         >
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem' }}>
+          <h2
+            style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem' }}
+          >
             Something went wrong!
           </h2>
           <p
@@ -35,7 +47,8 @@ export default function GlobalError({
               maxWidth: '400px',
             }}
           >
-            {error?.message || 'A critical error occurred. Please try again or refresh the page.'}
+            {error?.message ||
+              'A critical error occurred. Please try again or refresh the page.'}
           </p>
           <button
             onClick={() => reset()}

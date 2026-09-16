@@ -8,6 +8,8 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
   experimental: {
+    workerThreads: false,
+    cpus: 1,
     optimizePackageImports: [
       'lucide-react',
       'date-fns',
