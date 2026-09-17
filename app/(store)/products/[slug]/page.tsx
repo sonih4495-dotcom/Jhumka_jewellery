@@ -30,6 +30,7 @@ import { formatPrice } from '@/lib/utils';
 import { JsonLd } from '@/components/jsonld';
 import { RingSizeGuideModal } from '@/components/ring-size-guide-modal';
 import { ReferralModal } from '@/components/referral-modal';
+import { MobileStickyCart } from '@/components/mobile-sticky-cart';
 
 interface ProductPageProps {
   params: Promise<{
@@ -422,6 +423,15 @@ export default async function ProductPage(props: ProductPageProps) {
           </div>
         )}
       </div>
+
+      <MobileStickyCart
+        productId={product.id}
+        productName={product.name}
+        price={Number(product.price)}
+        comparePrice={product.comparePrice ? Number(product.comparePrice) : null}
+        disabled={product.inventory && product.inventory[0] ? product.inventory[0].available <= 0 : false}
+        maxQuantity={product.inventory?.[0]?.available ?? 10}
+      />
     </>
   );
 }

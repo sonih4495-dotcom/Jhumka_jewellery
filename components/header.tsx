@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
-import { Menu, Search, User, Heart, Sparkles, ShoppingBag, ShieldCheck, Ruler } from 'lucide-react';
+import { Menu, Search, User, Heart, Sparkles, ChevronDown, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -30,74 +30,192 @@ const RingSizeGuideModal = dynamic(
 );
 
 const categories = [
-  { href: '/category/rings', label: 'Rings 💍' },
-  { href: '/category/earrings', label: 'Earrings & Jhumkas ✨' },
-  { href: '/category/necklaces', label: 'Necklaces & Chokers 📿' },
-  { href: '/category/anklets', label: 'Anklets (Payal) 🔔' },
-  { href: '/category/bracelets', label: 'Bracelets & Bangles 💫' },
-  { href: '/category/combos', label: 'Festive Combos 🎁' },
+  {
+    href: '/category/rings',
+    label: 'Rings',
+    emoji: '💍',
+    tagline: 'Adjustable & Stackable',
+    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=200&auto=format&fit=crop&q=80',
+  },
+  {
+    href: '/category/earrings',
+    label: 'Earrings & Jhumkas',
+    emoji: '✨',
+    tagline: 'Festive & College Glow',
+    image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=200&auto=format&fit=crop&q=80',
+  },
+  {
+    href: '/category/necklaces',
+    label: 'Necklaces & Chokers',
+    emoji: '📿',
+    tagline: 'Layered & Evil Eye Chains',
+    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=200&auto=format&fit=crop&q=80',
+  },
+  {
+    href: '/category/anklets',
+    label: 'Anklets (Payal)',
+    emoji: '🔔',
+    tagline: 'Tribal Chimes & Daily Payal',
+    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=200&auto=format&fit=crop&q=80',
+  },
+  {
+    href: '/category/bracelets',
+    label: 'Bracelets & Bangles',
+    emoji: '💫',
+    tagline: 'Pure Sterling Sparkle',
+    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=200&auto=format&fit=crop&q=80',
+  },
+  {
+    href: '/category/combos',
+    label: 'Festive Combos',
+    emoji: '🎁',
+    tagline: 'Bestie & Navratri Sets',
+    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=200&auto=format&fit=crop&q=80',
+  },
 ];
 
 export function Header() {
   const { data: session } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const { wishlistCount } = useWishlist();
 
   return (
     <>
-      {/* Top Announcement Bar */}
-      <div className="bg-[#121214] border-b border-white/10 py-2 px-4 text-center text-xs font-medium text-gray-200">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <span className="hidden sm:inline-flex items-center gap-1.5 text-amber-400 font-semibold tracking-wide">
-            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-            Navratri &amp; Festive Drop Live
-          </span>
-          <span className="mx-auto sm:mx-0 text-gray-300">
-            Use Code <strong className="rounded bg-white/10 border border-white/15 px-2 py-0.5 font-mono text-amber-300 font-bold">DRIP10</strong> for 10% OFF | FREE Shipping on ALL orders — always! 🚚✨
-          </span>
-          <div className="hidden md:flex items-center gap-2">
-            <ReferralModal />
-          </div>
+      {/* ── Marquee Announcement Bar ── */}
+      <div className="bg-[#161514] border-b border-amber-500/20 py-2 text-xs font-medium text-stone-200 overflow-hidden relative select-none">
+        <div className="flex w-max animate-marquee gap-10 items-center whitespace-nowrap">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-center gap-10">
+              <span className="inline-flex items-center gap-1.5 text-amber-300 font-semibold tracking-wide">
+                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                Navratri &amp; Festive Drop Live ✨
+              </span>
+              <span className="text-stone-300">
+                Use Code <strong className="rounded-md bg-white/10 border border-amber-400/30 px-2 py-0.5 font-mono text-amber-300 font-bold">DRIP10</strong> for 10% OFF
+              </span>
+              <span className="text-stone-300">
+                FREE Shipping on ALL orders — always! 🚚✨
+              </span>
+              <span className="text-stone-300 hidden sm:inline">
+                🛡️ 100% Anti-Tarnish • Skin-Safe Oxidised Silver
+              </span>
+              <span className="text-stone-300 hidden md:inline">
+                👯‍♀️ Bestie Referral: Give 20%, Get ₹200 Voucher
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Main Header */}
-      <header className="sticky top-0 z-40 border-b border-gray-200/80 bg-white/95 backdrop-blur-md shadow-[0_2px_15px_rgba(0,0,0,0.03)] transition-all">
+      {/* ── Main Boutique Sticky Header ── */}
+      <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-[#FAF8F5]/90 backdrop-blur-xl shadow-[0_4px_25px_rgba(0,0,0,0.03)] transition-all">
         <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-3 sm:py-3.5">
           {/* Brand Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="relative h-10 w-10 overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-transform group-hover:scale-105">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="relative h-10 w-10 overflow-hidden rounded-xl border border-stone-200 shadow-sm transition-transform duration-300 group-hover:scale-105 bg-white">
               <Image src="/images/logo.png" alt="Jhumka Junction Logo" fill priority sizes="40px" className="object-cover" />
             </div>
             <div>
-              <span className="text-xl sm:text-2xl font-black tracking-tight text-gray-900 font-sans">
-                Jhumka<span className="text-rose-600">Junction</span>
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-stone-900 font-sans">
+                Jhumka<span className="text-rani">Junction</span>
               </span>
-              <p className="hidden xs:block text-[9px] font-bold uppercase tracking-widest text-gray-500">
-                Oxidised &amp; Fashion Jewellery • Handcrafted
+              <p className="hidden xs:block text-[9px] font-bold uppercase tracking-widest text-stone-500 font-sans">
+                Boutique Oxidised &amp; Handcrafted Jewellery
               </p>
             </div>
           </Link>
 
-          {/* Desktop Nav */}
+          {/* Desktop Navigation */}
           <nav className="hidden items-center gap-6 lg:flex">
-            <Link href="/products" className="text-xs font-bold text-gray-900 hover:text-rose-600 transition-colors">
+            <Link
+              href="/products"
+              className="text-xs font-bold uppercase tracking-wider text-stone-900 hover:text-rani transition-colors"
+            >
               All Drops
             </Link>
-            {categories.slice(0, 5).map(cat => (
-              <Link
-                key={cat.href}
-                href={cat.href}
-                className="text-xs font-semibold text-gray-700 hover:text-rose-600 transition-colors"
+
+            {/* Categories Mega Dropdown */}
+            <div
+              className="relative"
+              onMouseEnter={() => setIsCategoryMenuOpen(true)}
+              onMouseLeave={() => setIsCategoryMenuOpen(false)}
+            >
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-700 hover:text-rani transition-colors py-2"
+                onClick={() => setIsCategoryMenuOpen(prev => !prev)}
               >
-                {cat.label}
-              </Link>
-            ))}
+                Categories
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isCategoryMenuOpen ? 'rotate-180 text-rani' : 'text-stone-400'}`} />
+              </button>
+
+              {/* Mega-menu dropdown panel */}
+              {isCategoryMenuOpen && (
+                <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50 w-[580px]">
+                  <div className="rounded-2xl border border-stone-200/90 bg-[#FAF8F5]/95 backdrop-blur-2xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
+                    <div className="mb-3 flex items-center justify-between border-b border-stone-200/70 pb-2.5">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                        ✨ Explore by Category
+                      </span>
+                      <Link
+                        href="/products"
+                        onClick={() => setIsCategoryMenuOpen(false)}
+                        className="text-[11px] font-bold text-rani hover:underline"
+                      >
+                        View Full Collection →
+                      </Link>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      {categories.map(cat => (
+                        <Link
+                          key={cat.href}
+                          href={cat.href}
+                          onClick={() => setIsCategoryMenuOpen(false)}
+                          className="group flex flex-col items-center rounded-xl border border-stone-200/60 bg-white/80 p-2.5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-rani/40 hover:shadow-md"
+                        >
+                          <div className="relative mb-2 h-16 w-full overflow-hidden rounded-lg bg-stone-100">
+                            <Image
+                              src={cat.image}
+                              alt={cat.label}
+                              fill
+                              sizes="120px"
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            <span className="absolute bottom-1 right-1 text-sm drop-shadow">{cat.emoji}</span>
+                          </div>
+                          <span className="text-xs font-bold text-stone-900 group-hover:text-rani transition-colors line-clamp-1">
+                            {cat.label}
+                          </span>
+                          <span className="text-[10px] text-stone-500 line-clamp-1 mt-0.5">
+                            {cat.tagline}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Link
+              href="/category/combos"
+              className="text-xs font-bold uppercase tracking-wider text-stone-700 hover:text-rani transition-colors"
+            >
+              Festive Combos 🎁
+            </Link>
+
             <RingSizeGuideModal />
+
+            <div className="hidden xl:block">
+              <ReferralModal />
+            </div>
+
             {session?.user?.role === 'ADMIN' && (
               <Link
                 href="/admin/products"
-                className="rounded-full bg-gray-900 px-3 py-1 text-xs font-bold text-white hover:bg-black"
+                className="rounded-full bg-stone-900 px-3 py-1 text-xs font-bold text-white hover:bg-black transition-colors"
               >
                 Admin Panel
               </Link>
@@ -106,17 +224,27 @@ export function Header() {
 
           {/* Right Action Icons */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-full text-gray-700 hover:text-rose-600 hover:bg-gray-100">
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full text-stone-700 hover:text-rani hover:bg-stone-200/50"
+            >
               <Link href="/search" aria-label="Search Jewellery">
                 <Search className="h-4 w-4" />
               </Link>
             </Button>
 
-            <Button asChild variant="ghost" size="icon" className="relative h-9 w-9 rounded-full text-gray-700 hover:text-rose-600 hover:bg-gray-100">
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="relative h-9 w-9 rounded-full text-stone-700 hover:text-rani hover:bg-stone-200/50"
+            >
               <Link href="/wishlist" aria-label="Wishlist">
                 <Heart className="h-4 w-4" />
                 {wishlistCount > 0 && (
-                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-[9px] font-bold text-white shadow-sm">
+                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rani text-[9px] font-bold text-white shadow-sm animate-pulse">
                     {wishlistCount}
                   </span>
                 )}
@@ -127,7 +255,12 @@ export function Header() {
 
             {session?.user ? (
               <div className="hidden items-center gap-1 sm:flex">
-                <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-full text-gray-700 hover:text-rose-600 hover:bg-gray-100">
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full text-stone-700 hover:text-rani hover:bg-stone-200/50"
+                >
                   <Link href="/profile" aria-label="My Account">
                     <User className="h-4 w-4" />
                   </Link>
@@ -136,59 +269,70 @@ export function Header() {
                   variant="ghost"
                   size="sm"
                   onClick={() => signOut()}
-                  className="text-xs text-gray-600 hover:text-gray-900"
+                  className="text-xs text-stone-600 hover:text-stone-900 font-semibold"
                 >
                   Sign Out
                 </Button>
               </div>
             ) : (
-              <Button asChild size="sm" className="hidden sm:inline-flex rounded-full bg-gray-900 text-xs font-bold text-white hover:bg-black px-4 py-2 shadow-sm border-0">
+              <Button
+                asChild
+                size="sm"
+                className="hidden sm:inline-flex rounded-full bg-stone-900 text-xs font-bold text-white hover:bg-stone-800 px-4 py-2 shadow-sm border-0 transition-all hover:scale-105 active:scale-95"
+              >
                 <Link href="/auth/signin">Sign In</Link>
               </Button>
             )}
 
+            {/* Mobile Navigation Drawer */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden h-9 w-9 rounded-full hover:bg-gray-100" aria-label="Open menu">
-                  <Menu className="h-5 w-5 text-gray-800" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden h-9 w-9 rounded-full hover:bg-stone-200/50"
+                  aria-label="Open menu"
+                >
+                  <Menu className="h-5 w-5 text-stone-800" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[360px] p-6 bg-white border-l border-gray-200">
+              <SheetContent side="right" className="w-[300px] sm:w-[360px] p-6 bg-[#FAF8F5] border-l border-stone-200 overflow-y-auto">
                 <SheetHeader className="text-left">
-                  <SheetTitle className="flex items-center gap-2 text-xl font-black text-gray-900 font-sans">
+                  <SheetTitle className="flex items-center gap-2 text-xl font-black text-stone-900 font-sans">
                     <Sparkles className="h-5 w-5 text-amber-500" />
                     Jhumka Junction
                   </SheetTitle>
-                  <p className="text-xs text-gray-500">Handcrafted Jewellery for Gen Z</p>
+                  <p className="text-xs text-stone-500">Handcrafted Jewellery for Gen Z</p>
                 </SheetHeader>
 
                 <div className="mt-6 flex flex-col gap-3">
-                  <div className="rounded-2xl bg-amber-50/70 p-3 border border-amber-200/60">
+                  <div className="rounded-2xl bg-amber-500/10 p-3.5 border border-amber-400/30">
                     <p className="text-[11px] font-bold text-amber-900">✨ Bestie Referral Program</p>
                     <p className="text-[10px] text-amber-800/80 mt-0.5">Share with your friends and get ₹200 off!</p>
-                    <div className="mt-2">
+                    <div className="mt-2.5">
                       <ReferralModal />
                     </div>
                   </div>
 
-                  <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mt-2">Categories</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mt-2">Categories</p>
                   <Link
                     href="/products"
-                    className="flex items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                    className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-stone-900 bg-white/70 border border-stone-200/60 hover:bg-white"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <span>All Silver Drops</span>
-                    <span className="text-xs text-rose-600 font-bold">Explore →</span>
+                    <span className="text-xs text-rani font-bold">Explore →</span>
                   </Link>
 
                   {categories.map(cat => (
                     <Link
                       key={cat.href}
                       href={cat.href}
-                      className="rounded-xl px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-rose-600"
+                      className="flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-stone-700 hover:bg-white hover:text-rani transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      {cat.label}
+                      <span>{cat.label} {cat.emoji}</span>
+                      <span className="text-[10px] text-stone-400">{cat.tagline}</span>
                     </Link>
                   ))}
 
@@ -196,12 +340,12 @@ export function Header() {
                     <RingSizeGuideModal />
                   </div>
 
-                  <div className="border-t border-gray-200 pt-4 mt-2">
+                  <div className="border-t border-stone-200 pt-4 mt-2">
                     {session?.user ? (
                       <div className="space-y-2">
                         <Link
                           href="/profile"
-                          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-stone-700 hover:bg-white"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           <User className="h-4 w-4" /> My Profile &amp; Orders
@@ -209,7 +353,7 @@ export function Header() {
                         {session.user.role === 'ADMIN' && (
                           <Link
                             href="/admin/products"
-                            className="flex items-center gap-2 rounded-xl bg-gray-900 px-3 py-2 text-sm font-bold text-white"
+                            className="flex items-center gap-2 rounded-xl bg-stone-900 px-3 py-2 text-sm font-bold text-white"
                             onClick={() => setIsMobileMenuOpen(false)}
                           >
                             Admin Dashboard
@@ -219,13 +363,13 @@ export function Header() {
                           variant="outline"
                           size="sm"
                           onClick={() => { signOut(); setIsMobileMenuOpen(false); }}
-                          className="w-full text-xs border-gray-300 text-gray-700"
+                          className="w-full text-xs border-stone-300 text-stone-700"
                         >
                           Sign Out
                         </Button>
                       </div>
                     ) : (
-                      <Button asChild className="w-full rounded-xl bg-gray-900 text-xs font-bold text-white hover:bg-black">
+                      <Button asChild className="w-full rounded-xl bg-stone-900 text-xs font-bold text-white hover:bg-stone-800">
                         <Link href="/auth/signin" onClick={() => setIsMobileMenuOpen(false)}>
                           Sign In / Register
                         </Link>

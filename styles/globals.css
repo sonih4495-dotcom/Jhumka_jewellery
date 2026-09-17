@@ -5,48 +5,48 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 240 10% 3.9%;
+    --background: 38 30% 98%; /* #FAF8F5 warm ivory */
+    --foreground: 24 12% 12%; /* #1F1D1A boutique deep charcoal */
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 24 12% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 346 77% 49.8%;
-    --accent-foreground: 0 0% 98%;
+    --popover-foreground: 24 12% 12%;
+    --primary: 24 12% 12%;
+    --primary-foreground: 38 30% 98%;
+    --secondary: 38 20% 93%;
+    --secondary-foreground: 24 12% 12%;
+    --muted: 38 18% 92%;
+    --muted-foreground: 24 6% 45%;
+    --accent: 336 78% 42%; /* Rani pink/magenta #BE185D */
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.75rem;
+    --border: 36 18% 88%;
+    --input: 36 18% 88%;
+    --ring: 43 65% 45%; /* Gold ring */
+    --radius: 0.875rem;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 346 77% 49.8%;
+    --background: 24 15% 7%;
+    --foreground: 38 25% 96%;
+    --card: 24 14% 9%;
+    --card-foreground: 38 25% 96%;
+    --popover: 24 14% 9%;
+    --popover-foreground: 38 25% 96%;
+    --primary: 38 25% 96%;
+    --primary-foreground: 24 15% 7%;
+    --secondary: 24 10% 14%;
+    --secondary-foreground: 38 25% 96%;
+    --muted: 24 10% 16%;
+    --muted-foreground: 30 8% 65%;
+    --accent: 336 78% 42%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 24 10% 16%;
+    --input: 24 10% 16%;
+    --ring: 43 65% 45%;
   }
 }
 
@@ -166,6 +166,37 @@
   }
   .scale-in {
     animation: scaleIn 0.2s ease-out;
+  }
+
+  /* Luxury Boutique Gradients & Effects */
+  .text-gold-foil {
+    background: linear-gradient(135deg, #DFB76C 0%, #F6E27A 25%, #CB9B51 50%, #F6E27A 75%, #DFB76C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-rani-foil {
+    background: linear-gradient(135deg, #F43F5E 0%, #BE185D 50%, #881337 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+
+  .glass-card-dark {
+    background: rgba(26, 24, 22, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .gold-border-glow {
+    box-shadow: 0 0 15px -3px rgba(212, 175, 55, 0.18), 0 0 6px -2px rgba(212, 175, 55, 0.12);
   }
 }
 

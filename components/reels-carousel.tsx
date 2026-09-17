@@ -1,10 +1,10 @@
 // Location: components/reels-carousel.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Play, Heart, Instagram, ShoppingBag } from 'lucide-react';
+import { Play, Heart, Instagram, ShoppingBag, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 
@@ -87,78 +87,77 @@ export function ReelsCarousel() {
     <section className="container mx-auto px-4 py-8">
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end mb-8">
         <div>
-          <div className="flex items-center gap-2">
-            <Badge className="bg-gradient-to-r from-rose-500 to-pink-600 text-white text-xs px-2.5 py-0.5 rounded-full shadow-sm border-0">
-              <Instagram className="mr-1 h-3 w-3" /> Seen on the 'Gram
-            </Badge>
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-rani/10 border border-rani/20 px-3 py-1 text-xs font-bold text-rani mb-2">
+            <Instagram className="h-3.5 w-3.5 text-rani" />
+            Seen on the 'Gram
           </div>
-          <h2 className="mt-2 text-2xl font-black tracking-tight text-gray-900 sm:text-3xl font-display">
+          <h2 className="mt-1 text-2xl font-black tracking-tight text-stone-900 sm:text-3xl font-display">
             #JhumkaJunction IRL ✨
           </h2>
-          <p className="mt-1 text-sm text-gray-500 font-sans">
+          <p className="mt-1 text-sm text-stone-500 font-sans">
             Watch real Gen Z besties styling our handcrafted &amp; oxidised drops.
           </p>
         </div>
         <Link
           href="https://instagram.com"
           target="_blank"
-          className="text-xs font-bold text-rose-600 hover:text-rose-700 hover:underline flex items-center gap-1 font-sans"
+          className="text-xs font-bold text-rani hover:underline flex items-center gap-1 font-sans"
         >
           Tag @JhumkaJunction to get featured →
         </Link>
       </div>
 
-      {/* Reels Grid */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4">
+      {/* Reels Grid with Horizontal Scroll on Small screens */}
+      <div className="flex sm:grid sm:grid-cols-2 md:grid-cols-4 gap-4 overflow-x-auto pb-4 sm:pb-0 scrollbar-hide snap-x snap-mandatory">
         {REELS.map(reel => (
           <div
             key={reel.id}
-            className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-black shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+            className="group relative flex-none w-[260px] sm:w-auto snap-center flex flex-col overflow-hidden rounded-2xl border border-stone-800 bg-stone-950 shadow-md transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl hover:border-amber-500/50"
           >
             {/* Aspect Ratio 9:16 Video Thumbnail Container */}
-            <div className="relative aspect-[9/16] w-full overflow-hidden bg-gray-900">
+            <div className="relative aspect-[9/16] w-full overflow-hidden bg-stone-900">
               <Image
                 src={reel.thumbnail}
                 alt={reel.title}
                 fill
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 300px"
-                className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100"
+                sizes="(max-width: 640px) 260px, (max-width: 1024px) 25vw, 300px"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105 opacity-90 group-hover:opacity-100"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/40" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/50" />
 
               {/* Top: Creator pill */}
-              <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[11px] text-white">
-                  <div className="relative h-4 w-4 overflow-hidden rounded-full">
+              <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
+                <div className="flex items-center gap-2 rounded-full bg-stone-950/70 backdrop-blur-md px-2.5 py-1 text-[11px] text-stone-100 border border-white/10">
+                  <div className="relative h-4 w-4 overflow-hidden rounded-full border border-amber-400/40">
                     <Image src={reel.avatar} alt={reel.creator} fill sizes="16px" className="object-cover" />
                   </div>
                   <span className="font-semibold truncate max-w-[90px]">{reel.handle}</span>
                 </div>
-                <div className="flex items-center gap-1 text-[11px] text-rose-300 font-bold drop-shadow">
-                  <Heart className="h-3.5 w-3.5 fill-rose-500 text-rose-500" />
+                <div className="flex items-center gap-1 text-[11px] text-pink-300 font-bold drop-shadow bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10">
+                  <Heart className="h-3 w-3 fill-rani text-rani" />
                   {reel.likes}
                 </div>
               </div>
 
               {/* Center Play Button Icon */}
-              <div className="absolute inset-0 m-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/30 backdrop-blur-md text-white transition-transform group-hover:scale-110 shadow-lg">
+              <div className="absolute inset-0 m-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/25 backdrop-blur-md text-white border border-white/40 shadow-xl transition-all duration-300 group-hover:scale-110 group-hover:bg-rani/80">
                 <Play className="h-5 w-5 fill-white ml-0.5" />
               </div>
 
               {/* Bottom: Caption & Product Tag */}
-              <div className="absolute bottom-3 left-3 right-3 space-y-2">
+              <div className="absolute bottom-3 left-3 right-3 space-y-2 z-10">
                 <p className="text-xs font-medium text-white line-clamp-2 drop-shadow-md">
                   {reel.title}
                 </p>
                 <Link
                   href={`/products/${reel.taggedProduct.slug}`}
-                  className="flex items-center justify-between rounded-xl bg-white/95 backdrop-blur-md p-2 text-xs text-gray-900 shadow-md transition-all hover:bg-white"
+                  className="flex items-center justify-between rounded-xl bg-white/95 backdrop-blur-md p-2 text-xs text-stone-900 shadow-md transition-all duration-300 hover:bg-white hover:scale-[1.02] border border-stone-200/50"
                 >
                   <div className="truncate mr-2">
-                    <p className="truncate font-semibold text-[11px] text-gray-900">{reel.taggedProduct.name}</p>
-                    <p className="text-[10px] font-bold text-rose-600">{formatCurrency(reel.taggedProduct.price)}</p>
+                    <p className="truncate font-semibold text-[11px] text-stone-900">{reel.taggedProduct.name}</p>
+                    <p className="text-[10px] font-black text-rani">{formatCurrency(reel.taggedProduct.price)}</p>
                   </div>
-                  <span className="rounded-lg bg-gray-900 p-1.5 text-white">
+                  <span className="rounded-lg bg-stone-900 p-1.5 text-white">
                     <ShoppingBag className="h-3 w-3" />
                   </span>
                 </Link>
