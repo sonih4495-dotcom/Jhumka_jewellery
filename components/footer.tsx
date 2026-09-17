@@ -19,12 +19,21 @@ const ReferralModal = dynamic(
 
 export function Footer() {
   return (
-    <footer className="mt-20 border-t border-stone-800 bg-[#121110] text-stone-300">
+    <footer
+      className="mt-20 border-t border-stone-800 text-stone-300"
+      style={{ backgroundColor: '#121110', color: '#e7e5e4' }}
+    >
       {/* Trust Badges Banner */}
-      <div className="border-b border-stone-800/80 py-8 bg-[#181716]">
+      <div
+        className="border-b border-stone-800/80 py-8"
+        style={{ backgroundColor: '#181716' }}
+      >
         <div className="container mx-auto grid grid-cols-2 gap-6 px-4 sm:grid-cols-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-800/80 text-amber-400 border border-stone-700/50">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-amber-400 border border-stone-700/60"
+              style={{ backgroundColor: '#232220' }}
+            >
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
@@ -34,7 +43,10 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-800/80 text-rani border border-stone-700/50">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-rani border border-stone-700/60"
+              style={{ backgroundColor: '#232220' }}
+            >
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
@@ -44,7 +56,10 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-800/80 text-amber-300 border border-stone-700/50">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-amber-300 border border-stone-700/60"
+              style={{ backgroundColor: '#232220' }}
+            >
               <Truck className="h-5 w-5" />
             </div>
             <div>
@@ -54,7 +69,10 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-800/80 text-emerald-400 border border-stone-700/50">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-emerald-400 border border-stone-700/60"
+              style={{ backgroundColor: '#232220' }}
+            >
               <RefreshCw className="h-5 w-5" />
             </div>
             <div>

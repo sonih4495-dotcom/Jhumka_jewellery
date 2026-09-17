@@ -169,6 +169,22 @@
   }
 
   /* Luxury Boutique Gradients & Effects */
+  .bg-boutique-charcoal {
+    background-color: #141312 !important;
+  }
+  .bg-boutique-dark {
+    background-color: #0f0e0d !important;
+  }
+  .bg-boutique-strip {
+    background-color: #1a1918 !important;
+  }
+  .bg-boutique-footer {
+    background-color: #121110 !important;
+  }
+  .bg-boutique-ivory {
+    background-color: #FAF8F5 !important;
+  }
+
   .text-gold-foil {
     background: linear-gradient(135deg, #DFB76C 0%, #F6E27A 25%, #CB9B51 50%, #F6E27A 75%, #DFB76C 100%);
     -webkit-background-clip: text;

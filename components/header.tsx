@@ -83,7 +83,10 @@ export function Header() {
   return (
     <>
       {/* ── Marquee Announcement Bar ── */}
-      <div className="bg-[#161514] border-b border-amber-500/20 py-2 text-xs font-medium text-stone-200 overflow-hidden relative select-none">
+      <div
+        className="border-b border-amber-500/20 py-2.5 text-xs font-medium text-stone-200 overflow-hidden relative select-none"
+        style={{ backgroundColor: '#161514', color: '#f5f5f4' }}
+      >
         <div className="flex w-max animate-marquee gap-10 items-center whitespace-nowrap">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="flex items-center gap-10">
@@ -109,7 +112,10 @@ export function Header() {
       </div>
 
       {/* ── Main Boutique Sticky Header ── */}
-      <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-[#FAF8F5]/90 backdrop-blur-xl shadow-[0_4px_25px_rgba(0,0,0,0.03)] transition-all">
+      <header
+        className="sticky top-0 z-40 border-b border-stone-200/80 backdrop-blur-xl shadow-[0_4px_25px_rgba(0,0,0,0.03)] transition-all"
+        style={{ backgroundColor: 'rgba(250, 248, 245, 0.95)' }}
+      >
         <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-3 sm:py-3.5">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-3 group">
@@ -152,45 +158,44 @@ export function Header() {
 
               {/* Mega-menu dropdown panel */}
               {isCategoryMenuOpen && (
-                <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50 w-[580px]">
-                  <div className="rounded-2xl border border-stone-200/90 bg-[#FAF8F5]/95 backdrop-blur-2xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50"
+                  style={{ width: '620px', maxWidth: '90vw' }}
+                >
+                  <div className="rounded-2xl border border-stone-200/90 bg-white/95 backdrop-blur-2xl p-5 shadow-[0_25px_60px_rgba(0,0,0,0.15)]">
                     <div className="mb-3 flex items-center justify-between border-b border-stone-200/70 pb-2.5">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
-                        ✨ Explore by Category
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500 flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                        Explore by Category
                       </span>
                       <Link
                         href="/products"
                         onClick={() => setIsCategoryMenuOpen(false)}
-                        className="text-[11px] font-bold text-rani hover:underline"
+                        className="text-xs font-bold text-rani hover:underline"
                       >
                         View Full Collection →
                       </Link>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                       {categories.map(cat => (
                         <Link
                           key={cat.href}
                           href={cat.href}
                           onClick={() => setIsCategoryMenuOpen(false)}
-                          className="group flex flex-col items-center rounded-xl border border-stone-200/60 bg-white/80 p-2.5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-rani/40 hover:shadow-md"
+                          className="group flex items-center gap-3 rounded-xl border border-stone-200/70 bg-stone-50/70 p-3 transition-all duration-200 hover:bg-white hover:border-rani/40 hover:shadow-md"
                         >
-                          <div className="relative mb-2 h-16 w-full overflow-hidden rounded-lg bg-stone-100">
-                            <Image
-                              src={cat.image}
-                              alt={cat.label}
-                              fill
-                              sizes="120px"
-                              className="object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                            <span className="absolute bottom-1 right-1 text-sm drop-shadow">{cat.emoji}</span>
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-stone-200/80 shadow-xs text-xl group-hover:scale-110 transition-transform">
+                            {cat.emoji}
+                          </span>
+                          <div className="min-w-0 text-left">
+                            <p className="text-xs font-bold text-stone-900 group-hover:text-rani transition-colors truncate">
+                              {cat.label}
+                            </p>
+                            <p className="text-[10px] text-stone-500 truncate mt-0.5">
+                              {cat.tagline}
+                            </p>
                           </div>
-                          <span className="text-xs font-bold text-stone-900 group-hover:text-rani transition-colors line-clamp-1">
-                            {cat.label}
-                          </span>
-                          <span className="text-[10px] text-stone-500 line-clamp-1 mt-0.5">
-                            {cat.tagline}
-                          </span>
                         </Link>
                       ))}
                     </div>

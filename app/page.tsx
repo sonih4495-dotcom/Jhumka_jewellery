@@ -188,10 +188,16 @@ async function NewProductsSection() {
 
 export default function HomePage() {
   return (
-    <div className="space-y-16 sm:space-y-24 bg-[#FAF8F5]">
+    <div
+      className="space-y-16 sm:space-y-24"
+      style={{ backgroundColor: '#FAF8F5' }}
+    >
 
       {/* ── HERO SECTION: Full-Bleed Obsidian Canvas, Warm Gold & Rani Ambient Glow ── */}
-      <section className="relative overflow-hidden bg-[#141312] text-white pt-16 pb-20 sm:pt-24 sm:pb-32 border-b border-amber-500/20">
+      <section
+        className="relative overflow-hidden text-white pt-16 pb-20 sm:pt-24 sm:pb-32 border-b border-amber-500/20"
+        style={{ backgroundColor: '#141312' }}
+      >
         {/* Ambient lighting mesh */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(212,175,55,0.14),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(194,24,91,0.16),transparent_50%)] pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(212,175,55,0.08),rgba(255,255,255,0))] pointer-events-none" />
