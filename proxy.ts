@@ -122,13 +122,13 @@ export async function proxy(request: NextRequest) {
   // Content Security Policy
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://maps.googleapis.com;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://checkout.razorpay.com https://maps.googleapis.com https://va.vercel-scripts.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com;
     img-src 'self' blob: data: https:;
     media-src 'self' blob: data:;
-    connect-src 'self' https://api.stripe.com https://maps.googleapis.com;
-    frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
+    connect-src 'self' https://api.stripe.com https://api.razorpay.com https://lumberjack.razorpay.com https://maps.googleapis.com https://vitals.vercel-insights.com https://*.vercel-analytics.com;
+    frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://api.razorpay.com;
     worker-src 'self' blob:;
   `
     .replace(/\s{2,}/g, ' ')

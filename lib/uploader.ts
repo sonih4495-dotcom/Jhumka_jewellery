@@ -9,14 +9,14 @@ import sharp from 'sharp';
 
 // S3 Configuration
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
+  region: process.env.AWS_REGION || 'ap-south-1',
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy_access_key',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy_secret_key',
   },
 });
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME!;
+const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || 'jhumka-jewellery';
 const CDN_URL =
   process.env.CDN_URL || `https://${BUCKET_NAME}.s3.amazonaws.com`;
 

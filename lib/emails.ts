@@ -4,7 +4,8 @@ import { render } from '@react-email/render';
 import { OrderConfirmation } from '@/emails/OrderConfirmation';
 import { ResetPassword } from '@/emails/ResetPassword';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_placeholder');
+const SENDER_EMAIL = process.env.EMAIL_FROM || process.env.FROM_EMAIL || 'noreply@jhumkajunction.com';
 
 export interface OrderEmailData {
   orderId: string;
@@ -37,7 +38,7 @@ export const sendOrderConfirmation = async (data: OrderEmailData) => {
     const emailHtml = await render(OrderConfirmation(data));
 
     await resend.emails.send({
-      from: process.env.EMAIL_FROM!,
+      from: SENDER_EMAIL,
       to: data.customerEmail,
       subject: `Order Confirmation - #${data.orderId}`,
       html: emailHtml,
@@ -61,7 +62,7 @@ export const sendResetPasswordEmail = async (
     const emailHtml = await render(ResetPassword(data));
 
     await resend.emails.send({
-      from: process.env.EMAIL_FROM!,
+      from: SENDER_EMAIL,
       to: email,
       subject: 'Reset your password',
       html: emailHtml,
@@ -77,7 +78,7 @@ export const sendResetPasswordEmail = async (
 export const sendWelcomeEmail = async (email: string, name: string) => {
   try {
     await resend.emails.send({
-      from: process.env.EMAIL_FROM!,
+      from: SENDER_EMAIL,
       to: email,
       subject: 'Welcome to our store!',
       html: `
@@ -104,7 +105,7 @@ export const sendLowStockAlert = async (
 ) => {
   try {
     await resend.emails.send({
-      from: process.env.EMAIL_FROM!,
+      from: SENDER_EMAIL,
       to: adminEmail,
       subject: `Low Stock Alert: ${productName}`,
       html: `
