@@ -31,6 +31,8 @@ interface CartItem {
   };
 }
 
+import { useCart } from '@/components/cart-provider';
+
 interface CartDrawerProps {
   trigger?: React.ReactNode;
   open?: boolean;
@@ -38,21 +40,8 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ trigger, open, onOpenChange }: CartDrawerProps) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { items: cartItems, total: subtotal, totalItems: itemCount, updateQuantity, removeItem, isLoading } = useCart();
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    loadCartItems();
-    window.addEventListener('cart-updated', loadCartItems);
-    return () => window.removeEventListener('cart-updated', loadCartItems);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      loadCartItems();
-    }
-  }, [isOpen]);
 
   useEffect(() => {
     if (open !== undefined) {
@@ -60,90 +49,22 @@ export function CartDrawer({ trigger, open, onOpenChange }: CartDrawerProps) {
     }
   }, [open]);
 
-  const loadCartItems = async () => {
-    setIsLoading(true);
-    try {
-      const result = await getCart();
-      if (result.items) {
-        setCartItems(result.items);
-      }
-    } catch (error) {
-      toast.error('Failed to load cart items');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleOpenChange = (newOpen: boolean) => {
     setIsOpen(newOpen);
     onOpenChange?.(newOpen);
   };
 
-  const updateQuantity = async (itemId: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
-
-    setCartItems(items =>
-      items.map(item =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      )
-    );
-
-    try {
-      const formData = new FormData();
-      formData.append('quantity', newQuantity.toString());
-      const result = await updateCartItem(itemId, formData);
-      if (!result.success) {
-        loadCartItems();
-        toast.error(result.error || 'Failed to update quantity');
-      }
-    } catch (error) {
-      loadCartItems();
-      toast.error('Failed to update quantity');
-    }
-  };
-
-  const removeItem = async (itemId: string) => {
-    const item = cartItems.find(i => i.id === itemId);
-    if (!item) return;
-
-    setCartItems(items => items.filter(item => item.id !== itemId));
-
-    try {
-      const formData = new FormData();
-      formData.append('productId', item.product.id);
-      const result = await removeFromCart(formData);
-      if (!result.success) {
-        loadCartItems();
-        toast.error(result.error || 'Failed to remove item');
-      } else {
-        toast.success('Item removed from cart');
-      }
-    } catch (error) {
-      loadCartItems();
-      toast.error('Failed to remove item');
-    }
-  };
-
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0
-  );
-  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
   const defaultTrigger = (
     <Button
       variant="ghost"
       size="icon"
-      className="relative h-9 w-9 rounded-full text-gray-700 hover:text-rose-600 hover:bg-gray-100"
+      className="relative h-9 w-9 rounded-full text-stone-700 hover:text-rani hover:bg-stone-200/50"
       data-testid="cart-button"
     >
       <ShoppingCart className="h-4 w-4" />
       {itemCount > 0 && (
-        <span
-          className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-[9px] font-bold text-white shadow-sm"
-          data-testid="cart-badge"
-        >
-          {itemCount > 99 ? '99+' : itemCount}
+        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rani text-[9px] font-bold text-white shadow-sm animate-pulse">
+          {itemCount}
         </span>
       )}
       <span className="sr-only">Open cart</span>

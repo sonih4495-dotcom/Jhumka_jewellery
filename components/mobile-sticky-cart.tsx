@@ -61,10 +61,13 @@ export function MobileStickyCart({
           </div>
         </div>
 
-        {/* Add to Cart button */}
+        {/* Add to Cart button or Stepper */}
         <div className="flex-1">
           <AddToCart
             productId={productId}
+            productName={productName}
+            price={price}
+            comparePrice={comparePrice}
             disabled={disabled}
             maxQuantity={maxQuantity}
             variant="default"

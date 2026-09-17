@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Star, Heart, Sparkles, ShoppingBag } from 'lucide-react';
 import { AddToCart } from './add-to-cart';
 import { useWishlist } from './wishlist-provider';
+import { useCart } from './cart-provider';
 
 interface ProductCardProps {
   id: string;
@@ -48,6 +49,8 @@ export function ProductCard({
 }: ProductCardProps) {
   const { isInWishlist, toggleWishlist } = useWishlist();
   const isWishlisted = isInWishlist(id);
+  const { getItemQuantity } = useCart();
+  const inCartQty = getItemQuantity(id);
 
   const discountPercentage = comparePrice && comparePrice > price
     ? Math.round(((comparePrice - price) / comparePrice) * 100)
@@ -141,9 +144,14 @@ export function ProductCard({
         </div>
 
         {/* Slide-Up Quick Add Overlay */}
-        <div className="absolute inset-x-3 bottom-3 z-10 translate-y-3 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+        <div className={`absolute inset-x-3 bottom-3 z-10 transition-all duration-300 ease-out ${inCartQty > 0 ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100'}`}>
           <AddToCart
             productId={id}
+            productName={name}
+            price={price}
+            comparePrice={comparePrice}
+            image={image}
+            slug={slug}
             disabled={!inStock}
             variant="secondary"
             size="sm"

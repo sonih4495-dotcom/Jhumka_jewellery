@@ -283,10 +283,15 @@ export default async function ProductPage(props: ProductPageProps) {
             <div className="space-y-3 pt-2">
               <AddToCart
                 productId={product.id}
+                productName={product.name}
+                price={Number(product.price)}
+                comparePrice={product.comparePrice ? Number(product.comparePrice) : null}
+                image={product.images?.[0]?.url}
+                slug={product.slug}
                 maxQuantity={product.inventory?.[0]?.available ?? 10}
                 disabled={product.inventory && product.inventory[0] ? product.inventory[0].available <= 0 : false}
                 size="lg"
-                className="w-full rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 py-6 text-sm font-bold text-white shadow-lg shadow-purple-200 hover:opacity-95"
+                className="w-full rounded-full bg-gradient-to-r from-rose-600 via-pink-600 to-rani py-6 text-sm font-bold text-white shadow-xl shadow-rose-950/20 hover:opacity-95 border-0"
               />
 
               <div className="flex items-center gap-2">
