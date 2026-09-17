@@ -2,6 +2,7 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
   Toast,
   ToastAction,
@@ -14,7 +15,16 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 
 export function Toaster() {
+  const [mounted, setMounted] = useState(false);
   const { toasts } = useToast();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <ToastProvider>
