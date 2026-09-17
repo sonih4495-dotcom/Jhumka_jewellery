@@ -14,7 +14,7 @@ const protectedRoutes = ['/profile', '/orders'];
 // Public routes that redirect authenticated users
 const authRoutes = ['/auth/signin', '/auth/signup'];
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Get the token from the request
@@ -206,3 +206,5 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|images|icons|robots.txt|sitemap.xml).*)',
   ],
 };
+
+export { middleware as proxy };
