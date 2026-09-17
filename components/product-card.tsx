@@ -125,14 +125,21 @@ export function ProductCard({
             e.stopPropagation();
             toggleWishlist(id);
           }}
-          className="absolute right-2.5 top-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/85 backdrop-blur-md shadow-sm border border-stone-200/70 transition-all duration-300 hover:bg-white hover:scale-110 active:scale-90"
-          aria-label="Save to Wishlist"
+          className={`absolute right-2.5 top-2.5 z-20 flex h-8.5 w-8.5 items-center justify-center rounded-full shadow-md transition-all duration-200 hover:scale-110 active:scale-90 ${
+            isWishlisted
+              ? 'border border-rose-300 shadow-rose-500/20'
+              : 'border border-stone-200 hover:border-rose-300'
+          }`}
+          style={{
+            backgroundColor: isWishlisted ? '#fff1f2' : '#ffffff',
+          }}
+          aria-label={isWishlisted ? 'Remove from Wishlist' : 'Save to Wishlist'}
         >
           <Heart
-            className={`h-4 w-4 transition-colors ${
+            className={`h-4 w-4 transition-all duration-200 ${
               isWishlisted
-                ? 'fill-rani text-rani'
-                : 'text-stone-500 hover:text-rani'
+                ? 'fill-rose-500 text-rose-500 scale-110'
+                : 'text-stone-800 hover:text-rose-500 stroke-[2.2]'
             }`}
           />
         </button>

@@ -73,7 +73,11 @@ export function CartDrawer({ trigger, open, onOpenChange }: CartDrawerProps) {
 
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-      <SheetTrigger asChild>{trigger || defaultTrigger}</SheetTrigger>
+      {trigger ? (
+        <SheetTrigger asChild>{trigger}</SheetTrigger>
+      ) : open === undefined ? (
+        <SheetTrigger asChild>{defaultTrigger}</SheetTrigger>
+      ) : null}
 
       <SheetContent className="flex w-full flex-col sm:max-w-md p-0 bg-white">
         {/* Header */}

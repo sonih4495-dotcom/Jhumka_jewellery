@@ -31,6 +31,7 @@ import { JsonLd } from '@/components/jsonld';
 import { RingSizeGuideModal } from '@/components/ring-size-guide-modal';
 import { ReferralModal } from '@/components/referral-modal';
 import { MobileStickyCart } from '@/components/mobile-sticky-cart';
+import { WishlistButton } from '@/components/wishlist-button';
 
 interface ProductPageProps {
   params: Promise<{
@@ -159,7 +160,10 @@ export default async function ProductPage(props: ProductPageProps) {
                 )}
               </div>
 
-              {/* Quality Badge Watermark */}
+              {/* Wishlist Button */}
+              <div className="absolute right-4 top-4 z-10">
+                <WishlistButton productId={product.id} />
+              </div>
               <div className="absolute bottom-4 left-4 z-10 rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white flex items-center gap-1.5 shadow-md">
                 <ShieldCheck className="h-4 w-4 text-purple-300" />
                 {product.silverPurity || 'Premium Quality Handcrafted'}
@@ -294,10 +298,11 @@ export default async function ProductPage(props: ProductPageProps) {
                 className="w-full rounded-full bg-gradient-to-r from-rose-600 via-pink-600 to-rani py-6 text-sm font-bold text-white shadow-xl shadow-rose-950/20 hover:opacity-95 border-0"
               />
 
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-2 gap-2">
+                <WishlistButton productId={product.id} variant="full" className="py-5" />
                 <ReferralModal trigger={
-                  <Button variant="outline" size="sm" className="flex-1 rounded-full border-pink-200 text-pink-700 hover:bg-pink-50 text-xs">
-                    <Gift className="mr-1.5 h-3.5 w-3.5 text-pink-500" /> Share with Bestie (Get ₹200)
+                  <Button variant="outline" size="sm" className="w-full rounded-full border-pink-200 text-pink-700 hover:bg-pink-50 text-xs py-5 font-bold">
+                    <Gift className="mr-1.5 h-3.5 w-3.5 text-pink-500" /> Share (Get ₹200)
                   </Button>
                 } />
               </div>

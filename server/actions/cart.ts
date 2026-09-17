@@ -2,7 +2,6 @@
 'use server';
 
 import prisma from '@/lib/prisma';
-import { revalidateTag } from 'next/cache';
 import {
   addToCartSchema,
   updateCartItemSchema,
@@ -144,7 +143,6 @@ export async function addToCart(formData: FormData) {
       });
     }
 
-    revalidateTag('cart', 'max');
     return { success: true };
   } catch (error) {
     console.error('Add to cart error:', error);
@@ -203,7 +201,6 @@ export async function updateCartItem(itemId: string, formData: FormData) {
       });
     }
 
-    revalidateTag('cart', 'max');
     return { success: true };
   } catch (error) {
     console.error('Update cart item error:', error);
@@ -231,7 +228,6 @@ export async function removeFromCart(formData: FormData) {
       },
     });
 
-    revalidateTag('cart', 'max');
     return { success: true };
   } catch (error) {
     console.error('Remove from cart error:', error);
@@ -247,7 +243,6 @@ export async function clearCart() {
       where: { cartId: cart.id },
     });
 
-    revalidateTag('cart', 'max');
     return { success: true };
   } catch (error) {
     console.error('Clear cart error:', error);
@@ -369,7 +364,6 @@ export async function mergeGuestCart(guestSessionId: string) {
       where: { id: guestCart.id },
     });
 
-    revalidateTag('cart', 'max');
     return { success: true };
   } catch (error) {
     console.error('Merge guest cart error:', error);

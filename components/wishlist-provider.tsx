@@ -1,21 +1,24 @@
 // Location: components/wishlist-provider.tsx
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { toast } from 'react-hot-toast';
 
 interface WishlistContextType {
   wishlistIds: string[];
-  toggleWishlist: (productId: string) => Promise<void>;
+  toggleWishlist: (productId: string) => void;
   isInWishlist: (productId: string) => boolean;
   wishlistCount: number;
 }
 
 const WishlistContext = createContext<WishlistContextType>({
   wishlistIds: [],
-  toggleWishlist: async () => {},
+  toggleWishlist: () => {},
   isInWishlist: () => false,
   wishlistCount: 0,
 });
+
+const WISHLIST_STORAGE_KEY = 'jhumka_junction_wishlist';
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
@@ -23,9 +26,9 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    // Load from localStorage on client mount
+    // Load from localStorage on client mount immediately
     try {
-      const saved = localStorage.getItem('jhumka_junction_wishlist');
+      const saved = localStorage.getItem(WISHLIST_STORAGE_KEY);
       if (saved) {
         setWishlistIds(JSON.parse(saved));
       }
@@ -33,7 +36,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       // Ignore storage errors
     }
 
-    // Attempt to sync with API if logged in
+    // Attempt to sync with API in background if logged in
     fetch('/api/wishlist')
       .then(res => res.json())
       .then(data => {
@@ -43,32 +46,53 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         }
       })
       .catch(() => {});
+
+    // Listen to cross-window storage events
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === WISHLIST_STORAGE_KEY && e.newValue) {
+        try {
+          setWishlistIds(JSON.parse(e.newValue));
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  const toggleWishlist = async (productId: string) => {
+  const toggleWishlist = useCallback((productId: string) => {
     setWishlistIds(prev => {
-      const next = prev.includes(productId)
+      const isAlreadyIn = prev.includes(productId);
+      const next = isAlreadyIn
         ? prev.filter(id => id !== productId)
         : [...prev, productId];
+
       try {
-        localStorage.setItem('jhumka_junction_wishlist', JSON.stringify(next));
+        localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(next));
       } catch {}
+
+      if (isAlreadyIn) {
+        toast('Removed from Wishlist', { icon: '💔', id: `wishlist-${productId}`, duration: 1500 });
+      } else {
+        toast.success('Saved to Wishlist ❤️', { id: `wishlist-${productId}`, duration: 1500 });
+      }
+
       return next;
     });
 
-    // Notify backend
-    try {
-      await fetch('/api/wishlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId }),
-      });
-    } catch {
-      // Non-blocking
-    }
-  };
+    window.dispatchEvent(new Event('wishlist-updated'));
 
-  const isInWishlist = (productId: string) => wishlistIds.includes(productId);
+    // Non-blocking fire-and-forget sync to backend
+    fetch('/api/wishlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId }),
+    }).catch(e => console.warn('Background wishlist sync:', e));
+  }, []);
+
+  const isInWishlist = useCallback(
+    (productId: string) => wishlistIds.includes(productId),
+    [wishlistIds]
+  );
 
   return (
     <WishlistContext.Provider

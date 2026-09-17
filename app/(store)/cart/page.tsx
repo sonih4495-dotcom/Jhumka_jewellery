@@ -1,7 +1,7 @@
 // Location: app/(store)/cart/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -9,99 +9,35 @@ import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck, T
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency } from '@/lib/utils';
-import { getCart, updateCartItem, removeFromCart } from '@/server/actions/cart';
+import { useCart } from '@/components/cart-provider';
 import { useToast } from '@/components/ui/use-toast';
 
-interface CartItem {
-  id: string;
-  quantity: number;
-  product: {
-    id: string;
-    name: string;
-    slug: string;
-    price: number;
-    images: Array<{ url: string }>;
-  };
-}
-
 export default function CartPage() {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { items, total: totalAmount, totalItems, updateQuantity, removeItem, isLoading } = useCart();
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
-  const loadCart = async () => {
-    const cart = await getCart();
-    setItems(cart.items);
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    loadCart();
-  }, []);
-
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalAmount = items.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0
-  );
   const isFreeShipping = totalAmount >= 999;
   const amountToFreeShipping = Math.max(0, 999 - totalAmount);
 
-  const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
-
-    setIsUpdating(itemId);
-    try {
-      const formData = new FormData();
-      formData.append('quantity', newQuantity.toString());
-      const result = await updateCartItem(itemId, formData);
-      if (result.success) {
-        setItems(prev =>
-          prev.map(item =>
-            item.id === itemId ? { ...item, quantity: newQuantity } : item
-          )
-        );
-        window.dispatchEvent(new Event('cart-updated'));
-      } else {
-        toast({
-          title: 'Error',
-          description: result.error || 'Failed to update cart item.',
-          variant: 'destructive',
-        });
-      }
-    } finally {
-      setIsUpdating(null);
+  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity < 1) {
+      handleRemoveItem(itemId);
+      return;
     }
+    updateQuantity(itemId, newQuantity);
   };
 
-  const handleRemoveItem = async (itemId: string, productId: string) => {
-    setIsUpdating(itemId);
-    try {
-      const formData = new FormData();
-      formData.append('productId', productId);
-      const result = await removeFromCart(formData);
-      if (result.success) {
-        setItems(prev => prev.filter(item => item.id !== itemId));
-        window.dispatchEvent(new Event('cart-updated'));
-        toast({
-          title: 'Item removed',
-          description: 'Item has been removed from your cart.',
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: result.error || 'Failed to remove item from cart.',
-          variant: 'destructive',
-        });
-      }
-    } finally {
-      setIsUpdating(null);
-    }
+  const handleRemoveItem = (itemId: string) => {
+    removeItem(itemId);
+    toast({
+      title: 'Item removed',
+      description: 'Item has been removed from your cart.',
+    });
   };
 
-  if (isLoading) {
+  if (isLoading && items.length === 0) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-center space-y-3">
@@ -220,7 +156,6 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                        disabled={isUpdating === item.id}
                         className="flex h-7 w-7 items-center justify-center text-gray-600 hover:bg-gray-100 rounded-r-md"
                       >
                         <Plus className="h-3.5 w-3.5" />
@@ -229,8 +164,7 @@ export default function CartPage() {
 
                     <button
                       type="button"
-                      onClick={() => handleRemoveItem(item.id, item.product.id)}
-                      disabled={isUpdating === item.id}
+                      onClick={() => handleRemoveItem(item.id)}
                       className="text-xs text-gray-400 hover:text-rose-600 flex items-center gap-1 ml-3"
                     >
                       <Trash2 className="h-3.5 w-3.5" /> Remove

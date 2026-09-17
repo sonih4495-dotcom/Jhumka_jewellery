@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/sheet';
 import { CartDrawer } from '@/components/cart-drawer';
 import { useWishlist } from '@/components/wishlist-provider';
+import { useCart } from '@/components/cart-provider';
 import dynamic from 'next/dynamic';
 
 const ReferralModal = dynamic(
@@ -78,7 +79,9 @@ export function Header() {
   const { data: session } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const { wishlistCount } = useWishlist();
+  const { totalItems: cartCount } = useCart();
 
   return (
     <>
@@ -240,23 +243,43 @@ export function Header() {
               </Link>
             </Button>
 
+            {/* Wishlist / Liked Button */}
             <Button
               asChild
               variant="ghost"
               size="icon"
-              className="relative h-9 w-9 rounded-full text-stone-700 hover:text-rani hover:bg-stone-200/50"
+              className="relative h-9 w-9 rounded-full text-stone-700 hover:text-rani hover:bg-stone-200/50 transition-transform active:scale-95"
             >
-              <Link href="/wishlist" aria-label="Wishlist">
-                <Heart className="h-4 w-4" />
+              <Link href="/wishlist" aria-label="Wishlist" data-testid="header-wishlist-button">
+                <Heart className={`h-4 w-4 transition-colors ${wishlistCount > 0 ? 'fill-rani text-rani stroke-[2.2]' : ''}`} />
                 {wishlistCount > 0 && (
-                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rani text-[9px] font-bold text-white shadow-sm animate-pulse">
-                    {wishlistCount}
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[18px] px-1 items-center justify-center rounded-full bg-rani text-[9px] font-black text-white shadow-sm ring-2 ring-white animate-in zoom-in-50 duration-200">
+                    {wishlistCount > 99 ? '99+' : wishlistCount}
                   </span>
                 )}
               </Link>
             </Button>
 
-            <CartDrawer />
+            {/* Shopping Bag / Cart Button */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsCartDrawerOpen(true)}
+              className="relative h-9 w-9 rounded-full text-stone-700 hover:text-rani hover:bg-stone-200/50 transition-transform active:scale-95"
+              aria-label="Shopping Bag"
+              data-testid="header-cart-button"
+            >
+              <ShoppingBag className={`h-4 w-4 transition-colors ${cartCount > 0 ? 'text-stone-900 stroke-[2.2]' : ''}`} />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-[18px] px-1 items-center justify-center rounded-full bg-stone-900 text-amber-300 font-black text-[9px] shadow-sm border border-amber-400/40 ring-2 ring-white animate-in zoom-in-50 duration-200">
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              )}
+            </Button>
+
+            {/* Cart Drawer controlled by Header button */}
+            <CartDrawer open={isCartDrawerOpen} onOpenChange={setIsCartDrawerOpen} />
 
             {session?.user ? (
               <div className="hidden items-center gap-1 sm:flex">
@@ -317,6 +340,41 @@ export function Header() {
                     <div className="mt-2.5">
                       <ReferralModal />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link
+                      href="/wishlist"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-between rounded-xl p-2.5 bg-white border border-stone-200/80 text-xs font-bold text-stone-800 hover:border-rani shadow-xs"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Heart className={`h-3.5 w-3.5 ${wishlistCount > 0 ? 'text-rani fill-rani' : 'text-stone-500'}`} /> Liked
+                      </span>
+                      {wishlistCount > 0 && (
+                        <span className="rounded-full bg-rani px-1.5 py-0.5 text-[9px] font-black text-white">
+                          {wishlistCount}
+                        </span>
+                      )}
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setIsCartDrawerOpen(true);
+                      }}
+                      className="flex items-center justify-between rounded-xl p-2.5 bg-white border border-stone-200/80 text-xs font-bold text-stone-800 hover:border-amber-400 shadow-xs"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <ShoppingBag className="h-3.5 w-3.5 text-amber-600" /> My Bag
+                      </span>
+                      {cartCount > 0 && (
+                        <span className="rounded-full bg-stone-900 text-amber-300 border border-amber-400/40 px-1.5 py-0.5 text-[9px] font-black">
+                          {cartCount}
+                        </span>
+                      )}
+                    </button>
                   </div>
 
                   <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mt-2">Categories</p>

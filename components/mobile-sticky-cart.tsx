@@ -34,12 +34,16 @@ export function MobileStickyCart({
         <button
           type="button"
           onClick={() => toggleWishlist(productId)}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white border border-stone-200 shadow-sm text-stone-600 transition-transform active:scale-90"
-          aria-label="Wishlist"
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm transition-transform active:scale-90 ${
+            isWishlisted
+              ? 'bg-rose-50 border-rose-300 text-rose-500'
+              : 'bg-white border-stone-200 text-stone-700 hover:text-rose-500'
+          }`}
+          aria-label={isWishlisted ? 'Remove from Wishlist' : 'Save to Wishlist'}
         >
           <Heart
-            className={`h-5 w-5 ${
-              isWishlisted ? 'fill-rani text-rani' : 'text-stone-500'
+            className={`h-5 w-5 transition-transform ${
+              isWishlisted ? 'fill-rose-500 text-rose-500 scale-110' : 'text-stone-800 stroke-[2]'
             }`}
           />
         </button>
