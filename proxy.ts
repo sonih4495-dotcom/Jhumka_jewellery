@@ -126,8 +126,8 @@ export async function middleware(request: NextRequest) {
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com;
     img-src 'self' blob: data: https:;
-    media-src 'self' blob: data:;
-    connect-src 'self' https://api.stripe.com https://api.razorpay.com https://lumberjack.razorpay.com https://maps.googleapis.com https://vitals.vercel-insights.com https://*.vercel-analytics.com;
+    media-src 'self' blob: data: https: https://*.supabase.co;
+    connect-src 'self' https://api.stripe.com https://api.razorpay.com https://lumberjack.razorpay.com https://maps.googleapis.com https://vitals.vercel-insights.com https://*.vercel-analytics.com https://*.supabase.co https:;
     frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://api.razorpay.com;
     worker-src 'self' blob:;
   `
