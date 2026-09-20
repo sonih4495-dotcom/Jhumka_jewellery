@@ -4,22 +4,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
-  Play,
   Volume2,
   VolumeX,
   Heart,
   Instagram,
   ShoppingBag,
   Sparkles,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
+  ArrowRight,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import { AddToCart } from './add-to-cart';
-import { BuyNowButton } from './buy-now-button';
 
 export interface ReelItem {
   id: string;
@@ -124,11 +119,6 @@ export const REELS_DATA: ReelItem[] = [
 
 export function ReelsCarousel() {
   const [reels, setReels] = useState<ReelItem[]>(REELS_DATA);
-  const [activeReelIndex, setActiveReelIndex] = useState<number | null>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const modalVideoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     fetch('/api/reels')
@@ -141,63 +131,9 @@ export function ReelsCarousel() {
       .catch(() => {});
   }, []);
 
-  const activeReel = activeReelIndex !== null ? reels[activeReelIndex] : null;
-
-  // Keyboard navigation when modal is open
-  useEffect(() => {
-    if (activeReelIndex === null) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setActiveReelIndex(null);
-      } else if (e.key === 'ArrowRight') {
-        setActiveReelIndex(prev => (prev !== null && prev < reels.length - 1 ? prev + 1 : 0));
-      } else if (e.key === 'ArrowLeft') {
-        setActiveReelIndex(prev => (prev !== null && prev > 0 ? prev - 1 : reels.length - 1));
-      } else if (e.key === ' ') {
-        e.preventDefault();
-        togglePlayPause();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeReelIndex, isPlaying]);
-
-  // Handle modal video playback when active reel changes
-  useEffect(() => {
-    if (modalVideoRef.current) {
-      modalVideoRef.current.currentTime = 0;
-      modalVideoRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-    }
-  }, [activeReelIndex]);
-
-  const togglePlayPause = () => {
-    if (!modalVideoRef.current) return;
-    if (modalVideoRef.current.paused) {
-      modalVideoRef.current.play();
-      setIsPlaying(true);
-    } else {
-      modalVideoRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!modalVideoRef.current) return;
-    modalVideoRef.current.muted = !modalVideoRef.current.muted;
-    setIsMuted(modalVideoRef.current.muted);
-  };
-
-  const handleTimeUpdate = () => {
-    if (modalVideoRef.current && modalVideoRef.current.duration) {
-      setProgress((modalVideoRef.current.currentTime / modalVideoRef.current.duration) * 100);
-    }
-  };
-
   return (
     <section className="container mx-auto px-4 py-8">
+      {/* Header */}
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end mb-8">
         <div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-rani/10 border border-rani/20 px-3 py-1 text-xs font-bold text-rani mb-2">
@@ -208,7 +144,7 @@ export function ReelsCarousel() {
             #JhumkaJunction IRL ✨
           </h2>
           <p className="mt-1 text-sm text-stone-500 font-sans">
-            Watch real Gen Z besties styling our handcrafted &amp; oxidised drops. Tap any reel to watch with sound!
+            Watch real Gen Z besties styling our handcrafted &amp; oxidised drops. Click any reel to view and shop the product!
           </p>
         </div>
         <Link
@@ -220,359 +156,164 @@ export function ReelsCarousel() {
         </Link>
       </div>
 
-      {/* Reels Grid */}
-      <div className="flex sm:grid sm:grid-cols-2 md:grid-cols-4 gap-4 overflow-x-auto pb-4 sm:pb-0 scrollbar-hide snap-x snap-mandatory">
-        {reels.map((reel, index) => (
-          <ReelCard
-            key={reel.id}
-            reel={reel}
-            onOpen={() => {
-              setActiveReelIndex(index);
-              setIsMuted(false);
-            }}
-          />
+      {/* Reels Grid: Autoplaying & Click to open Product */}
+      <div className="flex sm:grid sm:grid-cols-2 md:grid-cols-4 gap-5 overflow-x-auto pb-4 sm:pb-0 scrollbar-hide snap-x snap-mandatory">
+        {reels.map(reel => (
+          <ReelProductCard key={reel.id} reel={reel} />
         ))}
       </div>
-
-      {/* ── Fullscreen / Popup Reels Video Modal ── */}
-      {activeReel && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in-0 duration-200"
-          onClick={() => setActiveReelIndex(null)}
-        >
-          <div
-            className="relative flex flex-col md:flex-row w-full max-w-4xl max-h-[92vh] overflow-hidden rounded-3xl bg-stone-950 border border-stone-800 shadow-2xl"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => setActiveReelIndex(null)}
-              className="absolute top-4 right-4 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md hover:bg-black hover:scale-105 active:scale-95 transition-all border border-white/20"
-              aria-label="Close reel player"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            {/* Left/Main Column: 9:16 Video Player */}
-            <div
-              className="relative aspect-[9/16] w-full md:w-[420px] shrink-0 bg-black overflow-hidden cursor-pointer select-none flex items-center justify-center group"
-              onClick={togglePlayPause}
-            >
-              {activeReel.videoUrl ? (
-                <video
-                  ref={modalVideoRef}
-                  src={activeReel.videoUrl}
-                  poster={activeReel.thumbnail}
-                  playsInline
-                  autoPlay
-                  loop
-                  muted={isMuted}
-                  onTimeUpdate={handleTimeUpdate}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="relative h-full w-full">
-                  <Image
-                    src={activeReel.thumbnail}
-                    alt={activeReel.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
-
-              {/* Video Progress Bar */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 z-20">
-                <div
-                  className="h-full bg-gradient-to-r from-rani to-amber-400 transition-all duration-100"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-
-              {/* Play / Pause Center Overlay indicator on toggle */}
-              {!isPlaying && (
-                <div className="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/30 shadow-2xl">
-                  <Play className="h-8 w-8 fill-white ml-1" />
-                </div>
-              )}
-
-              {/* Video Bottom Left Overlay: Mute Toggle & Creator Info */}
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-20 pointer-events-none">
-                <div className="flex items-center gap-2 rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-xs text-white border border-white/10">
-                  <div className="relative h-5 w-5 overflow-hidden rounded-full border border-amber-400">
-                    <Image src={activeReel.avatar} alt={activeReel.creator} fill sizes="20px" className="object-cover" />
-                  </div>
-                  <span className="font-bold">{activeReel.handle}</span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={toggleMute}
-                  className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-black border border-white/20 transition-all active:scale-90"
-                  aria-label={isMuted ? 'Unmute video' : 'Mute video'}
-                >
-                  {isMuted ? <VolumeX className="h-4 w-4 text-rose-400" /> : <Volume2 className="h-4 w-4 text-amber-300" />}
-                </button>
-              </div>
-
-              {/* Previous / Next Reel Buttons */}
-              {reels.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={e => {
-                      e.stopPropagation();
-                      setActiveReelIndex(prev => (prev !== null && prev > 0 ? prev - 1 : reels.length - 1));
-                    }}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100"
-                    aria-label="Previous reel"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={e => {
-                      e.stopPropagation();
-                      setActiveReelIndex(prev => (prev !== null && prev < reels.length - 1 ? prev + 1 : 0));
-                    }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100"
-                    aria-label="Next reel"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Right Column: Reel Details, Creator Tag & Tagged Product Checkout */}
-            <div className="flex flex-1 flex-col justify-between p-5 md:p-6 bg-stone-900 text-white overflow-y-auto">
-              <div className="space-y-4">
-                {/* Creator Profile line */}
-                <div className="flex items-center justify-between border-b border-stone-800 pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-11 w-11 overflow-hidden rounded-full border-2 border-amber-400/80 shadow-md">
-                      <Image src={activeReel.avatar} alt={activeReel.creator} fill sizes="44px" className="object-cover" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
-                        {activeReel.creator}
-                        <span className="text-[10px] text-amber-400">✨ Verified Bestie</span>
-                      </h4>
-                      <p className="text-xs text-stone-400 font-medium">{activeReel.handle}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 rounded-full bg-pink-500/10 border border-pink-500/30 px-3 py-1 text-xs font-bold text-pink-300">
-                    <Heart className="h-3.5 w-3.5 fill-rani text-rani" />
-                    {activeReel.likes}
-                  </div>
-                </div>
-
-                {/* Caption / Reel Title */}
-                <div>
-                  <p className="text-sm text-stone-200 leading-relaxed font-sans">
-                    {activeReel.title}
-                  </p>
-                  <p className="text-[11px] text-stone-500 mt-1 font-mono">
-                    #JhumkaJunction #OxidisedJewellery #FestiveDrop #GenZFashion
-                  </p>
-                </div>
-
-                {/* Instagram Direct Link Badge (if applicable) */}
-                {activeReel.instagramUrl && (
-                  <Link
-                    href={activeReel.instagramUrl}
-                    target="_blank"
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-900/40 via-pink-900/40 to-amber-900/40 border border-pink-500/30 px-3 py-2 text-xs font-semibold text-pink-200 hover:text-white hover:border-pink-500/60 transition-all"
-                  >
-                    <Instagram className="h-4 w-4 text-pink-400" />
-                    <span>View original styling reel on Instagram</span>
-                    <ExternalLink className="h-3.5 w-3.5 ml-auto text-stone-400" />
-                  </Link>
-                )}
-              </div>
-
-              {/* Tagged Jewellery Piece: Instant Shop & Buy Now Card */}
-              <div className="mt-6 rounded-2xl bg-stone-950 border border-stone-800 p-4 space-y-3 shadow-xl">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
-                    <Sparkles className="h-3 w-3" />
-                    Featured In This Look
-                  </span>
-                  <Link
-                    href={`/products/${activeReel.taggedProduct.slug}`}
-                    onClick={() => setActiveReelIndex(null)}
-                    className="text-xs font-bold text-rani hover:underline"
-                  >
-                    View Details →
-                  </Link>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-stone-800 bg-stone-900">
-                    <Image
-                      src={activeReel.taggedProduct.image}
-                      alt={activeReel.taggedProduct.name}
-                      fill
-                      sizes="56px"
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/products/${activeReel.taggedProduct.slug}`}
-                      onClick={() => setActiveReelIndex(null)}
-                      className="text-xs font-bold text-white hover:text-amber-300 transition-colors line-clamp-1"
-                    >
-                      {activeReel.taggedProduct.name}
-                    </Link>
-                    <div className="mt-1 flex items-baseline gap-2">
-                      <span className="text-sm font-black text-amber-300">
-                        {formatCurrency(activeReel.taggedProduct.price)}
-                      </span>
-                      {activeReel.taggedProduct.comparePrice && (
-                        <span className="text-xs text-stone-500 line-through">
-                          {formatCurrency(activeReel.taggedProduct.comparePrice)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Two-part CTA: Quick Add & Direct Buy Now */}
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <AddToCart
-                    productId={activeReel.taggedProduct.id}
-                    productName={activeReel.taggedProduct.name}
-                    price={activeReel.taggedProduct.price}
-                    comparePrice={activeReel.taggedProduct.comparePrice}
-                    image={activeReel.taggedProduct.image}
-                    slug={activeReel.taggedProduct.slug}
-                    size="sm"
-                    className="w-full rounded-xl bg-stone-800 hover:bg-stone-700 text-white font-bold text-xs h-9 border border-stone-700"
-                  />
-                  <BuyNowButton
-                    productId={activeReel.taggedProduct.id}
-                    productName={activeReel.taggedProduct.name}
-                    price={activeReel.taggedProduct.price}
-                    comparePrice={activeReel.taggedProduct.comparePrice}
-                    image={activeReel.taggedProduct.image}
-                    slug={activeReel.taggedProduct.slug}
-                    size="sm"
-                    className="w-full rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-stone-950 font-black text-xs h-9 shadow-md border-0"
-                  >
-                    ⚡ Buy Now
-                  </BuyNowButton>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }
 
-// Individual Reel Card in Grid with video hover preview
-function ReelCard({ reel, onOpen }: { reel: ReelItem; onOpen: () => void }) {
-  const [isHovered, setIsHovered] = useState(false);
+// Interactive Reel Video Card that plays video continuously and opens product on click
+function ReelProductCard({ reel }: { reel: ReelItem }) {
+  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
-  const handleMouseEnter = () => {
-    setIsHovered(true);
+  // Auto-play video smoothly
+  useEffect(() => {
     if (videoRef.current) {
       videoRef.current.play().catch(() => {});
     }
+  }, [reel.videoUrl]);
+
+  const handleCardClick = () => {
+    if (reel.taggedProduct?.slug) {
+      router.push(`/products/${reel.taggedProduct.slug}`);
+    }
   };
 
-  const handleMouseLeave = () => {
-    setIsHovered(false);
+  const toggleSound = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(videoRef.current.muted);
     }
   };
 
   return (
     <div
-      onClick={onOpen}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="group relative flex-none w-[260px] sm:w-auto snap-center flex flex-col overflow-hidden rounded-2xl border border-stone-800 bg-stone-950 shadow-md transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl hover:border-amber-500/50 cursor-pointer"
+      onClick={handleCardClick}
+      className="group relative flex-none w-[270px] sm:w-auto snap-center flex flex-col overflow-hidden rounded-3xl border border-stone-800/80 bg-stone-950 shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-amber-400/60 cursor-pointer select-none"
     >
-      {/* 9:16 Video / Thumbnail Container */}
+      {/* 9:16 Ratio Video Container */}
       <div className="relative aspect-[9/16] w-full overflow-hidden bg-stone-900">
-        {/* Background Image / Poster */}
+        {/* Background Poster / Fallback Image */}
         <Image
           src={reel.thumbnail}
           alt={reel.title}
           fill
-          sizes="(max-width: 640px) 260px, (max-width: 1024px) 25vw, 300px"
+          sizes="(max-width: 640px) 270px, (max-width: 1024px) 25vw, 320px"
           className={`object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${
-            isHovered && reel.videoUrl ? 'opacity-0' : 'opacity-90 group-hover:opacity-100'
+            isVideoLoaded && reel.videoUrl ? 'opacity-0' : 'opacity-100'
           }`}
         />
 
-        {/* Hover Silent Auto-playing Video */}
+        {/* Seamlessly Playing Reel Video */}
         {reel.videoUrl && (
           <video
             ref={videoRef}
             src={reel.videoUrl}
-            playsInline
-            muted
+            poster={reel.thumbnail}
+            autoPlay
             loop
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
-              isHovered ? 'opacity-100' : 'opacity-0'
-            }`}
+            muted={isMuted}
+            playsInline
+            onLoadedData={() => setIsVideoLoaded(true)}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40" />
+        {/* Ambient Dark Gradient Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-black/50 pointer-events-none" />
 
-        {/* Top: Creator pill */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
-          <div className="flex items-center gap-2 rounded-full bg-stone-950/75 backdrop-blur-md px-2.5 py-1 text-[11px] text-stone-100 border border-white/10">
-            <div className="relative h-4 w-4 overflow-hidden rounded-full border border-amber-400/40">
+        {/* Top Header: Creator Tag & Sound Toggle */}
+        <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between z-10">
+          <div className="flex items-center gap-2 rounded-full bg-black/65 backdrop-blur-md px-2.5 py-1 text-[11px] text-stone-100 border border-white/15 shadow">
+            <div className="relative h-4 w-4 overflow-hidden rounded-full border border-amber-400">
               <Image src={reel.avatar} alt={reel.creator} fill sizes="16px" className="object-cover" />
             </div>
-            <span className="font-semibold truncate max-w-[90px]">{reel.handle}</span>
+            <span className="font-bold truncate max-w-[100px]">{reel.handle}</span>
           </div>
-          <div className="flex items-center gap-1 text-[11px] text-pink-300 font-bold drop-shadow bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10">
-            <Heart className="h-3 w-3 fill-rani text-rani" />
-            {reel.likes}
+
+          <div className="flex items-center gap-2">
+            {/* Sound Toggle */}
+            {reel.videoUrl && (
+              <button
+                type="button"
+                onClick={toggleSound}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 hover:bg-black hover:scale-110 active:scale-95 transition-all shadow"
+                aria-label={isMuted ? 'Unmute reel' : 'Mute reel'}
+              >
+                {isMuted ? <VolumeX className="h-3.5 w-3.5 text-stone-300" /> : <Volume2 className="h-3.5 w-3.5 text-amber-300 animate-pulse" />}
+              </button>
+            )}
+
+            {/* Likes */}
+            <div className="flex items-center gap-1 text-[10px] text-pink-200 font-bold bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 shadow">
+              <Heart className="h-3 w-3 fill-rani text-rani" />
+              {reel.likes}
+            </div>
           </div>
         </div>
 
-        {/* Center Play Button Icon */}
-        <div className="absolute inset-0 m-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/25 backdrop-blur-md text-white border border-white/40 shadow-xl transition-all duration-300 group-hover:scale-110 group-hover:bg-rani/80">
-          <Play className="h-5 w-5 fill-white ml-0.5" />
+        {/* Hover Cue: "Click to Shop Look" Pill */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-90 group-hover:scale-100 z-20 pointer-events-none">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 px-4 py-1.5 text-xs font-black text-stone-950 shadow-2xl border border-amber-300/60">
+            <Sparkles className="h-3.5 w-3.5" />
+            Shop This Look →
+          </span>
         </div>
 
-        {/* Bottom: Caption & Tagged Product Link */}
-        <div className="absolute bottom-3 left-3 right-3 space-y-2 z-10">
-          <p className="text-xs font-medium text-white line-clamp-2 drop-shadow-md">
+        {/* Bottom Section: Title & Tagged Product Banner */}
+        <div className="absolute bottom-3.5 left-3.5 right-3.5 space-y-2.5 z-10">
+          <p className="text-xs font-medium text-stone-100 line-clamp-2 drop-shadow-md leading-relaxed">
             {reel.title}
           </p>
+
+          {/* Tagged Product Chip */}
           <div
-            onClick={e => e.stopPropagation()}
-            className="flex items-center justify-between rounded-xl bg-white/95 backdrop-blur-md p-2 text-xs text-stone-900 shadow-md transition-all duration-300 hover:bg-white hover:scale-[1.02] border border-stone-200/50"
+            onClick={e => {
+              e.stopPropagation();
+              handleCardClick();
+            }}
+            className="flex items-center gap-2.5 rounded-2xl bg-stone-900/95 backdrop-blur-md p-2.5 border border-stone-700/80 shadow-2xl transition-all duration-300 group-hover:border-amber-400/80 group-hover:bg-stone-900"
           >
-            <Link
-              href={`/products/${reel.taggedProduct.slug}`}
-              className="truncate mr-2 flex-1"
-            >
-              <p className="truncate font-semibold text-[11px] text-stone-900">{reel.taggedProduct.name}</p>
-              <p className="text-[10px] font-black text-rani">{formatCurrency(reel.taggedProduct.price)}</p>
-            </Link>
-            <Link
-              href={`/products/${reel.taggedProduct.slug}`}
-              className="rounded-lg bg-stone-900 p-1.5 text-white hover:bg-black transition-colors"
-            >
-              <ShoppingBag className="h-3 w-3" />
-            </Link>
+            {/* Product Thumbnail */}
+            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-stone-700 bg-stone-800">
+              <Image
+                src={reel.taggedProduct.image}
+                alt={reel.taggedProduct.name}
+                fill
+                sizes="44px"
+                className="object-cover"
+              />
+            </div>
+
+            {/* Product Info */}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
+                {reel.taggedProduct.name}
+              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-xs font-black text-amber-400">
+                  {formatCurrency(reel.taggedProduct.price)}
+                </span>
+                {reel.taggedProduct.comparePrice && (
+                  <span className="text-[10px] text-stone-400 line-through">
+                    {formatCurrency(reel.taggedProduct.comparePrice)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* CTA Arrow */}
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 shadow-md group-hover:scale-105 transition-transform">
+              <ArrowRight className="h-4 w-4 font-bold" />
+            </div>
           </div>
         </div>
       </div>
