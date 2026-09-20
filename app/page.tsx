@@ -26,6 +26,8 @@ import { ReferralModal } from '@/components/referral-modal';
 import { RingSizeGuideModal } from '@/components/ring-size-guide-modal';
 import { getFeaturedProducts, getNewProducts } from '@/server/queries/products';
 import { JEWELLERY_VIBES } from '@/lib/utils';
+import { HeroMediaShowcase } from '@/components/hero-media-showcase';
+import { getStoredHeroBanner } from '@/server/banner-data';
 import { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -199,6 +201,8 @@ async function NewProductsSection() {
 }
 
 export default function HomePage() {
+  const heroBanner = getStoredHeroBanner();
+
   return (
     <div
       className="space-y-16 sm:space-y-24"
@@ -267,28 +271,7 @@ export default function HomePage() {
 
             {/* Hero Right Visual Showcase */}
             <div className="lg:col-span-5 relative">
-              <div className="relative mx-auto max-w-sm rounded-3xl border border-amber-400/30 bg-stone-900/60 p-2.5 sm:p-3 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.6)] gold-border-glow">
-                <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
-                  <Image
-                    src={`${SUPABASE_BUCKET_URL}/products/royal-chandbali-1.jpg?v=2`}
-                    alt="Jhumka Junction Handcrafted Royal Chandbali Jhumkas"
-                    fill
-                    priority
-                    sizes="(max-width: 768px) 100vw, 400px"
-                    className="object-cover transition-transform duration-700 hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4 text-left">
-                    <span className="inline-flex items-center rounded-full bg-rani px-2.5 py-0.5 text-[10px] font-bold text-white mb-2 shadow-md">
-                      🔥 Navratri Bestseller
-                    </span>
-                    <p className="font-display font-bold text-base text-white">Royal Chandbali Oxidised Jhumkas</p>
-                    <p className="text-sm text-amber-300 font-extrabold mt-0.5">
-                      ₹1,299 <span className="line-through text-stone-400 font-normal text-xs ml-1">₹2,199</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <HeroMediaShowcase banner={heroBanner} />
             </div>
           </div>
         </div>

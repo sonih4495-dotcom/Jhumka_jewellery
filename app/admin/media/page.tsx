@@ -32,6 +32,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'react-hot-toast';
 import { ReelItem } from '@/lib/reels-data';
+import { HeroBannerConfig, DEFAULT_HERO_BANNER } from '@/lib/banner-data';
+import { AdminHeroBannerStudio } from '@/components/admin-hero-banner-studio';
 
 interface MediaItem {
   id: string;
@@ -67,6 +69,8 @@ export default function AdminMediaPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFolder, setSelectedFolder] = useState<string>('all');
+  const [heroBanner, setHeroBanner] = useState<HeroBannerConfig>(DEFAULT_HERO_BANNER);
+  const [availableBannerVideos, setAvailableBannerVideos] = useState<{ name: string; url: string; size: number }[]>([]);
   
   // Upload photo modal state
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -138,9 +142,10 @@ export default function AdminMediaPage() {
   const fetchMedia = async () => {
     setLoading(true);
     try {
-      const [mediaRes, reelsRes] = await Promise.all([
+      const [mediaRes, reelsRes, bannerRes] = await Promise.all([
         fetch('/api/admin/media'),
         fetch('/api/admin/reels'),
+        fetch('/api/admin/hero-banner'),
       ]);
 
       const mediaData = await mediaRes.json();
@@ -154,6 +159,14 @@ export default function AdminMediaPage() {
       const reelsData = await reelsRes.json();
       if (reelsData.success) {
         setReels(reelsData.reels || []);
+      }
+
+      const bannerData = await bannerRes.json();
+      if (bannerData.success && bannerData.banner) {
+        setHeroBanner(bannerData.banner);
+        if (bannerData.availableVideos) {
+          setAvailableBannerVideos(bannerData.availableVideos);
+        }
       }
     } catch (err: any) {
       toast.error('Network error loading media library');
@@ -564,17 +577,26 @@ export default function AdminMediaPage() {
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-stone-900/95 text-stone-200 p-3 rounded-2xl border border-stone-800 shadow-md">
         <div className="flex flex-wrap items-center gap-2">
           {[
-            { id: 'all', label: 'All Photos', count: counts.total, isReels: false },
-            { id: 'reels', label: '✨ Reels & Videos', count: reels.length, isReels: true },
-            { id: 'products', label: 'Products', count: counts.products, isReels: false },
-            { id: 'categories', label: 'Categories', count: counts.categories, isReels: false },
-            { id: 'banners', label: 'Banners & Hero', count: counts.banners, isReels: false },
+            { id: 'all', label: 'All Photos', count: counts.total, isReels: false, isHero: false },
+            { id: 'hero-banner', label: '🎬 Home Banner Video', count: 1, isReels: false, isHero: true },
+            { id: 'reels', label: '✨ Reels & Videos', count: reels.length, isReels: true, isHero: false },
+            { id: 'products', label: 'Products', count: counts.products, isReels: false, isHero: false },
+            { id: 'categories', label: 'Categories', count: counts.categories, isReels: false, isHero: false },
+            { id: 'banners', label: 'Media Files', count: counts.banners, isReels: false, isHero: false },
           ].map((tab) => {
             const isActive = selectedFolder === tab.id;
             let tabClass = '';
             let badgeClass = '';
 
-            if (tab.isReels) {
+            if (tab.isHero) {
+              if (isActive) {
+                tabClass = 'bg-gradient-to-r from-amber-400 via-rose-500 to-pink-600 text-white font-black shadow-lg border border-amber-300 scale-[1.02]';
+                badgeClass = 'bg-black/30 text-white font-black';
+              } else {
+                tabClass = 'bg-amber-950/40 text-amber-300 font-bold border border-amber-500/30 hover:bg-amber-900/50 hover:text-white';
+                badgeClass = 'bg-amber-900/60 text-amber-200';
+              }
+            } else if (tab.isReels) {
               if (isActive) {
                 tabClass = 'bg-gradient-to-r from-pink-600 via-rose-600 to-amber-500 text-white font-black shadow-lg border border-pink-400/50 scale-[1.02]';
                 badgeClass = 'bg-black/30 text-white font-black';
@@ -619,8 +641,15 @@ export default function AdminMediaPage() {
         </div>
       </div>
 
-      {/* ── VIEW 1: REELS & IRL VIDEOS TAB ── */}
-      {selectedFolder === 'reels' ? (
+      {/* ── VIEW 0: HOME HERO BANNER VIDEO STUDIO ── */}
+      {selectedFolder === 'hero-banner' ? (
+        <AdminHeroBannerStudio
+          initialBanner={heroBanner}
+          availableVideos={availableBannerVideos}
+          products={products}
+          onRefresh={fetchMedia}
+        />
+      ) : selectedFolder === 'reels' ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
