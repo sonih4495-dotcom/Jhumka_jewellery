@@ -45,7 +45,7 @@ export const REELS_DATA: ReelItem[] = [
     handle: '@ananya.glam',
     avatar: `${SUPABASE_BUCKET_URL}/ui/avatar-ananya.jpg`,
     thumbnail: `${SUPABASE_BUCKET_URL}/vibes/garba-glam.jpg`,
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-showing-her-earrings-41006-large.mp4',
+    videoUrl: `${SUPABASE_BUCKET_URL}/videos/1789902892881_5130e938b8e244784da9c2dd2a24699b_540w.mp4`,
     instagramUrl: 'https://instagram.com',
     title: 'Garba night styling with Royal Chandbali jhumkas! 🌙✨',
     likes: '14.2K',
@@ -64,7 +64,7 @@ export const REELS_DATA: ReelItem[] = [
     handle: '@riya_drips',
     avatar: `${SUPABASE_BUCKET_URL}/ui/avatar-priya.jpg`,
     thumbnail: `${SUPABASE_BUCKET_URL}/vibes/date-night.jpg`,
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-touching-her-earring-41007-large.mp4',
+    videoUrl: `${SUPABASE_BUCKET_URL}/videos/1789903187531_5130e938b8e244784da9c2dd2a24699b_540w.mp4`,
     instagramUrl: 'https://instagram.com',
     title: 'Twin dome peacock jhumkas for ethnic festive dates! 🦚✨',
     likes: '28.9K',
@@ -83,7 +83,7 @@ export const REELS_DATA: ReelItem[] = [
     handle: '@kavyastyles',
     avatar: `${SUPABASE_BUCKET_URL}/ui/avatar-tanvi.jpg`,
     thumbnail: `${SUPABASE_BUCKET_URL}/vibes/evil-eye.jpg`,
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-woman-wearing-traditional-indian-jewelry-41009-large.mp4',
+    videoUrl: `${SUPABASE_BUCKET_URL}/videos/1789902892881_5130e938b8e244784da9c2dd2a24699b_540w.mp4`,
     instagramUrl: 'https://instagram.com',
     title: 'Shoulder-dusting Kashmiri mirrors! The Navratri viral pair 🌙🪞',
     likes: '45.1K',
@@ -102,7 +102,7 @@ export const REELS_DATA: ReelItem[] = [
     handle: '@tanvi.vibes',
     avatar: `${SUPABASE_BUCKET_URL}/ui/avatar-sneha.jpg`,
     thumbnail: `${SUPABASE_BUCKET_URL}/vibes/bestie-gifting.jpg`,
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-portrait-of-a-woman-with-silver-earrings-41008-large.mp4',
+    videoUrl: `${SUPABASE_BUCKET_URL}/videos/1789903187531_5130e938b8e244784da9c2dd2a24699b_540w.mp4`,
     instagramUrl: 'https://instagram.com',
     title: 'That sweet ghungroo chime when you twirl in traditional jhumkas! 💃🔔',
     likes: '32.4K',
@@ -171,14 +171,15 @@ function ReelProductCard({ reel }: { reel: ReelItem }) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isMuted, setIsMuted] = useState(true);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
   // Auto-play video smoothly
   useEffect(() => {
     if (videoRef.current) {
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = isMuted;
       videoRef.current.play().catch(() => {});
     }
-  }, [reel.videoUrl]);
+  }, [reel.videoUrl, isMuted]);
 
   const handleCardClick = () => {
     if (reel.taggedProduct?.slug) {
@@ -189,8 +190,9 @@ function ReelProductCard({ reel }: { reel: ReelItem }) {
   const toggleSound = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      setIsMuted(videoRef.current.muted);
+      const nextMuted = !videoRef.current.muted;
+      videoRef.current.muted = nextMuted;
+      setIsMuted(nextMuted);
     }
   };
 
@@ -201,29 +203,26 @@ function ReelProductCard({ reel }: { reel: ReelItem }) {
     >
       {/* 9:16 Ratio Video Container */}
       <div className="relative aspect-[9/16] w-full overflow-hidden bg-stone-900">
-        {/* Background Poster / Fallback Image */}
-        <Image
-          src={reel.thumbnail}
-          alt={reel.title}
-          fill
-          sizes="(max-width: 640px) 270px, (max-width: 1024px) 25vw, 320px"
-          className={`object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${
-            isVideoLoaded && reel.videoUrl ? 'opacity-0' : 'opacity-100'
-          }`}
-        />
-
-        {/* Seamlessly Playing Reel Video */}
-        {reel.videoUrl && (
+        {/* Seamlessly Playing Reel Video or Fallback Image */}
+        {reel.videoUrl ? (
           <video
             ref={videoRef}
             src={reel.videoUrl}
             poster={reel.thumbnail}
             autoPlay
             loop
-            muted={isMuted}
+            muted
             playsInline
-            onLoadedData={() => setIsVideoLoaded(true)}
+            preload="auto"
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          />
+        ) : (
+          <Image
+            src={reel.thumbnail}
+            alt={reel.title}
+            fill
+            sizes="(max-width: 640px) 270px, (max-width: 1024px) 25vw, 320px"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
         )}
 
