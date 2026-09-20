@@ -685,6 +685,16 @@ export default function AdminMediaPage() {
                         loop
                         playsInline
                         preload="auto"
+                        onCanPlay={(e) => {
+                          const v = e.currentTarget;
+                          v.muted = true;
+                          v.play().catch(() => {});
+                        }}
+                        onLoadedMetadata={(e) => {
+                          const v = e.currentTarget;
+                          v.muted = true;
+                          v.play().catch(() => {});
+                        }}
                         className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (

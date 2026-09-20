@@ -171,14 +171,64 @@ function ReelProductCard({ reel }: { reel: ReelItem }) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  // Auto-play video smoothly
+  // Bulletproof universal auto-play
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.defaultMuted = true;
-      videoRef.current.muted = isMuted;
-      videoRef.current.play().catch(() => {});
-    }
+    const video = videoRef.current;
+    if (!video || !reel.videoUrl) return;
+
+    video.defaultMuted = true;
+    video.muted = isMuted;
+
+    const attemptPlay = () => {
+      if (!video) return;
+      video.muted = isMuted;
+      video
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {
+          // If browser policy blocked unmuted or initial play, enforce muted play
+          video.muted = true;
+          setIsMuted(true);
+          video.play().then(() => setIsPlaying(true)).catch(() => {});
+        });
+    };
+
+    attemptPlay();
+
+    // Auto-play when scrolled into view
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            attemptPlay();
+          } else {
+            video.pause();
+            setIsPlaying(false);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(video);
+
+    // Fallback: auto-trigger on first user scroll / touch / click if browser had strict policy
+    const handleFirstGesture = () => {
+      attemptPlay();
+    };
+
+    window.addEventListener('click', handleFirstGesture, { once: true, passive: true });
+    window.addEventListener('touchstart', handleFirstGesture, { once: true, passive: true });
+    window.addEventListener('scroll', handleFirstGesture, { once: true, passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('click', handleFirstGesture);
+      window.removeEventListener('touchstart', handleFirstGesture);
+      window.removeEventListener('scroll', handleFirstGesture);
+    };
   }, [reel.videoUrl, isMuted]);
 
   const handleCardClick = () => {
@@ -193,6 +243,7 @@ function ReelProductCard({ reel }: { reel: ReelItem }) {
       const nextMuted = !videoRef.current.muted;
       videoRef.current.muted = nextMuted;
       setIsMuted(nextMuted);
+      videoRef.current.play().catch(() => {});
     }
   };
 
@@ -214,6 +265,16 @@ function ReelProductCard({ reel }: { reel: ReelItem }) {
             muted
             playsInline
             preload="auto"
+            onCanPlay={(e) => {
+              const v = e.currentTarget;
+              v.muted = isMuted;
+              v.play().then(() => setIsPlaying(true)).catch(() => {});
+            }}
+            onLoadedMetadata={(e) => {
+              const v = e.currentTarget;
+              v.muted = isMuted;
+              v.play().then(() => setIsPlaying(true)).catch(() => {});
+            }}
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
         ) : (
