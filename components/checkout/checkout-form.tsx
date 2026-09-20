@@ -105,8 +105,25 @@ export function CheckoutForm({
   const [state, setState] = useState(savedAddress?.shippingState ?? 'Gujarat');
   const [pincode, setPincode] = useState(savedAddress?.shippingZip ?? '');
   const [phone, setPhone] = useState(savedAddress?.customerPhone ?? '');
+  const availableShippingMethods = shippingMethods && shippingMethods.length > 0 ? shippingMethods : [
+    {
+      id: 'standard',
+      name: 'Standard Delivery (Free above ₹999)',
+      description: '3-5 business days across India (Delhivery / BlueDart)',
+      price: 0,
+      estimatedDays: '3-5 Business Days',
+    },
+    {
+      id: 'express',
+      name: 'Express Insured Air Shipping',
+      description: '1-2 business days with tamper-proof protective packaging',
+      price: 0,
+      estimatedDays: '1-2 Business Days',
+    }
+  ];
+
   const [shippingMethod, setShippingMethod] = useState(
-    shippingMethods[0]?.id ?? 'standard'
+    availableShippingMethods[0]?.id ?? 'standard'
   );
   const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'COD'>('UPI');
   const [copiedUpi, setCopiedUpi] = useState(false);
@@ -464,12 +481,13 @@ export function CheckoutForm({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 pt-4">
-            {shippingMethods.map(method => {
+            {availableShippingMethods.map(method => {
               const isSelected = shippingMethod === method.id;
 
               return (
                 <label
                   key={method.id}
+                  onClick={() => setShippingMethod(method.id)}
                   className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition-all ${
                     isSelected
                       ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
@@ -848,9 +866,9 @@ export function CheckoutForm({
             )}
 
             <Button
-              className="w-full rounded-2xl bg-gray-900 hover:bg-black py-6 text-sm font-bold text-white shadow-md transition-all border-0"
+              className="w-full rounded-2xl bg-gray-900 hover:bg-black py-6 text-sm font-bold text-white shadow-md transition-all border-0 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handlePlaceOrder}
-              disabled={isSubmitting || cart.items.length === 0}
+              disabled={isSubmitting || activeItems.length === 0}
             >
               {isSubmitting ? (
                 'Placing Order...'
