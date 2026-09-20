@@ -75,7 +75,7 @@ export function AddToCart({
       return (
         <div
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-          className="flex items-center justify-between w-full rounded-xl bg-stone-900 text-white shadow-md border border-amber-400/40 p-1 select-none backdrop-blur-md"
+          className="flex items-center justify-between w-full rounded-xl bg-stone-900 text-white shadow-xs border border-amber-400/40 px-1 py-0.5 select-none h-8.5 backdrop-blur-md"
         >
           <button
             type="button"
@@ -151,9 +151,9 @@ export function AddToCart({
       data-testid="add-to-cart-btn"
       {...props}
     >
-      <div className="flex items-center justify-center gap-2">
-        <ShoppingBag className="h-4 w-4" />
-        <span>{children || (size === 'sm' ? 'Quick Add' : 'Add to Bag')}</span>
+      <div className="flex items-center justify-center gap-1.5 w-full">
+        <ShoppingBag className={size === 'sm' ? 'h-3.5 w-3.5 shrink-0' : 'h-4 w-4 shrink-0'} />
+        <span className="truncate">{children || (size === 'sm' ? 'Add' : 'Add to Bag')}</span>
       </div>
     </Button>
   );

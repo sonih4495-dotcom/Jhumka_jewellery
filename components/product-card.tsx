@@ -248,8 +248,8 @@ export function ProductCard({
         </div>
 
         {/* Mobile-Only 1-Tap Quick Action Row */}
-        <div className="sm:hidden mt-2 pt-2 border-t border-stone-100/80 flex items-center gap-1.5">
-          <div className="flex-1">
+        <div className="sm:hidden mt-2.5 pt-2 border-t border-stone-100/90">
+          {inCartQty > 0 ? (
             <AddToCart
               productId={id}
               productName={name}
@@ -259,23 +259,39 @@ export function ProductCard({
               slug={slug}
               disabled={!inStock}
               size="sm"
-              className="w-full rounded-xl bg-stone-900 text-white hover:bg-black font-bold text-[10px] h-7.5 shadow-xs border border-stone-800"
+              className="w-full h-8.5 rounded-xl"
             />
-          </div>
-          <BuyNowButton
-            productId={id}
-            productName={name}
-            price={price}
-            comparePrice={comparePrice}
-            image={image}
-            slug={slug}
-            disabled={!inStock}
-            size="sm"
-            className="rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-stone-950 font-black text-[11px] h-7.5 px-2.5 shadow-xs border-0 shrink-0"
-            title="Buy Now"
-          >
-            ⚡
-          </BuyNowButton>
+          ) : (
+            <div className="grid grid-cols-2 gap-1.5 w-full">
+              <AddToCart
+                productId={id}
+                productName={name}
+                price={price}
+                comparePrice={comparePrice}
+                image={image}
+                slug={slug}
+                disabled={!inStock}
+                size="sm"
+                className="w-full rounded-xl bg-stone-900 text-white hover:bg-black font-bold text-[11px] h-8.5 shadow-xs border border-stone-800 active:scale-95 transition-all px-1 flex items-center justify-center gap-1"
+              >
+                Add
+              </AddToCart>
+              <BuyNowButton
+                productId={id}
+                productName={name}
+                price={price}
+                comparePrice={comparePrice}
+                image={image}
+                slug={slug}
+                disabled={!inStock}
+                size="sm"
+                className="w-full rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-stone-950 font-black text-[11px] h-8.5 shadow-xs border-0 active:scale-95 transition-all px-1 flex items-center justify-center gap-1"
+                title="Buy Now"
+              >
+                <span>⚡ Buy</span>
+              </BuyNowButton>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
