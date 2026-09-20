@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ wishlist: [] });
+      return NextResponse.json({ wishlist: [], guest: true });
     }
 
     const wishlists = await prisma.wishlist.findMany({
@@ -24,20 +24,24 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      wishlist: wishlists.map(w => ({
-        id: w.id,
-        productId: w.productId,
-        product: {
-          id: w.product.id,
-          name: w.product.name,
-          slug: w.product.slug,
-          price: Number(w.product.price),
-          comparePrice: w.product.comparePrice ? Number(w.product.comparePrice) : null,
-          badge: w.product.badge,
-          material: w.product.material,
-          images: w.product.images.map(img => ({ url: img.url })),
-        },
-      })),
+      guest: false,
+      wishlist: wishlists
+        .filter(w => w.product != null)
+        .map(w => ({
+          id: w.id,
+          productId: w.productId,
+          product: {
+            id: w.product.id,
+            name: w.product.name,
+            slug: w.product.slug,
+            price: Number(w.product.price),
+            comparePrice: w.product.comparePrice ? Number(w.product.comparePrice) : null,
+            badge: w.product.badge,
+            material: w.product.material,
+            silverPurity: w.product.silverPurity,
+            images: w.product.images.map(img => ({ url: img.url })),
+          },
+        })),
     });
   } catch (error) {
     console.error('Wishlist GET error:', error);

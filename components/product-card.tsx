@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star, Heart, Sparkles, ShoppingBag } from 'lucide-react';
 import { AddToCart } from './add-to-cart';
+import { BuyNowButton } from './buy-now-button';
 import { useWishlist } from './wishlist-provider';
 import { useCart } from './cart-provider';
 
@@ -150,20 +151,40 @@ export function ProductCard({
           {silverPurity || 'Handcrafted'}
         </div>
 
-        {/* Slide-Up Quick Add Overlay */}
-        <div className={`absolute inset-x-3 bottom-3 z-10 transition-all duration-300 ease-out ${inCartQty > 0 ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100'}`}>
-          <AddToCart
-            productId={id}
-            productName={name}
-            price={price}
-            comparePrice={comparePrice}
-            image={image}
-            slug={slug}
-            disabled={!inStock}
-            variant="secondary"
-            size="sm"
-            className="w-full rounded-xl bg-stone-900/95 text-xs font-bold text-white shadow-lg hover:bg-black backdrop-blur-md border border-white/20 transition-all py-2.5"
-          />
+        {/* Slide-Up Two-Part Action Bar (Quick Add + ⚡ Buy Now) */}
+        <div
+          className={`absolute inset-x-2 bottom-2 z-20 transition-all duration-300 ease-out ${
+            inCartQty > 0
+              ? 'translate-y-0 opacity-100'
+              : 'translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 sm:translate-y-2 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100'
+          }`}
+        >
+          <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-stone-950/85 backdrop-blur-md border border-white/20 shadow-xl">
+            <AddToCart
+              productId={id}
+              productName={name}
+              price={price}
+              comparePrice={comparePrice}
+              image={image}
+              slug={slug}
+              disabled={!inStock}
+              size="sm"
+              className="w-full rounded-xl bg-stone-900 text-white hover:bg-black font-bold text-[11px] h-8 shadow-sm border border-stone-700/60"
+            />
+            <BuyNowButton
+              productId={id}
+              productName={name}
+              price={price}
+              comparePrice={comparePrice}
+              image={image}
+              slug={slug}
+              disabled={!inStock}
+              size="sm"
+              className="w-full rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-stone-950 font-black text-[11px] h-8 shadow-md border-0"
+            >
+              ⚡ Buy Now
+            </BuyNowButton>
+          </div>
         </div>
       </div>
 

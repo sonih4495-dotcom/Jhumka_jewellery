@@ -30,19 +30,31 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     try {
       const saved = localStorage.getItem(WISHLIST_STORAGE_KEY);
       if (saved) {
-        setWishlistIds(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setWishlistIds(parsed);
+        }
       }
     } catch {
       // Ignore storage errors
     }
 
-    // Attempt to sync with API in background if logged in
+    // Sync with server DB if logged in (DB is single source of truth for authenticated user)
     fetch('/api/wishlist')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) return null;
+        return res.json();
+      })
       .then(data => {
-        if (data.wishlist && Array.isArray(data.wishlist) && data.wishlist.length > 0) {
-          const apiIds = data.wishlist.map((item: any) => item.productId);
-          setWishlistIds(prev => Array.from(new Set([...prev, ...apiIds])));
+        if (!data) return;
+        if (data.guest === false && Array.isArray(data.wishlist)) {
+          const apiIds = data.wishlist
+            .map((item: any) => item.productId)
+            .filter(Boolean);
+          setWishlistIds(apiIds);
+          try {
+            localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(apiIds));
+          } catch {}
         }
       })
       .catch(() => {});
@@ -51,7 +63,10 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === WISHLIST_STORAGE_KEY && e.newValue) {
         try {
-          setWishlistIds(JSON.parse(e.newValue));
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setWishlistIds(parsed);
+          }
         } catch {}
       }
     };

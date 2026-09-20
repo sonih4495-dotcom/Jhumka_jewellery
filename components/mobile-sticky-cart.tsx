@@ -59,7 +59,7 @@ export function MobileStickyCart({
             maxQuantity={maxQuantity}
             variant="default"
             size="default"
-            className="w-full rounded-xl bg-stone-900 text-xs font-bold text-white shadow-md hover:bg-stone-800 border-0 h-11"
+            className="w-full rounded-xl bg-stone-900 text-xs font-bold text-white shadow-md hover:bg-black border-0 h-11"
           />
         </div>
 
@@ -72,7 +72,7 @@ export function MobileStickyCart({
             comparePrice={comparePrice}
             disabled={disabled}
             maxQuantity={maxQuantity}
-            className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-black text-xs shadow-md border-0 h-11"
+            className="w-full rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-stone-950 font-black text-xs shadow-md border-0 h-11"
           >
             ⚡ Buy Now
           </BuyNowButton>

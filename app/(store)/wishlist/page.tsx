@@ -73,21 +73,21 @@ export default function WishlistPage() {
 
       {loading ? (
         <div className="py-16 text-center">
-          <Sparkles className="h-8 w-8 text-purple-400 animate-spin mx-auto" />
-          <p className="mt-2 text-sm text-gray-500">Loading your sparkle stash...</p>
+          <Sparkles className="h-8 w-8 text-amber-500 animate-spin mx-auto" />
+          <p className="mt-2 text-sm text-stone-500">Loading your sparkle stash...</p>
         </div>
       ) : products.length === 0 ? (
-        <div className="mx-auto max-w-md rounded-3xl border border-dashed border-pink-200 bg-pink-50/30 p-10 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-pink-100 text-pink-600 mb-4">
-            <Heart className="h-8 w-8 text-pink-400" />
+        <div className="mx-auto max-w-md rounded-3xl border border-dashed border-stone-300 bg-stone-50/50 p-10 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-pink-50 text-rani mb-4 border border-pink-100">
+            <Heart className="h-8 w-8 text-rani" />
           </div>
-          <h3 className="text-lg font-bold text-gray-900">Your wishlist is empty</h3>
-          <p className="mt-1 text-xs text-gray-500">
-            Tap the heart icon on any ring, jhumka, choker or anklet to save it for later!
+          <h3 className="text-lg font-bold text-stone-900">Your wishlist is empty</h3>
+          <p className="mt-1 text-xs text-stone-500">
+            Tap the heart icon on any jhumka, choker, necklace or combo to save it for later!
           </p>
-          <Button asChild className="mt-6 rounded-full bg-purple-600 px-6 font-bold text-white hover:bg-purple-700">
+          <Button asChild className="mt-6 rounded-full bg-stone-900 px-6 font-bold text-white hover:bg-black transition-all shadow-md">
             <Link href="/products">
-              Explore Silver Drops <ArrowRight className="ml-1.5 h-4 w-4" />
+              Explore Silver Drops <ArrowRight className="ml-1.5 h-4 w-4 text-amber-400" />
             </Link>
           </Button>
         </div>
