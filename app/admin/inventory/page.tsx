@@ -19,6 +19,7 @@ import {
   getInventoryCategories,
 } from '@/server/queries/inventory';
 import { InventoryDataTable } from '@/components/inventory-data-table';
+import { InventoryFilters } from '@/components/inventory-filters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -204,67 +205,8 @@ export default async function AdminInventoryPage(props: AdminInventoryPageProps)
           })}
         </div>
 
-        {/* Search & Filter Bar */}
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <form method="GET" className="relative flex-1 w-full">
-            {searchParams.stockLevel && (
-              <input type="hidden" name="stockLevel" value={searchParams.stockLevel} />
-            )}
-            {searchParams.category && (
-              <input type="hidden" name="category" value={searchParams.category} />
-            )}
-            {searchParams.productStatus && (
-              <input type="hidden" name="productStatus" value={searchParams.productStatus} />
-            )}
-            <Search className="absolute left-3.5 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              name="search"
-              placeholder="Search jewellery by name, SKU, or tag..."
-              defaultValue={searchParams.search || ''}
-              className="pl-9 text-xs rounded-xl bg-white border-gray-200 shadow-xs"
-            />
-          </form>
-
-          {/* Quick Category Filter */}
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <select
-              defaultValue={currentCategory}
-              onChange={(e) => {
-                const searchObj = new URLSearchParams();
-                if (searchParams.stockLevel && searchParams.stockLevel !== 'all') searchObj.set('stockLevel', searchParams.stockLevel);
-                if (searchParams.search) searchObj.set('search', searchParams.search);
-                if (searchParams.productStatus && searchParams.productStatus !== 'all') searchObj.set('productStatus', searchParams.productStatus);
-                if (e.target.value !== 'all') searchObj.set('category', e.target.value);
-                window.location.href = `/admin/inventory${searchObj.toString() ? `?${searchObj.toString()}` : ''}`;
-              }}
-              className="h-9 px-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 shadow-xs focus:outline-none focus:border-stone-900"
-            >
-              <option value="all">All Categories</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.slug}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              defaultValue={currentStatus}
-              onChange={(e) => {
-                const searchObj = new URLSearchParams();
-                if (searchParams.stockLevel && searchParams.stockLevel !== 'all') searchObj.set('stockLevel', searchParams.stockLevel);
-                if (searchParams.search) searchObj.set('search', searchParams.search);
-                if (searchParams.category && searchParams.category !== 'all') searchObj.set('category', searchParams.category);
-                if (e.target.value !== 'all') searchObj.set('productStatus', e.target.value);
-                window.location.href = `/admin/inventory${searchObj.toString() ? `?${searchObj.toString()}` : ''}`;
-              }}
-              className="h-9 px-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 shadow-xs focus:outline-none focus:border-stone-900"
-            >
-              <option value="all">All Status</option>
-              <option value="PUBLISHED">Published Only</option>
-              <option value="DRAFT">Draft Only</option>
-            </select>
-          </div>
-        </div>
+        {/* Search & Filter Bar via Client Component */}
+        <InventoryFilters categories={categories} />
       </div>
 
       {/* Inventory & Products Table Container */}
