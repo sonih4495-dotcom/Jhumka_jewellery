@@ -194,17 +194,23 @@ export default async function AdminOrdersPage(props: AdminOrdersPageProps) {
               <Link
                 key={tab.value}
                 href={`/admin/orders${searchObj.toString() ? `?${searchObj.toString()}` : ''}`}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold whitespace-nowrap transition-all ${
+                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold whitespace-nowrap transition-all border ${
                   isSelected
-                    ? 'bg-stone-900 text-white shadow-sm'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-900 hover:text-gray-900'
+                    ? 'border-stone-900 shadow-sm'
+                    : 'border-gray-200 hover:border-stone-900'
                 }`}
+                style={{
+                  backgroundColor: isSelected ? '#181716' : '#ffffff',
+                  color: isSelected ? '#ffffff' : '#374151',
+                }}
               >
                 <span>{tab.label}</span>
                 <span
-                  className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-700'
-                  }`}
+                  className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                  style={{
+                    backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.22)' : '#f3f4f6',
+                    color: isSelected ? '#ffffff' : '#4b5563',
+                  }}
                 >
                   {tab.count}
                 </span>
