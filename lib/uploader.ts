@@ -40,19 +40,43 @@ const ALLOWED_DOCUMENT_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ] as const;
 
-const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'video/x-matroska',
+  'video/ogg',
+] as const;
+
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+const MAX_IMAGE_SIZE = 15 * 1024 * 1024; // 15MB
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
 
 // Validate file
 export const validateFile = (
   file: File,
-  type: 'image' | 'document' = 'image'
+  type: 'image' | 'document' | 'video' = 'image'
 ) => {
-  const allowedTypes =
-    type === 'image' ? ALLOWED_IMAGE_TYPES : ALLOWED_DOCUMENT_TYPES;
-  const maxSize = type === 'image' ? MAX_IMAGE_SIZE : MAX_FILE_SIZE;
+  let allowedTypes: readonly string[];
+  let maxSize: number;
 
-  if (!(allowedTypes as readonly string[]).includes(file.type)) {
+  if (type === 'image') {
+    allowedTypes = ALLOWED_IMAGE_TYPES;
+    maxSize = MAX_IMAGE_SIZE;
+  } else if (type === 'video') {
+    allowedTypes = ALLOWED_VIDEO_TYPES;
+    maxSize = MAX_VIDEO_SIZE;
+  } else {
+    allowedTypes = ALLOWED_DOCUMENT_TYPES;
+    maxSize = MAX_FILE_SIZE;
+  }
+
+  // Allow video fallback check if type starts with video/
+  const isAllowed =
+    (allowedTypes as readonly string[]).includes(file.type) ||
+    (type === 'video' && file.type.startsWith('video/'));
+
+  if (!isAllowed) {
     throw new Error(
       `Invalid file type (${file.type}). Allowed types: ${allowedTypes.join(', ')}`
     );

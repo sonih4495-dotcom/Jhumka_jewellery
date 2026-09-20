@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const folder = searchParams.get('folder') || '';
 
-    const foldersToScan = folder ? [folder] : ['products', 'categories', 'banners', 'uploads'];
+    const foldersToScan = folder ? [folder] : ['products', 'categories', 'banners', 'videos', 'uploads'];
     
     // Fetch products & categories to map links
     const [products, categories] = await Promise.all([
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
             path: fullPath,
             folder: f,
             size: file.metadata?.size || 0,
-            mimetype: file.metadata?.mimetype || 'image/jpeg',
+            mimetype: file.metadata?.mimetype || (f === 'videos' ? 'video/mp4' : 'image/jpeg'),
             updatedAt: file.updated_at || file.created_at,
             publicUrl,
             linkedProducts,
@@ -96,6 +96,7 @@ export async function GET(request: NextRequest) {
         products: allMedia.filter((m) => m.folder === 'products').length,
         categories: allMedia.filter((m) => m.folder === 'categories').length,
         banners: allMedia.filter((m) => m.folder === 'banners').length,
+        videos: allMedia.filter((m) => m.folder === 'videos').length,
       },
       availableProducts: products.map((p) => ({ id: p.id, name: p.name })),
       availableCategories: categories.map((c) => ({ id: c.id, name: c.name })),
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: Upload or Replace an image in Supabase Storage
+// POST: Upload or Replace an image/video in Supabase Storage
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -123,10 +124,11 @@ export async function POST(request: NextRequest) {
     const isPrimary = formData.get('isPrimary') === 'true';
 
     if (!file) {
-      return NextResponse.json({ error: 'No image file provided' }, { status: 400 });
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    validateFile(file, 'image');
+    const isVideo = file.type.startsWith('video/') || folder === 'videos';
+    validateFile(file, isVideo ? 'video' : 'image');
 
     const buffer = Buffer.from(await file.arrayBuffer());
     
@@ -134,10 +136,9 @@ export async function POST(request: NextRequest) {
     let finalFilename: string;
     if (customFilename) {
       const extMatch = file.name.match(/\.[a-zA-Z0-9]+$/);
-      const ext = extMatch ? extMatch[0].toLowerCase() : '.jpg';
-      finalFilename = customFilename.endsWith('.jpg') || customFilename.endsWith('.png') || customFilename.endsWith('.webp')
-        ? customFilename
-        : `${customFilename}${ext}`;
+      const defaultExt = isVideo ? '.mp4' : '.jpg';
+      const ext = extMatch ? extMatch[0].toLowerCase() : defaultExt;
+      finalFilename = customFilename.includes('.') ? customFilename : `${customFilename}${ext}`;
     } else {
       const cleanOriginal = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
       finalFilename = `${Date.now()}_${cleanOriginal}`;
@@ -149,7 +150,7 @@ export async function POST(request: NextRequest) {
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from(SUPABASE_STORAGE_BUCKET)
       .upload(storagePath, buffer, {
-        contentType: file.type || 'image/jpeg',
+        contentType: file.type || (isVideo ? 'video/mp4' : 'image/jpeg'),
         upsert: true,
       });
 

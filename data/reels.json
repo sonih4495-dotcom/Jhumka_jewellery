@@ -1,0 +1,82 @@
+[
+  {
+    "id": "1",
+    "creator": "Ananya Sharma",
+    "handle": "@ananya.glam",
+    "avatar": "https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/ui/avatar-ananya.jpg",
+    "thumbnail": "https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/vibes/garba-glam.jpg",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-fashion-model-showing-her-earrings-41006-large.mp4",
+    "instagramUrl": "https://instagram.com",
+    "title": "Garba night styling with Royal Chandbali jhumkas! 🌙✨",
+    "likes": "14.2K",
+    "taggedProduct": {
+      "id": "chandbali-1",
+      "name": "Royal Chandbali Oxidised Silver Jhumkas",
+      "price": 1299,
+      "comparePrice": 1999,
+      "slug": "royal-chandbali-oxidised-jhumkas",
+      "image": "https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/categories/chandbali-jhumkas.jpg"
+    },
+    "createdAt": "2026-09-20T10:34:47.622Z"
+  },
+  {
+    "id": "2",
+    "creator": "Riya Mehta",
+    "handle": "@riya_drips",
+    "avatar": "https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/ui/avatar-priya.jpg",
+    "thumbnail": "https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/vibes/date-night.jpg",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-young-woman-touching-her-earring-41007-large.mp4",
+    "instagramUrl": "https://instagram.com",
+    "title": "Twin dome peacock jhumkas for ethnic festive dates! 🦚✨",
+    "likes": "28.9K",
+    "taggedProduct": {
+      "id": "peacock-1",
+      "name": "Peacock Filigree Dual Dome Jhumkas",
+      "price": 1499,
+      "comparePrice": 2199,
+      "slug": "peacock-filigree-dual-dome-jhumkas",
+      "image": "https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/categories/peacock-floral-jhumkas.jpg"
+    },
+    "createdAt": "2026-09-20T10:34:47.622Z"
+  },
+  {
+    "id": "3",
+    "creator": "Kavya Patel",
+    "handle": "@kavyastyles",
+    "avatar": "https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/ui/avatar-tanvi.jpg",
+    "thumbnail": "https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/vibes/evil-eye.jpg",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-woman-wearing-traditional-indian-jewelry-41009-large.mp4",
+    "instagramUrl": "https://instagram.com",
+    "title": "Shoulder-dusting Kashmiri mirrors! The Navratri viral pair 🌙🪞",
+    "likes": "45.1K",
+    "taggedProduct": {
+      "id": "kashmiri-1",
+      "name": "Kashmiri Long Mirror-Work Tribal Jhumkas",
+      "price": 1699,
+      "comparePrice": 2499,
+      "slug": "kashmiri-long-tribal-jhumkas",
+      "image": "https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/categories/kashmiri-afghan-jhumkas.jpg"
+    },
+    "createdAt": "2026-09-20T10:34:47.622Z"
+  },
+  {
+    "id": "4",
+    "creator": "Tanvi Joshi",
+    "handle": "@tanvi.vibes",
+    "avatar": "https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/ui/avatar-sneha.jpg",
+    "thumbnail": "https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/vibes/bestie-gifting.jpg",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-portrait-of-a-woman-with-silver-earrings-41008-large.mp4",
+    "instagramUrl": "https://instagram.com",
+    "title": "That sweet ghungroo chime when you twirl in traditional jhumkas! 💃🔔",
+    "likes": "32.4K",
+    "taggedProduct": {
+      "id": "temple-1",
+      "name": "Traditional Gujarati Ghungroo Dome Jhumkas",
+      "price": 1399,
+      "comparePrice": 1899,
+      "slug": "gujarati-ghungroo-dome-jhumkas",
+      "image": "https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/categories/dome-temple-jhumkas.jpg"
+    },
+    "createdAt": "2026-09-20T10:34:47.622Z"
+  }
+]

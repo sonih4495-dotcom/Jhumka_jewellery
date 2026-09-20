@@ -17,11 +17,17 @@ import {
   AlertCircle,
   X,
   Layers,
+  Video,
+  Play,
+  Instagram,
+  Heart,
+  ShoppingBag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'react-hot-toast';
+import { ReelItem } from '@/lib/reels-data';
 
 interface MediaItem {
   id: string;
@@ -38,6 +44,9 @@ interface MediaItem {
 interface ProductOption {
   id: string;
   name: string;
+  price?: number;
+  slug?: string;
+  image?: string;
 }
 
 interface CategoryOption {
@@ -47,14 +56,15 @@ interface CategoryOption {
 
 export default function AdminMediaPage() {
   const [media, setMedia] = useState<MediaItem[]>([]);
-  const [counts, setCounts] = useState({ total: 0, products: 0, categories: 0, banners: 0 });
+  const [counts, setCounts] = useState({ total: 0, products: 0, categories: 0, banners: 0, videos: 0 });
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [reels, setReels] = useState<ReelItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFolder, setSelectedFolder] = useState<string>('all');
   
-  // Upload modal state
+  // Upload photo modal state
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
@@ -64,6 +74,20 @@ export default function AdminMediaPage() {
   const [linkCategoryId, setLinkCategoryId] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
 
+  // Add Reel & Video modal state
+  const [isReelModalOpen, setIsReelModalOpen] = useState(false);
+  const [reelCreator, setReelCreator] = useState('');
+  const [reelHandle, setReelHandle] = useState('');
+  const [reelTitle, setReelTitle] = useState('');
+  const [reelLikes, setReelLikes] = useState('15.2K');
+  const [reelInstagramUrl, setReelInstagramUrl] = useState('');
+  const [reelProductId, setReelProductId] = useState('');
+  const [reelVideoFile, setReelVideoFile] = useState<File | null>(null);
+  const [reelThumbnailFile, setReelThumbnailFile] = useState<File | null>(null);
+  const [reelVideoPreview, setReelVideoPreview] = useState<string | null>(null);
+  const [reelThumbnailPreview, setReelThumbnailPreview] = useState<string | null>(null);
+  const [isSavingReel, setIsSavingReel] = useState(false);
+
   // Replace modal state
   const [replacingItem, setReplacingItem] = useState<MediaItem | null>(null);
   const [replaceFile, setReplaceFile] = useState<File | null>(null);
@@ -71,6 +95,7 @@ export default function AdminMediaPage() {
 
   // Delete confirm state
   const [deletingItem, setDeletingItem] = useState<MediaItem | null>(null);
+  const [deletingReelId, setDeletingReelId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Copied state
@@ -78,19 +103,28 @@ export default function AdminMediaPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
+  const reelVideoInputRef = useRef<HTMLInputElement>(null);
+  const reelThumbInputRef = useRef<HTMLInputElement>(null);
 
   const fetchMedia = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/media');
-      const data = await res.json();
-      if (data.success) {
-        setMedia(data.media || []);
-        setCounts(data.counts || { total: 0, products: 0, categories: 0, banners: 0 });
-        setProducts(data.availableProducts || []);
-        setCategories(data.availableCategories || []);
-      } else {
-        toast.error(data.error || 'Failed to load media');
+      const [mediaRes, reelsRes] = await Promise.all([
+        fetch('/api/admin/media'),
+        fetch('/api/admin/reels'),
+      ]);
+
+      const mediaData = await mediaRes.json();
+      if (mediaData.success) {
+        setMedia(mediaData.media || []);
+        setCounts(mediaData.counts || { total: 0, products: 0, categories: 0, banners: 0, videos: 0 });
+        setProducts(mediaData.availableProducts || []);
+        setCategories(mediaData.availableCategories || []);
+      }
+
+      const reelsData = await reelsRes.json();
+      if (reelsData.success) {
+        setReels(reelsData.reels || []);
       }
     } catch (err: any) {
       toast.error('Network error loading media library');
@@ -217,6 +251,120 @@ export default function AdminMediaPage() {
     }
   };
 
+  const handleReelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reelCreator || !reelTitle) {
+      toast.error('Creator name and title are required');
+      return;
+    }
+
+    if (!reelVideoFile && !reelInstagramUrl) {
+      toast.error('Please either upload a video file (.mp4) or provide an Instagram Reel link');
+      return;
+    }
+
+    setIsSavingReel(true);
+    try {
+      let uploadedVideoUrl = '';
+      let uploadedThumbUrl = '';
+
+      // 1. Upload Video File to Supabase Storage if present
+      if (reelVideoFile) {
+        toast.loading('Uploading video to Supabase Storage...', { id: 'reel-upload' });
+        const videoData = new FormData();
+        videoData.append('file', reelVideoFile);
+        videoData.append('folder', 'videos');
+        const videoRes = await fetch('/api/admin/media', {
+          method: 'POST',
+          body: videoData,
+        });
+        const videoJson = await videoRes.json();
+        if (!videoJson.success) {
+          throw new Error(videoJson.error || 'Failed to upload video to Supabase');
+        }
+        uploadedVideoUrl = videoJson.file.publicUrl;
+      }
+
+      // 2. Upload Thumbnail File if present
+      if (reelThumbnailFile) {
+        const thumbData = new FormData();
+        thumbData.append('file', reelThumbnailFile);
+        thumbData.append('folder', 'uploads');
+        const thumbRes = await fetch('/api/admin/media', {
+          method: 'POST',
+          body: thumbData,
+        });
+        const thumbJson = await thumbRes.json();
+        if (thumbJson.success) {
+          uploadedThumbUrl = thumbJson.file.publicUrl;
+        }
+      }
+
+      toast.loading('Saving Reel details...', { id: 'reel-upload' });
+
+      // 3. Save Reel in backend
+      const res = await fetch('/api/admin/reels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creator: reelCreator,
+          handle: reelHandle,
+          title: reelTitle,
+          likes: reelLikes,
+          videoUrl: uploadedVideoUrl,
+          instagramUrl: reelInstagramUrl,
+          thumbnail: uploadedThumbUrl,
+          productId: reelProductId,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Reel added and live on #JhumkaJunction IRL ✨!', { id: 'reel-upload' });
+        setIsReelModalOpen(false);
+        setReelCreator('');
+        setReelHandle('');
+        setReelTitle('');
+        setReelInstagramUrl('');
+        setReelProductId('');
+        setReelVideoFile(null);
+        setReelThumbnailFile(null);
+        setReelVideoPreview(null);
+        setReelThumbnailPreview(null);
+        fetchMedia();
+      } else {
+        toast.error(data.error || 'Failed to save reel', { id: 'reel-upload' });
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error creating reel', { id: 'reel-upload' });
+    } finally {
+      setIsSavingReel(false);
+    }
+  };
+
+  const handleDeleteReelConfirm = async () => {
+    if (!deletingReelId) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/reels?id=${deletingReelId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Reel deleted');
+        setDeletingReelId(null);
+        fetchMedia();
+      } else {
+        toast.error(data.error || 'Failed to delete reel');
+      }
+    } catch (err: any) {
+      toast.error('Network error deleting reel');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Filtering
   const filteredMedia = media.filter((item) => {
     const matchesFolder = selectedFolder === 'all' || item.folder === selectedFolder;
@@ -226,6 +374,16 @@ export default function AdminMediaPage() {
       item.linkedProducts.some((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
       item.linkedCategories.some((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesFolder && matchesSearch;
+  });
+
+  const filteredReels = reels.filter((r) => {
+    if (!searchQuery) return true;
+    return (
+      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.creator.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.handle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.taggedProduct?.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   });
 
   return (
@@ -238,15 +396,15 @@ export default function AdminMediaPage() {
               Media &amp; Storage Manager
             </h1>
             <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-              Supabase Connected
+              Supabase Storage
             </Badge>
           </div>
           <p className="text-sm text-stone-500 mt-1">
-            CRUD images directly in your Supabase Storage Bucket (<code className="font-mono text-xs bg-stone-100 px-1 py-0.5 rounded">jewellery</code>)
+            Manage photos, product assets, and Instagram / Gen Z video reels stored in Supabase (<code className="font-mono text-xs bg-stone-100 px-1 py-0.5 rounded">jewellery</code>)
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -261,10 +419,19 @@ export default function AdminMediaPage() {
           <Button
             size="sm"
             onClick={() => setIsUploadModalOpen(true)}
-            className="rounded-full bg-stone-900 text-white hover:bg-stone-800 shadow-sm"
+            className="rounded-full bg-stone-900 text-white hover:bg-black shadow-sm"
           >
             <Plus className="h-4 w-4 mr-1.5" />
-            Upload New Photo
+            Upload Photo
+          </Button>
+
+          <Button
+            size="sm"
+            onClick={() => setIsReelModalOpen(true)}
+            className="rounded-full bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:from-pink-700 hover:to-amber-700 text-white font-bold shadow-md"
+          >
+            <Video className="h-4 w-4 mr-1.5" />
+            + Add Reel &amp; Video
           </Button>
         </div>
       </div>
@@ -274,6 +441,7 @@ export default function AdminMediaPage() {
         <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
           {[
             { id: 'all', label: 'All Photos', count: counts.total },
+            { id: 'reels', label: '✨ Reels & Videos', count: reels.length },
             { id: 'products', label: 'Products', count: counts.products },
             { id: 'categories', label: 'Categories', count: counts.categories },
             { id: 'banners', label: 'Banners & Hero', count: counts.banners },
@@ -281,7 +449,7 @@ export default function AdminMediaPage() {
             <button
               key={tab.id}
               onClick={() => setSelectedFolder(tab.id)}
-              className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all whitespace-nowrap ${
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition-all whitespace-nowrap ${
                 selectedFolder === tab.id
                   ? 'bg-stone-900 text-white shadow-sm'
                   : 'text-stone-600 hover:bg-stone-200/70'
@@ -296,7 +464,7 @@ export default function AdminMediaPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-stone-400" />
           <Input
             type="text"
-            placeholder="Search by file or product..."
+            placeholder="Search files, reels, or tags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-8 pl-8 text-xs rounded-full bg-white border-stone-200"
@@ -304,147 +472,495 @@ export default function AdminMediaPage() {
         </div>
       </div>
 
-      {/* ── Media Grid ── */}
-      {loading ? (
-        <div className="py-20 text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto text-stone-400 mb-3" />
-          <p className="text-sm font-semibold text-stone-600">Loading Supabase Storage library...</p>
-        </div>
-      ) : filteredMedia.length === 0 ? (
-        <div className="py-16 text-center border-2 border-dashed border-stone-200 rounded-2xl bg-white">
-          <Folder className="h-10 w-10 text-stone-300 mx-auto mb-2" />
-          <p className="text-base font-bold text-stone-800">No images found</p>
-          <p className="text-xs text-stone-500 mt-1">
-            {searchQuery ? 'Try changing your search keywords' : 'Click "Upload New Photo" to add your first image'}
-          </p>
-          <Button
-            size="sm"
-            onClick={() => setIsUploadModalOpen(true)}
-            className="mt-4 rounded-full bg-stone-900 text-white"
-          >
-            <Plus className="h-3.5 w-3.5 mr-1" /> Upload Image
-          </Button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredMedia.map((item) => {
-            const hasLinks = item.linkedProducts.length > 0 || item.linkedCategories.length > 0;
-            const isCopied = copiedPath === item.path;
+      {/* ── VIEW 1: REELS & IRL VIDEOS TAB ── */}
+      {selectedFolder === 'reels' ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-stone-900 flex items-center gap-2">
+                <Video className="h-5 w-5 text-rani" />
+                #JhumkaJunction IRL Video Reels Studio
+              </h3>
+              <p className="text-xs text-stone-500 mt-0.5">
+                These styling clips appear live in the homepage Instagram/TikTok reels carousel.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => setIsReelModalOpen(true)}
+              className="rounded-full bg-stone-900 text-white hover:bg-black text-xs font-bold"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add New Reel
+            </Button>
+          </div>
 
-            return (
-              <div
-                key={item.path}
-                className="group relative flex flex-col rounded-2xl border border-stone-200/90 bg-white overflow-hidden shadow-xs hover:shadow-md transition-all"
+          {loading ? (
+            <div className="py-20 text-center">
+              <RefreshCw className="h-8 w-8 animate-spin mx-auto text-stone-400 mb-3" />
+              <p className="text-sm font-semibold text-stone-600">Loading reels...</p>
+            </div>
+          ) : filteredReels.length === 0 ? (
+            <div className="py-16 text-center border-2 border-dashed border-stone-200 rounded-2xl bg-white p-8">
+              <Video className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+              <p className="text-base font-bold text-stone-800">No reels found</p>
+              <p className="text-xs text-stone-500 mt-1">
+                Upload video files or add Instagram reel links to feature real styling videos on your store!
+              </p>
+              <Button
+                size="sm"
+                onClick={() => setIsReelModalOpen(true)}
+                className="mt-4 rounded-full bg-stone-900 text-white font-bold"
               >
-                {/* Image Preview */}
-                <div className="relative aspect-square w-full bg-stone-100 overflow-hidden">
-                  <Image
-                    src={item.publicUrl}
-                    alt={item.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 25vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    unoptimized
-                  />
-                  
-                  {/* Folder Tag overlay */}
-                  <div className="absolute top-2.5 left-2.5">
-                    <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-black/75 text-white backdrop-blur-xs">
-                      {item.folder}
-                    </span>
-                  </div>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add First Reel
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {filteredReels.map((reel) => (
+                <div
+                  key={reel.id}
+                  className="group relative flex flex-col rounded-2xl border border-stone-800 bg-stone-950 overflow-hidden shadow-md hover:border-amber-500/50 transition-all text-white"
+                >
+                  {/* 9:16 Video / Poster box */}
+                  <div className="relative aspect-[9/16] w-full bg-stone-900 overflow-hidden">
+                    {reel.videoUrl ? (
+                      <video
+                        src={reel.videoUrl}
+                        poster={reel.thumbnail}
+                        muted
+                        loop
+                        playsInline
+                        onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
+                        onMouseLeave={(e) => {
+                          const v = e.target as HTMLVideoElement;
+                          v.pause();
+                          v.currentTime = 0;
+                        }}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Image src={reel.thumbnail} alt={reel.title} fill className="object-cover" />
+                    )}
 
-                  {/* Action overlay buttons */}
-                  <div className="absolute top-2.5 right-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => handleCopyUrl(item.publicUrl, item.path)}
-                      title="Copy Public URL"
-                      className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-stone-800 shadow-sm hover:bg-white transition-colors"
-                    >
-                      {isCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                    </button>
-                    <a
-                      href={item.publicUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Open full size in new tab"
-                      className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-stone-800 shadow-sm hover:bg-white transition-colors"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  </div>
-                </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/50 pointer-events-none" />
 
-                {/* Meta details */}
-                <div className="p-3.5 flex flex-col justify-between flex-1">
-                  <div>
-                    <p className="text-xs font-bold text-stone-900 truncate" title={item.name}>
-                      {item.name}
-                    </p>
-                    <p className="text-[10px] text-stone-500 mt-0.5">
-                      {(item.size / 1024).toFixed(1)} KB • Supabase Storage
-                    </p>
+                    {/* Top: Creator pill */}
+                    <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
+                      <div className="flex items-center gap-1.5 rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-[11px] text-stone-100 border border-white/10">
+                        <div className="relative h-4 w-4 overflow-hidden rounded-full border border-amber-400">
+                          <Image src={reel.avatar} alt={reel.creator} fill sizes="16px" className="object-cover" />
+                        </div>
+                        <span className="font-bold truncate max-w-[80px]">{reel.handle}</span>
+                      </div>
 
-                    {/* Linked items */}
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {item.linkedProducts.map((p) => (
-                        <span
-                          key={p.id}
-                          className="inline-flex items-center gap-1 text-[9px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80 px-1.5 py-0.5 rounded"
-                          title={p.name}
-                        >
-                          <Tag className="h-2.5 w-2.5" />
-                          <span className="truncate max-w-[130px]">{p.name}</span>
+                      <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-md bg-pink-600/90 text-white backdrop-blur-xs flex items-center gap-1">
+                        <Heart className="h-2.5 w-2.5 fill-white" /> {reel.likes}
+                      </span>
+                    </div>
+
+                    {/* Type badge */}
+                    <div className="absolute top-10 left-2.5 z-10">
+                      {reel.videoUrl ? (
+                        <span className="px-2 py-0.5 text-[9px] font-bold rounded-md bg-emerald-600/90 text-white flex items-center gap-1">
+                          <Video className="h-2.5 w-2.5" /> MP4 Video
                         </span>
-                      ))}
-
-                      {item.linkedCategories.map((c) => (
-                        <span
-                          key={c.id}
-                          className="inline-flex items-center gap-1 text-[9px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80 px-1.5 py-0.5 rounded"
-                          title={c.name}
-                        >
-                          <Layers className="h-2.5 w-2.5" />
-                          <span className="truncate max-w-[130px]">{c.name}</span>
-                        </span>
-                      ))}
-
-                      {!hasLinks && (
-                        <span className="text-[10px] text-stone-400 italic">
-                          Unassigned asset
+                      ) : (
+                        <span className="px-2 py-0.5 text-[9px] font-bold rounded-md bg-purple-600/90 text-white flex items-center gap-1">
+                          <Instagram className="h-2.5 w-2.5" /> Insta Link
                         </span>
                       )}
                     </div>
+
+                    {/* Center play icon */}
+                    <div className="absolute inset-0 m-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md text-white border border-white/30 pointer-events-none">
+                      <Play className="h-4 w-4 fill-white ml-0.5" />
+                    </div>
+
+                    {/* Bottom: Caption & Tagged product */}
+                    <div className="absolute bottom-2.5 left-2.5 right-2.5 space-y-1.5 z-10">
+                      <p className="text-xs font-semibold text-white line-clamp-2 drop-shadow">
+                        {reel.title}
+                      </p>
+
+                      <div className="flex items-center justify-between rounded-xl bg-white/95 backdrop-blur-md p-2 text-xs text-stone-900 shadow-md">
+                        <div className="truncate mr-2">
+                          <p className="truncate font-bold text-[10px] text-stone-900">{reel.taggedProduct?.name}</p>
+                          <p className="text-[9px] font-black text-rani">₹{reel.taggedProduct?.price}</p>
+                        </div>
+                        <span className="rounded-lg bg-stone-900 p-1 text-white">
+                          <ShoppingBag className="h-2.5 w-2.5" />
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Card Bottom Actions */}
-                  <div className="mt-3.5 pt-2.5 border-t border-stone-100 flex items-center justify-between">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setReplacingItem(item);
-                        setReplaceFile(null);
-                      }}
-                      className="h-7 px-2.5 text-[11px] font-bold rounded-lg hover:bg-stone-100"
-                    >
-                      <RefreshCw className="h-3 w-3 mr-1" />
-                      Replace
-                    </Button>
+                  {/* Card footer actions */}
+                  <div className="p-3 bg-stone-900 border-t border-stone-800 flex items-center justify-between gap-1">
+                    {reel.instagramUrl && (
+                      <a
+                        href={reel.instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-bold text-pink-400 hover:text-pink-300 flex items-center gap-1"
+                      >
+                        <Instagram className="h-3 w-3" /> View Reel
+                      </a>
+                    )}
+
+                    {reel.videoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => handleCopyUrl(reel.videoUrl!, reel.id)}
+                        className="text-[10px] font-bold text-stone-400 hover:text-white flex items-center gap-1"
+                      >
+                        <Copy className="h-3 w-3" /> Copy URL
+                      </button>
+                    )}
 
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setDeletingItem(item)}
-                      className="h-7 px-2 text-[11px] text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg"
+                      onClick={() => setDeletingReelId(reel.id)}
+                      className="h-7 px-2 text-[11px] text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 rounded-lg ml-auto"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ── VIEW 2: STANDARD PHOTOS & ASSETS GRID ── */
+        loading ? (
+          <div className="py-20 text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto text-stone-400 mb-3" />
+            <p className="text-sm font-semibold text-stone-600">Loading Supabase Storage library...</p>
+          </div>
+        ) : filteredMedia.length === 0 ? (
+          <div className="py-16 text-center border-2 border-dashed border-stone-200 rounded-2xl bg-white">
+            <Folder className="h-10 w-10 text-stone-300 mx-auto mb-2" />
+            <p className="text-base font-bold text-stone-800">No images found</p>
+            <p className="text-xs text-stone-500 mt-1">
+              {searchQuery ? 'Try changing your search keywords' : 'Click "Upload New Photo" to add your first image'}
+            </p>
+            <Button
+              size="sm"
+              onClick={() => setIsUploadModalOpen(true)}
+              className="mt-4 rounded-full bg-stone-900 text-white"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Upload Image
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredMedia.map((item) => {
+              const hasLinks = item.linkedProducts.length > 0 || item.linkedCategories.length > 0;
+              const isCopied = copiedPath === item.path;
+
+              return (
+                <div
+                  key={item.path}
+                  className="group relative flex flex-col rounded-2xl border border-stone-200/90 bg-white overflow-hidden shadow-xs hover:shadow-md transition-all"
+                >
+                  {/* Image Preview */}
+                  <div className="relative aspect-square w-full bg-stone-100 overflow-hidden">
+                    <Image
+                      src={item.publicUrl}
+                      alt={item.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 25vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      unoptimized
+                    />
+                    
+                    {/* Folder Tag overlay */}
+                    <div className="absolute top-2.5 left-2.5">
+                      <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-black/75 text-white backdrop-blur-xs">
+                        {item.folder}
+                      </span>
+                    </div>
+
+                    {/* Action overlay buttons */}
+                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleCopyUrl(item.publicUrl, item.path)}
+                        title="Copy Public URL"
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-stone-800 shadow-sm hover:bg-white transition-colors"
+                      >
+                        {isCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                      <a
+                        href={item.publicUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Open full size in new tab"
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-stone-800 shadow-sm hover:bg-white transition-colors"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Meta details */}
+                  <div className="p-3.5 flex flex-col justify-between flex-1">
+                    <div>
+                      <p className="text-xs font-bold text-stone-900 truncate" title={item.name}>
+                        {item.name}
+                      </p>
+                      <p className="text-[10px] text-stone-500 mt-0.5">
+                        {(item.size / 1024).toFixed(1)} KB • Supabase Storage
+                      </p>
+
+                      {/* Linked items */}
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {item.linkedProducts.map((p) => (
+                          <span
+                            key={p.id}
+                            className="inline-flex items-center gap-1 text-[9px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80 px-1.5 py-0.5 rounded"
+                            title={p.name}
+                          >
+                            <Tag className="h-2.5 w-2.5" />
+                            <span className="truncate max-w-[130px]">{p.name}</span>
+                          </span>
+                        ))}
+
+                        {item.linkedCategories.map((c) => (
+                          <span
+                            key={c.id}
+                            className="inline-flex items-center gap-1 text-[9px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80 px-1.5 py-0.5 rounded"
+                            title={c.name}
+                          >
+                            <Layers className="h-2.5 w-2.5" />
+                            <span className="truncate max-w-[130px]">{c.name}</span>
+                          </span>
+                        ))}
+
+                        {!hasLinks && (
+                          <span className="text-[10px] text-stone-400 italic">
+                            Unassigned asset
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Card Bottom Actions */}
+                    <div className="mt-3.5 pt-2.5 border-t border-stone-100 flex items-center justify-between">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setReplacingItem(item);
+                          setReplaceFile(null);
+                        }}
+                        className="h-7 px-2.5 text-[11px] font-bold rounded-lg hover:bg-stone-100"
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Replace
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeletingItem(item)}
+                        className="h-7 px-2 text-[11px] text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      )}
+
+      {/* ── Add New Reel & Video Modal ── */}
+      {isReelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="relative w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl border border-stone-200 animate-in zoom-in-95 my-8">
+            <div className="flex items-center justify-between border-b pb-3.5">
+              <div className="flex items-center gap-2">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-pink-600 to-amber-600 text-white shadow-sm">
+                  <Video className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-base font-bold text-stone-900">Add Gen Z Styling Reel / Video</h2>
+                  <p className="text-[11px] text-stone-500">Upload video to Supabase Storage or link Instagram Reel</p>
+                </div>
               </div>
-            );
-          })}
+              <button
+                onClick={() => setIsReelModalOpen(false)}
+                className="h-8 w-8 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-500"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleReelSubmit} className="mt-4 space-y-4">
+              {/* Creator Info */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-stone-700">Creator Name *</label>
+                  <Input
+                    type="text"
+                    required
+                    placeholder="e.g. Ananya Sharma"
+                    value={reelCreator}
+                    onChange={(e) => setReelCreator(e.target.value)}
+                    className="h-9 text-xs rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-stone-700">Instagram Handle</label>
+                  <Input
+                    type="text"
+                    placeholder="e.g. @ananya.glam"
+                    value={reelHandle}
+                    onChange={(e) => setReelHandle(e.target.value)}
+                    className="h-9 text-xs rounded-xl"
+                  />
+                </div>
+              </div>
+
+              {/* Title / Caption */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-stone-700">Reel Caption / Styling Description *</label>
+                <Input
+                  type="text"
+                  required
+                  placeholder="e.g. Garba night styling with Royal Chandbali jhumkas! 🌙✨"
+                  value={reelTitle}
+                  onChange={(e) => setReelTitle(e.target.value)}
+                  className="h-9 text-xs rounded-xl"
+                />
+              </div>
+
+              {/* Likes & Instagram Link */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-stone-700">Likes Count</label>
+                  <Input
+                    type="text"
+                    placeholder="e.g. 18.5K"
+                    value={reelLikes}
+                    onChange={(e) => setReelLikes(e.target.value)}
+                    className="h-9 text-xs rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-stone-700 flex items-center gap-1">
+                    <Instagram className="h-3 w-3 text-pink-500" />
+                    <span>Instagram Reel URL</span>
+                  </label>
+                  <Input
+                    type="url"
+                    placeholder="https://www.instagram.com/reel/..."
+                    value={reelInstagramUrl}
+                    onChange={(e) => setReelInstagramUrl(e.target.value)}
+                    className="h-9 text-xs rounded-xl"
+                  />
+                </div>
+              </div>
+
+              {/* Video File Upload (Direct MP4 to Supabase Storage Bucket) */}
+              <div className="space-y-1.5 border-t pt-3">
+                <label className="text-xs font-bold text-stone-800 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Video className="h-4 w-4 text-emerald-600" />
+                    <span>Upload Video File (MP4/WebM to Supabase Storage)</span>
+                  </span>
+                  <span className="text-[10px] text-stone-400 font-normal">Saves in videos/ folder</span>
+                </label>
+
+                <div
+                  onClick={() => reelVideoInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-stone-300 p-4 text-center cursor-pointer hover:border-emerald-500 hover:bg-emerald-50/30 transition-all"
+                >
+                  <input
+                    ref={reelVideoInputRef}
+                    type="file"
+                    accept="video/mp4,video/webm,video/quicktime"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) {
+                        setReelVideoFile(f);
+                        setReelVideoPreview(URL.createObjectURL(f));
+                      }
+                    }}
+                    className="hidden"
+                  />
+
+                  {reelVideoFile ? (
+                    <div className="flex items-center gap-2 text-emerald-700">
+                      <Check className="h-5 w-5" />
+                      <span className="text-xs font-bold">{reelVideoFile.name} ({(reelVideoFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-stone-600">
+                      <Upload className="h-4 w-4 text-stone-400" />
+                      <span className="text-xs font-medium">Click to select MP4 / WebM video clip</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tag Product in Store for 1-Click Buy */}
+              <div className="space-y-1.5 border-t pt-3">
+                <label className="text-xs font-bold text-stone-700 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    <span>Tag Featured Jewellery Piece</span>
+                  </span>
+                  <span className="text-[10px] text-amber-700 font-semibold">Enables 1-Click Buy on Video!</span>
+                </label>
+                <select
+                  value={reelProductId}
+                  onChange={(e) => setReelProductId(e.target.value)}
+                  className="w-full h-9 px-3 rounded-xl border border-stone-200 text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
+                >
+                  <option value="">-- Choose a jewellery piece --</option>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsReelModalOpen(false)}
+                  className="rounded-full text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSavingReel}
+                  className="rounded-full bg-gradient-to-r from-pink-600 to-amber-600 hover:from-pink-700 hover:to-amber-700 text-white font-bold text-xs px-6 shadow-md"
+                >
+                  {isSavingReel ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      Saving Reel...
+                    </>
+                  ) : (
+                    'Save & Publish Reel'
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
@@ -479,7 +995,7 @@ export default function AdminMediaPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/jpeg,image/png,image/webp,video/mp4"
                   onChange={handleFileChange}
                   className="hidden"
                 />
@@ -497,8 +1013,8 @@ export default function AdminMediaPage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-stone-600">
                       <Upload className="h-5 w-5" />
                     </div>
-                    <p className="text-xs font-bold text-stone-800">Drag &amp; drop or click to choose photo</p>
-                    <p className="text-[10px] text-stone-400">JPG, PNG, WEBP up to 10MB</p>
+                    <p className="text-xs font-bold text-stone-800">Drag &amp; drop or click to choose file</p>
+                    <p className="text-[10px] text-stone-400">JPG, PNG, WEBP, or MP4 video</p>
                   </div>
                 )}
               </div>
@@ -515,6 +1031,7 @@ export default function AdminMediaPage() {
                     <option value="products">products/ (Product Gallery)</option>
                     <option value="categories">categories/ (Category Banners)</option>
                     <option value="banners">banners/ (Hero &amp; Promos)</option>
+                    <option value="videos">videos/ (Reels &amp; MP4 Clips)</option>
                     <option value="uploads">uploads/ (General Media)</option>
                   </select>
                 </div>
@@ -635,7 +1152,7 @@ export default function AdminMediaPage() {
                 <input
                   ref={replaceInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/jpeg,image/png,image/webp,video/mp4"
                   onChange={(e) => setReplaceFile(e.target.files?.[0] || null)}
                   className="hidden"
                 />
@@ -649,7 +1166,7 @@ export default function AdminMediaPage() {
                 ) : (
                   <div className="flex flex-col items-center gap-1">
                     <Upload className="h-6 w-6 text-stone-400 mb-1" />
-                    <p className="text-xs font-bold text-stone-800">Select replacement photo</p>
+                    <p className="text-xs font-bold text-stone-800">Select replacement file</p>
                     <p className="text-[10px] text-stone-400">Click to browse</p>
                   </div>
                 )}
@@ -679,7 +1196,7 @@ export default function AdminMediaPage() {
         </div>
       )}
 
-      {/* ── Delete Confirm Modal ── */}
+      {/* ── Delete Confirm Modal (Image) ── */}
       {deletingItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <div className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl border border-stone-200 animate-in zoom-in-95">
@@ -708,6 +1225,41 @@ export default function AdminMediaPage() {
                 className="rounded-full bg-rose-600 text-white hover:bg-rose-700 text-xs"
               >
                 {isDeleting ? 'Deleting...' : 'Delete Image'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Confirm Modal (Reel) ── */}
+      {deletingReelId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl border border-stone-200 animate-in zoom-in-95">
+            <div className="flex items-center gap-2.5 text-rose-600 mb-3">
+              <AlertCircle className="h-5 w-5" />
+              <h3 className="text-sm font-bold text-stone-900">Delete Reel?</h3>
+            </div>
+
+            <p className="text-xs text-stone-600 leading-relaxed">
+              Are you sure you want to remove this reel from the #JhumkaJunction IRL carousel?
+            </p>
+
+            <div className="flex items-center justify-end gap-2 mt-5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeletingReelId(null)}
+                className="rounded-full text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleDeleteReelConfirm}
+                disabled={isDeleting}
+                className="rounded-full bg-rose-600 text-white hover:bg-rose-700 text-xs font-bold"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Reel'}
               </Button>
             </div>
           </div>

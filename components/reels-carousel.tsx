@@ -123,13 +123,25 @@ export const REELS_DATA: ReelItem[] = [
 ];
 
 export function ReelsCarousel() {
+  const [reels, setReels] = useState<ReelItem[]>(REELS_DATA);
   const [activeReelIndex, setActiveReelIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const modalVideoRef = useRef<HTMLVideoElement | null>(null);
 
-  const activeReel = activeReelIndex !== null ? REELS_DATA[activeReelIndex] : null;
+  useEffect(() => {
+    fetch('/api/reels')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.reels) && data.reels.length > 0) {
+          setReels(data.reels);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const activeReel = activeReelIndex !== null ? reels[activeReelIndex] : null;
 
   // Keyboard navigation when modal is open
   useEffect(() => {
@@ -139,9 +151,9 @@ export function ReelsCarousel() {
       if (e.key === 'Escape') {
         setActiveReelIndex(null);
       } else if (e.key === 'ArrowRight') {
-        setActiveReelIndex(prev => (prev !== null && prev < REELS_DATA.length - 1 ? prev + 1 : 0));
+        setActiveReelIndex(prev => (prev !== null && prev < reels.length - 1 ? prev + 1 : 0));
       } else if (e.key === 'ArrowLeft') {
-        setActiveReelIndex(prev => (prev !== null && prev > 0 ? prev - 1 : REELS_DATA.length - 1));
+        setActiveReelIndex(prev => (prev !== null && prev > 0 ? prev - 1 : reels.length - 1));
       } else if (e.key === ' ') {
         e.preventDefault();
         togglePlayPause();
@@ -210,7 +222,7 @@ export function ReelsCarousel() {
 
       {/* Reels Grid */}
       <div className="flex sm:grid sm:grid-cols-2 md:grid-cols-4 gap-4 overflow-x-auto pb-4 sm:pb-0 scrollbar-hide snap-x snap-mandatory">
-        {REELS_DATA.map((reel, index) => (
+        {reels.map((reel, index) => (
           <ReelCard
             key={reel.id}
             reel={reel}
@@ -307,13 +319,13 @@ export function ReelsCarousel() {
               </div>
 
               {/* Previous / Next Reel Buttons */}
-              {REELS_DATA.length > 1 && (
+              {reels.length > 1 && (
                 <>
                   <button
                     type="button"
                     onClick={e => {
                       e.stopPropagation();
-                      setActiveReelIndex(prev => (prev !== null && prev > 0 ? prev - 1 : REELS_DATA.length - 1));
+                      setActiveReelIndex(prev => (prev !== null && prev > 0 ? prev - 1 : reels.length - 1));
                     }}
                     className="absolute left-2.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100"
                     aria-label="Previous reel"
@@ -324,7 +336,7 @@ export function ReelsCarousel() {
                     type="button"
                     onClick={e => {
                       e.stopPropagation();
-                      setActiveReelIndex(prev => (prev !== null && prev < REELS_DATA.length - 1 ? prev + 1 : 0));
+                      setActiveReelIndex(prev => (prev !== null && prev < reels.length - 1 ? prev + 1 : 0));
                     }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100"
                     aria-label="Next reel"
