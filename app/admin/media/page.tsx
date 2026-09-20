@@ -22,6 +22,9 @@ import {
   Instagram,
   Heart,
   ShoppingBag,
+  Volume2,
+  VolumeX,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -101,10 +104,16 @@ export default function AdminMediaPage() {
   // Copied state
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
 
+  // Preview Reel modal state
+  const [previewReel, setPreviewReel] = useState<ReelItem | null>(null);
+  const [isModalMuted, setIsModalMuted] = useState(false);
+  const [isModalPlaying, setIsModalPlaying] = useState(true);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const reelVideoInputRef = useRef<HTMLInputElement>(null);
   const reelThumbInputRef = useRef<HTMLInputElement>(null);
+  const adminVideoRef = useRef<HTMLVideoElement>(null);
 
   const fetchMedia = async () => {
     setLoading(true);
@@ -437,37 +446,60 @@ export default function AdminMediaPage() {
       </div>
 
       {/* ── Filter & Search Toolbar ── */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-stone-50/80 p-3 rounded-2xl border border-stone-200/80">
-        <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-stone-900/95 text-stone-200 p-3 rounded-2xl border border-stone-800 shadow-md">
+        <div className="flex flex-wrap items-center gap-2">
           {[
-            { id: 'all', label: 'All Photos', count: counts.total },
-            { id: 'reels', label: '✨ Reels & Videos', count: reels.length },
-            { id: 'products', label: 'Products', count: counts.products },
-            { id: 'categories', label: 'Categories', count: counts.categories },
-            { id: 'banners', label: 'Banners & Hero', count: counts.banners },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setSelectedFolder(tab.id)}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition-all whitespace-nowrap ${
-                selectedFolder === tab.id
-                  ? 'bg-stone-900 text-white shadow-sm'
-                  : 'text-stone-600 hover:bg-stone-200/70'
-              }`}
-            >
-              {tab.label} ({tab.count})
-            </button>
-          ))}
+            { id: 'all', label: 'All Photos', count: counts.total, isReels: false },
+            { id: 'reels', label: '✨ Reels & Videos', count: reels.length, isReels: true },
+            { id: 'products', label: 'Products', count: counts.products, isReels: false },
+            { id: 'categories', label: 'Categories', count: counts.categories, isReels: false },
+            { id: 'banners', label: 'Banners & Hero', count: counts.banners, isReels: false },
+          ].map((tab) => {
+            const isActive = selectedFolder === tab.id;
+            let tabClass = '';
+            let badgeClass = '';
+
+            if (tab.isReels) {
+              if (isActive) {
+                tabClass = 'bg-gradient-to-r from-pink-600 via-rose-600 to-amber-500 text-white font-black shadow-lg border border-pink-400/50 scale-[1.02]';
+                badgeClass = 'bg-black/30 text-white font-black';
+              } else {
+                tabClass = 'bg-pink-950/40 text-pink-300 font-bold border border-pink-500/30 hover:bg-pink-900/50 hover:text-white';
+                badgeClass = 'bg-pink-900/60 text-pink-200';
+              }
+            } else {
+              if (isActive) {
+                tabClass = 'bg-amber-400 text-stone-950 font-black shadow-md border border-amber-300 scale-[1.02]';
+                badgeClass = 'bg-stone-900 text-amber-300 font-bold';
+              } else {
+                tabClass = 'bg-stone-800/80 text-stone-300 font-semibold border border-stone-700/80 hover:bg-stone-800 hover:text-white';
+                badgeClass = 'bg-stone-950/80 text-stone-400';
+              }
+            }
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedFolder(tab.id)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs rounded-full transition-all duration-200 whitespace-nowrap ${tabClass}`}
+              >
+                <span>{tab.label}</span>
+                <span className={`px-1.5 py-0.5 text-[10px] rounded-full leading-none ${badgeClass}`}>
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-stone-400" />
+        <div className="relative w-full lg:w-72">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-stone-400" />
           <Input
             type="text"
-            placeholder="Search files, reels, or tags..."
+            placeholder="Search media, reels, products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8 pl-8 text-xs rounded-full bg-white border-stone-200"
+            className="h-9 pl-9 pr-3 text-xs rounded-full bg-stone-950 border-stone-700 text-white placeholder:text-stone-500 focus:border-amber-400 focus:ring-amber-400"
           />
         </div>
       </div>
@@ -515,18 +547,33 @@ export default function AdminMediaPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
               {filteredReels.map((reel) => (
                 <div
                   key={reel.id}
-                  className="group relative flex flex-col rounded-2xl border border-stone-800 bg-stone-950 overflow-hidden shadow-md hover:border-amber-500/50 transition-all text-white"
+                  onClick={() => {
+                    setPreviewReel(reel);
+                    setIsModalPlaying(true);
+                    setIsModalMuted(false);
+                  }}
+                  className="group relative flex flex-col rounded-2xl border border-stone-800 bg-stone-950 overflow-hidden shadow-xl hover:border-amber-400/80 hover:shadow-2xl transition-all duration-300 text-white cursor-pointer"
                 >
                   {/* 9:16 Video / Poster box */}
                   <div className="relative aspect-[9/16] w-full bg-stone-900 overflow-hidden">
-                    {reel.videoUrl ? (
+                    {/* Always visible base image poster */}
+                    <Image
+                      src={reel.thumbnail || 'https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/vibes/garba-glam.jpg'}
+                      alt={reel.title}
+                      fill
+                      unoptimized
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+
+                    {/* Smooth video layer for direct video links */}
+                    {reel.videoUrl && (
                       <video
                         src={reel.videoUrl}
-                        poster={reel.thumbnail}
+                        preload="metadata"
                         muted
                         loop
                         playsInline
@@ -536,74 +583,89 @@ export default function AdminMediaPage() {
                           v.pause();
                           v.currentTime = 0;
                         }}
-                        className="h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
                       />
-                    ) : (
-                      <Image src={reel.thumbnail} alt={reel.title} fill className="object-cover" />
                     )}
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/50 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-black/20 to-black/60 pointer-events-none" />
 
-                    {/* Top: Creator pill */}
-                    <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
-                      <div className="flex items-center gap-1.5 rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-[11px] text-stone-100 border border-white/10">
+                    {/* Top: Creator pill & Likes */}
+                    <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10 pointer-events-none">
+                      <div className="flex items-center gap-1.5 rounded-full bg-stone-950/80 backdrop-blur-md px-2.5 py-1 text-[11px] text-stone-100 border border-white/15 shadow-sm">
                         <div className="relative h-4 w-4 overflow-hidden rounded-full border border-amber-400">
-                          <Image src={reel.avatar} alt={reel.creator} fill sizes="16px" className="object-cover" />
+                          <Image src={reel.avatar || 'https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/ui/avatar-ananya.jpg'} alt={reel.creator} fill sizes="16px" className="object-cover" />
                         </div>
-                        <span className="font-bold truncate max-w-[80px]">{reel.handle}</span>
+                        <span className="font-bold truncate max-w-[85px]">{reel.handle || reel.creator}</span>
                       </div>
 
-                      <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-md bg-pink-600/90 text-white backdrop-blur-xs flex items-center gap-1">
-                        <Heart className="h-2.5 w-2.5 fill-white" /> {reel.likes}
+                      <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-pink-600/90 text-white backdrop-blur-md flex items-center gap-1 shadow-sm">
+                        <Heart className="h-3 w-3 fill-white" /> {reel.likes}
                       </span>
                     </div>
 
                     {/* Type badge */}
-                    <div className="absolute top-10 left-2.5 z-10">
+                    <div className="absolute top-11 left-2.5 z-10 pointer-events-none">
                       {reel.videoUrl ? (
-                        <span className="px-2 py-0.5 text-[9px] font-bold rounded-md bg-emerald-600/90 text-white flex items-center gap-1">
+                        <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wide rounded-md bg-emerald-600/90 text-white flex items-center gap-1 shadow-sm">
                           <Video className="h-2.5 w-2.5" /> MP4 Video
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 text-[9px] font-bold rounded-md bg-purple-600/90 text-white flex items-center gap-1">
+                        <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wide rounded-md bg-gradient-to-r from-purple-600 to-pink-600 text-white flex items-center gap-1 shadow-sm">
                           <Instagram className="h-2.5 w-2.5" /> Insta Link
                         </span>
                       )}
                     </div>
 
-                    {/* Center play icon */}
-                    <div className="absolute inset-0 m-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md text-white border border-white/30 pointer-events-none">
-                      <Play className="h-4 w-4 fill-white ml-0.5" />
+                    {/* Center play icon with glow */}
+                    <div className="absolute inset-0 m-auto flex h-12 w-12 items-center justify-center rounded-full bg-stone-950/60 backdrop-blur-md text-amber-300 border border-amber-400/40 shadow-xl group-hover:scale-110 group-hover:bg-gradient-to-r group-hover:from-pink-600 group-hover:to-amber-500 group-hover:text-white group-hover:border-transparent transition-all duration-300 pointer-events-none">
+                      <Play className="h-5 w-5 fill-current ml-0.5" />
                     </div>
 
                     {/* Bottom: Caption & Tagged product */}
-                    <div className="absolute bottom-2.5 left-2.5 right-2.5 space-y-1.5 z-10">
-                      <p className="text-xs font-semibold text-white line-clamp-2 drop-shadow">
+                    <div className="absolute bottom-2.5 left-2.5 right-2.5 space-y-2 z-10 pointer-events-none">
+                      <p className="text-xs font-semibold text-white line-clamp-2 drop-shadow-md leading-snug">
                         {reel.title}
                       </p>
 
-                      <div className="flex items-center justify-between rounded-xl bg-white/95 backdrop-blur-md p-2 text-xs text-stone-900 shadow-md">
-                        <div className="truncate mr-2">
-                          <p className="truncate font-bold text-[10px] text-stone-900">{reel.taggedProduct?.name}</p>
-                          <p className="text-[9px] font-black text-rani">₹{reel.taggedProduct?.price}</p>
+                      {reel.taggedProduct && (
+                        <div className="flex items-center justify-between rounded-xl bg-white/95 backdrop-blur-md p-2 text-xs text-stone-900 shadow-lg border border-stone-200/50">
+                          <div className="truncate mr-2">
+                            <p className="truncate font-bold text-[11px] text-stone-900">{reel.taggedProduct.name}</p>
+                            <p className="text-[10px] font-black text-rose-600">₹{reel.taggedProduct.price}</p>
+                          </div>
+                          <span className="rounded-lg bg-stone-900 p-1.5 text-white shrink-0 shadow-sm">
+                            <ShoppingBag className="h-3 w-3" />
+                          </span>
                         </div>
-                        <span className="rounded-lg bg-stone-900 p-1 text-white">
-                          <ShoppingBag className="h-2.5 w-2.5" />
-                        </span>
-                      </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Card footer actions */}
-                  <div className="p-3 bg-stone-900 border-t border-stone-800 flex items-center justify-between gap-1">
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-3 bg-stone-900 border-t border-stone-800 flex items-center justify-between gap-1 text-xs"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewReel(reel);
+                        setIsModalPlaying(true);
+                        setIsModalMuted(false);
+                      }}
+                      className="px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:text-white bg-stone-800 hover:bg-stone-700 rounded-lg flex items-center gap-1 transition-colors"
+                    >
+                      <Eye className="h-3.5 w-3.5" /> Preview
+                    </button>
+
                     {reel.instagramUrl && (
                       <a
                         href={reel.instagramUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[10px] font-bold text-pink-400 hover:text-pink-300 flex items-center gap-1"
+                        className="text-[11px] font-bold text-pink-400 hover:text-pink-300 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-pink-950/40 transition-colors"
                       >
-                        <Instagram className="h-3 w-3" /> View Reel
+                        <Instagram className="h-3.5 w-3.5" /> Reel
                       </a>
                     )}
 
@@ -611,9 +673,10 @@ export default function AdminMediaPage() {
                       <button
                         type="button"
                         onClick={() => handleCopyUrl(reel.videoUrl!, reel.id)}
-                        className="text-[10px] font-bold text-stone-400 hover:text-white flex items-center gap-1"
+                        className="text-[11px] font-bold text-stone-400 hover:text-white flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-stone-800 transition-colors"
+                        title="Copy direct MP4 video URL"
                       >
-                        <Copy className="h-3 w-3" /> Copy URL
+                        <Copy className="h-3.5 w-3.5" /> Copy
                       </button>
                     )}
 
@@ -622,6 +685,7 @@ export default function AdminMediaPage() {
                       size="sm"
                       onClick={() => setDeletingReelId(reel.id)}
                       className="h-7 px-2 text-[11px] text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 rounded-lg ml-auto"
+                      title="Delete Reel"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -1261,6 +1325,135 @@ export default function AdminMediaPage() {
               >
                 {isDeleting ? 'Deleting...' : 'Delete Reel'}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Admin Video & Reel Preview Modal ── */}
+      {previewReel && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in-0 duration-200"
+          onClick={() => setPreviewReel(null)}
+        >
+          <div
+            className="relative flex flex-col md:flex-row w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-3xl bg-stone-950 border border-stone-800 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setPreviewReel(null)}
+              className="absolute top-4 right-4 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md hover:bg-black/90 hover:scale-105 transition-all border border-white/20"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* Left: 9:16 Video Player */}
+            <div className="relative aspect-[9/16] w-full md:w-[320px] shrink-0 bg-black overflow-hidden flex items-center justify-center">
+              {previewReel.videoUrl ? (
+                <video
+                  ref={adminVideoRef}
+                  src={previewReel.videoUrl}
+                  poster={previewReel.thumbnail}
+                  autoPlay
+                  loop
+                  playsInline
+                  muted={isModalMuted}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={previewReel.thumbnail || 'https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/vibes/garba-glam.jpg'}
+                  alt={previewReel.title}
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+              )}
+
+              {/* Sound toggle overlay if video */}
+              {previewReel.videoUrl && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (adminVideoRef.current) {
+                      adminVideoRef.current.muted = !adminVideoRef.current.muted;
+                      setIsModalMuted(adminVideoRef.current.muted);
+                    }
+                  }}
+                  className="absolute top-4 left-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md hover:bg-black/80 transition-all border border-white/20"
+                  title={isModalMuted ? 'Unmute' : 'Mute'}
+                >
+                  {isModalMuted ? <VolumeX className="h-4 w-4 text-rose-400" /> : <Volume2 className="h-4 w-4 text-emerald-400" />}
+                </button>
+              )}
+            </div>
+
+            {/* Right: Reel Meta & Product Details */}
+            <div className="flex-1 p-6 flex flex-col justify-between bg-stone-900 text-white space-y-4 overflow-y-auto">
+              <div>
+                <div className="flex items-center gap-3 border-b border-stone-800 pb-4">
+                  <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-amber-400 shadow-md">
+                    <Image
+                      src={previewReel.avatar || 'https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/ui/avatar-ananya.jpg'}
+                      alt={previewReel.creator}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-white">{previewReel.creator}</h3>
+                    <p className="text-xs text-amber-400 font-medium">{previewReel.handle}</p>
+                  </div>
+                  <span className="ml-auto px-2.5 py-1 text-xs font-black rounded-full bg-pink-600/90 text-white flex items-center gap-1 shadow-sm">
+                    <Heart className="h-3 w-3 fill-white" /> {previewReel.likes}
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm text-stone-200 leading-relaxed font-sans">{previewReel.title}</p>
+                  <p className="text-[11px] text-stone-500 font-mono">#JhumkaJunction #OxidisedJewellery #FestiveDrop</p>
+                </div>
+
+                {previewReel.instagramUrl && (
+                  <div className="mt-4">
+                    <a
+                      href={previewReel.instagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl bg-pink-950/50 border border-pink-500/40 px-3.5 py-2 text-xs font-bold text-pink-200 hover:text-white hover:bg-pink-900/60 transition-all"
+                    >
+                      <Instagram className="h-4 w-4 text-pink-400" />
+                      <span>View original styling reel on Instagram</span>
+                      <ExternalLink className="h-3 w-3 ml-1 text-stone-400" />
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {previewReel.taggedProduct && (
+                <div className="rounded-2xl bg-stone-950 border border-stone-800 p-4 space-y-3 shadow-xl">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                    <Sparkles className="h-3.5 w-3.5" /> Featured Jewellery Piece
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-stone-800 bg-stone-900">
+                      <Image
+                        src={previewReel.taggedProduct.image || 'https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/categories/chandbali-jhumkas.jpg'}
+                        alt={previewReel.taggedProduct.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-white truncate">{previewReel.taggedProduct.name}</p>
+                      <p className="text-sm font-black text-amber-300 mt-0.5">₹{previewReel.taggedProduct.price}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
