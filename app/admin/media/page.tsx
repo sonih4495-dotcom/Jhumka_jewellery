@@ -675,45 +675,40 @@ export default function AdminMediaPage() {
                 >
                   {/* 9:16 Video / Poster box */}
                   <div className="relative aspect-[9/16] w-full bg-stone-900 overflow-hidden">
-                    {/* Always visible base image poster */}
-                    <Image
-                      src={reel.thumbnail || 'https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/vibes/garba-glam.jpg'}
-                      alt={reel.title}
-                      fill
-                      unoptimized
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-
-                    {/* Smooth video layer for direct video links */}
-                    {reel.videoUrl && (
+                    {/* Smooth video layer for direct video links or fallback image */}
+                    {reel.videoUrl ? (
                       <video
                         src={reel.videoUrl}
-                        preload="metadata"
+                        poster={reel.thumbnail}
+                        autoPlay
                         muted
                         loop
                         playsInline
-                        onMouseEnter={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
-                        onMouseLeave={(e) => {
-                          const v = e.target as HTMLVideoElement;
-                          v.pause();
-                          v.currentTime = 0;
-                        }}
-                        className="absolute inset-0 h-full w-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
+                        preload="auto"
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <Image
+                        src={reel.thumbnail || 'https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/vibes/garba-glam.jpg'}
+                        alt={reel.title}
+                        fill
+                        unoptimized
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     )}
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-black/20 to-black/60 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950/95 via-stone-950/30 to-stone-950/60 pointer-events-none" />
 
                     {/* Top: Creator pill & Likes */}
                     <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10 pointer-events-none">
-                      <div className="flex items-center gap-1.5 rounded-full bg-stone-950/80 backdrop-blur-md px-2.5 py-1 text-[11px] text-stone-100 border border-white/15 shadow-sm">
+                      <div className="flex items-center gap-1.5 rounded-full bg-stone-950/85 backdrop-blur-md px-2.5 py-1 text-[11px] text-stone-100 border border-white/20 shadow-md">
                         <div className="relative h-4 w-4 overflow-hidden rounded-full border border-amber-400">
                           <Image src={reel.avatar || 'https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery/ui/avatar-ananya.jpg'} alt={reel.creator} fill sizes="16px" className="object-cover" />
                         </div>
                         <span className="font-bold truncate max-w-[85px]">{reel.handle || reel.creator}</span>
                       </div>
 
-                      <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-pink-600/90 text-white backdrop-blur-md flex items-center gap-1 shadow-sm">
+                      <span className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-pink-600/90 text-white backdrop-blur-md flex items-center gap-1 shadow-md border border-pink-400/30">
                         <Heart className="h-3 w-3 fill-white" /> {reel.likes}
                       </span>
                     </div>
@@ -721,34 +716,34 @@ export default function AdminMediaPage() {
                     {/* Type badge */}
                     <div className="absolute top-11 left-2.5 z-10 pointer-events-none">
                       {reel.videoUrl ? (
-                        <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wide rounded-md bg-emerald-600/90 text-white flex items-center gap-1 shadow-sm">
-                          <Video className="h-2.5 w-2.5" /> MP4 Video
+                        <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wide rounded-md bg-emerald-600 text-white flex items-center gap-1 shadow-md border border-emerald-400/30">
+                          <Video className="h-2.5 w-2.5" /> MP4 Video (Live)
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wide rounded-md bg-gradient-to-r from-purple-600 to-pink-600 text-white flex items-center gap-1 shadow-sm">
+                        <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wide rounded-md bg-gradient-to-r from-purple-600 to-pink-600 text-white flex items-center gap-1 shadow-md border border-purple-400/30">
                           <Instagram className="h-2.5 w-2.5" /> Insta Link
                         </span>
                       )}
                     </div>
 
                     {/* Center play icon with glow */}
-                    <div className="absolute inset-0 m-auto flex h-12 w-12 items-center justify-center rounded-full bg-stone-950/60 backdrop-blur-md text-amber-300 border border-amber-400/40 shadow-xl group-hover:scale-110 group-hover:bg-gradient-to-r group-hover:from-pink-600 group-hover:to-amber-500 group-hover:text-white group-hover:border-transparent transition-all duration-300 pointer-events-none">
+                    <div className="absolute inset-0 m-auto flex h-12 w-12 items-center justify-center rounded-full bg-stone-950/70 backdrop-blur-md text-amber-300 border border-amber-400/50 shadow-2xl group-hover:scale-110 group-hover:bg-gradient-to-r group-hover:from-pink-600 group-hover:to-amber-500 group-hover:text-white group-hover:border-transparent transition-all duration-300 pointer-events-none">
                       <Play className="h-5 w-5 fill-current ml-0.5" />
                     </div>
 
                     {/* Bottom: Caption & Tagged product */}
                     <div className="absolute bottom-2.5 left-2.5 right-2.5 space-y-2 z-10 pointer-events-none">
-                      <p className="text-xs font-semibold text-white line-clamp-2 drop-shadow-md leading-snug">
+                      <p className="text-xs font-bold text-stone-100 line-clamp-2 drop-shadow-md leading-snug">
                         {reel.title}
                       </p>
 
                       {reel.taggedProduct && (
-                        <div className="flex items-center justify-between rounded-xl bg-white/95 backdrop-blur-md p-2 text-xs text-stone-900 shadow-lg border border-stone-200/50">
+                        <div className="flex items-center justify-between rounded-xl bg-stone-900/90 backdrop-blur-md p-2 text-xs text-white shadow-xl border border-stone-700/80">
                           <div className="truncate mr-2">
-                            <p className="truncate font-bold text-[11px] text-stone-900">{reel.taggedProduct.name}</p>
-                            <p className="text-[10px] font-black text-rose-600">₹{reel.taggedProduct.price}</p>
+                            <p className="truncate font-bold text-[11px] text-white">{reel.taggedProduct.name}</p>
+                            <p className="text-[10px] font-black text-amber-400">₹{reel.taggedProduct.price}</p>
                           </div>
-                          <span className="rounded-lg bg-stone-900 p-1.5 text-white shrink-0 shadow-sm">
+                          <span className="rounded-lg bg-amber-500 p-1.5 text-stone-950 font-black shrink-0 shadow-sm">
                             <ShoppingBag className="h-3 w-3" />
                           </span>
                         </div>
