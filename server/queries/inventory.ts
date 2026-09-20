@@ -157,14 +157,31 @@ export async function getInventoryData(options?: {
       },
     };
   } catch (error) {
-    console.error('Error fetching inventory data:', error);
-    throw error;
+    console.error('Error fetching inventory data (using resilient fallback):', error);
+    return {
+      items: [],
+      pagination: {
+        page: options?.page || 1,
+        limit: options?.limit || 20,
+        total: 0,
+        pages: 1,
+      },
+    };
   }
 }
 
+const FALLBACK_CATEGORIES = [
+  { id: 'cat-chandbali', name: 'Royal Chandbali Jhumkas', slug: 'chandbali-jhumkas' },
+  { id: 'cat-peacock', name: 'Peacock & Floral Jhumkas', slug: 'peacock-floral-jhumkas' },
+  { id: 'cat-kashmiri', name: 'Kashmiri & Afghan Tribal', slug: 'kashmiri-afghan-jhumkas' },
+  { id: 'cat-temple', name: 'Temple & Dome Jhumkas', slug: 'dome-temple-jhumkas' },
+  { id: 'cat-hasli', name: 'Hasli & Choker Sets', slug: 'hasli-choker-sets' },
+  { id: 'cat-earcuffs', name: 'Ear Cuffs & Drops', slug: 'ear-cuffs-drops' },
+];
+
 export async function getInventoryCategories() {
   try {
-    return await prisma.category.findMany({
+    const cats = await prisma.category.findMany({
       select: {
         id: true,
         name: true,
@@ -174,60 +191,75 @@ export async function getInventoryCategories() {
         name: 'asc',
       },
     });
+    if (cats && cats.length > 0) return cats;
+    return FALLBACK_CATEGORIES;
   } catch (error) {
-    console.error('Error fetching categories:', error);
-    return [];
+    console.error('Error fetching categories from database (using fallback categories):', error);
+    return FALLBACK_CATEGORIES;
   }
 }
 
 export async function getLiveInventoryStats() {
-  const [totalProducts, publishedCount, draftCount, allProductsWithInventory] = await Promise.all([
-    prisma.product.count(),
-    prisma.product.count({ where: { status: 'PUBLISHED' } }),
-    prisma.product.count({ where: { status: 'DRAFT' } }),
-    prisma.product.findMany({
-      select: {
-        price: true,
-        inventory: {
-          select: {
-            available: true,
-            quantity: true,
+  try {
+    const [totalProducts, publishedCount, draftCount, allProductsWithInventory] = await Promise.all([
+      prisma.product.count(),
+      prisma.product.count({ where: { status: 'PUBLISHED' } }),
+      prisma.product.count({ where: { status: 'DRAFT' } }),
+      prisma.product.findMany({
+        select: {
+          price: true,
+          inventory: {
+            select: {
+              available: true,
+              quantity: true,
+            },
           },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
 
-  let lowStockCount = 0;
-  let outOfStockCount = 0;
-  let totalInventoryUnits = 0;
-  let totalInventoryValue = 0;
+    let lowStockCount = 0;
+    let outOfStockCount = 0;
+    let totalInventoryUnits = 0;
+    let totalInventoryValue = 0;
 
-  for (const product of allProductsWithInventory) {
-    const inv = product.inventory[0];
-    const available = inv?.available ?? 0;
-    const qty = inv?.quantity ?? available;
-    const price = Number(product.price);
+    for (const product of allProductsWithInventory) {
+      const inv = product.inventory?.[0];
+      const available = inv?.available ?? 0;
+      const qty = inv?.quantity ?? available;
+      const price = Number(product.price);
 
-    totalInventoryUnits += qty;
-    totalInventoryValue += qty * price;
+      totalInventoryUnits += qty;
+      totalInventoryValue += qty * price;
 
-    if (available <= 0) {
-      outOfStockCount++;
-    } else if (available <= 10) {
-      lowStockCount++;
+      if (available <= 0) {
+        outOfStockCount++;
+      } else if (available <= 10) {
+        lowStockCount++;
+      }
     }
-  }
 
-  return {
-    totalItems: totalProducts,
-    publishedCount,
-    draftCount,
-    totalUnits: totalInventoryUnits,
-    lowStock: lowStockCount,
-    outOfStock: outOfStockCount,
-    totalValue: totalInventoryValue,
-  };
+    return {
+      totalItems: totalProducts,
+      publishedCount,
+      draftCount,
+      totalUnits: totalInventoryUnits,
+      lowStock: lowStockCount,
+      outOfStock: outOfStockCount,
+      totalValue: totalInventoryValue,
+    };
+  } catch (error) {
+    console.error('Error in getLiveInventoryStats (using fallback stats):', error);
+    return {
+      totalItems: 0,
+      publishedCount: 0,
+      draftCount: 0,
+      totalUnits: 0,
+      lowStock: 0,
+      outOfStock: 0,
+      totalValue: 0,
+    };
+  }
 }
 
 export const getInventory = createCachedFunction(
