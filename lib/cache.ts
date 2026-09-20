@@ -22,7 +22,7 @@ export const createCachedFunction = <T extends any[], R>(
   tags: CacheTag[],
   revalidate?: number
 ) => {
-  return unstable_cache(fn, undefined, {
+  return unstable_cache(fn, tags, {
     tags,
     revalidate,
   });

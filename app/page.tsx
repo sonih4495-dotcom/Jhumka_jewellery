@@ -127,9 +127,14 @@ const VIBE_BACKGROUNDS: Record<string, string> = {
 };
 
 async function FeaturedProductsSection() {
-  const products = await getFeaturedProducts();
+  let products: any[] = [];
+  try {
+    products = await getFeaturedProducts();
+  } catch (err) {
+    console.error('Failed to load featured products:', err);
+  }
 
-  if (!products.length) {
+  if (!products || !products.length) {
     return (
       <div className="py-12 text-center">
         <p className="text-xs text-stone-500">Curating the latest silver drops...</p>
@@ -160,9 +165,14 @@ async function FeaturedProductsSection() {
 }
 
 async function NewProductsSection() {
-  const products = await getNewProducts(8);
+  let products: any[] = [];
+  try {
+    products = await getNewProducts(8);
+  } catch (err) {
+    console.error('Failed to load new products:', err);
+  }
 
-  if (!products.length) {
+  if (!products || !products.length) {
     return null;
   }
 
