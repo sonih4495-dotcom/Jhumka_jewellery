@@ -1,25 +1,22 @@
-// File: app/admin/inventory/page.tsx
+// Location: app/admin/inventory/page.tsx
 import { Suspense } from 'react';
+import Link from 'next/link';
 import {
   Search,
   Filter,
   AlertTriangle,
-  TrendingUp,
   Package,
+  TrendingUp,
+  Layers,
+  Sparkles,
+  IndianRupee,
 } from 'lucide-react';
-import { getInventoryData } from '@/server/queries/inventory';
+import { getInventoryData, getLiveInventoryStats } from '@/server/queries/inventory';
 import { InventoryDataTable } from '@/components/inventory-data-table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { formatCurrency } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +29,7 @@ interface AdminInventoryPageProps {
   }>;
 }
 
-async function InventoryList({
+async function InventoryListSection({
   searchParams,
 }: {
   searchParams: Awaited<AdminInventoryPageProps['searchParams']>;
@@ -44,194 +41,157 @@ async function InventoryList({
 
   const result = await getInventoryData({
     page,
-    limit: 20,
+    limit: 25,
     search,
+    category,
     stockLevel,
   });
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Showing {(page - 1) * 20 + 1}-
-          {Math.min(page * 20, result.pagination.total)} of{' '}
-          {result.pagination.total} items
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-1">
+        <p className="text-xs text-gray-500">
+          Showing <strong className="text-gray-900">{(page - 1) * 25 + 1} - {Math.min(page * 25, result.pagination.total)}</strong> of{' '}
+          <strong className="text-gray-900">{result.pagination.total}</strong> products
         </p>
-        <div className="flex items-center space-x-2">
-          <Badge variant="outline">{result.pagination.total} items</Badge>
-        </div>
       </div>
 
-      <InventoryDataTable data={result.items} isLoading={false} />
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <InventoryDataTable items={result.items} pagination={result.pagination} />
+      </div>
     </div>
   );
 }
 
 export default async function AdminInventoryPage(props: AdminInventoryPageProps) {
   const searchParams = await props.searchParams;
+  const currentStockLevel = searchParams.stockLevel || 'all';
+
+  // Real-time dynamic stats directly from Supabase
+  const stats = await getLiveInventoryStats();
+
+  const STOCK_TABS = [
+    { label: 'All Products', value: 'all', count: stats.totalItems },
+    { label: 'Low Stock (≤10)', value: 'low-stock', count: stats.lowStock },
+    { label: 'Out of Stock (0)', value: 'out-of-stock', count: stats.outOfStock },
+    { label: 'In Stock (>10)', value: 'in-stock', count: Math.max(0, stats.totalItems - stats.lowStock - stats.outOfStock) },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Inventory Management
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
+            Inventory &amp; Stock Management
           </h1>
-          <p className="text-muted-foreground">
-            Monitor stock levels and manage inventory
+          <p className="text-xs sm:text-sm text-gray-500">
+            Real-time stock tracking, automatic order deductions, and quick inline stock adjustments.
           </p>
         </div>
-        <Button>Update Stock</Button>
       </div>
 
-      {/* Alerts */}
-      <div className="space-y-4">
-        <Alert className="border-red-200 bg-red-50">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertTitle className="text-red-800">Low Stock Alert</AlertTitle>
-          <AlertDescription className="text-red-700">
-            You have 23 products with low stock levels that need attention.
-          </AlertDescription>
-        </Alert>
-
-        <Alert className="border-yellow-200 bg-yellow-50">
-          <Package className="h-4 w-4 text-yellow-600" />
-          <AlertTitle className="text-yellow-800">
-            Reorder Suggestions
-          </AlertTitle>
-          <AlertDescription className="text-yellow-700">
-            8 products are recommended for reordering based on sales velocity.
-          </AlertDescription>
-        </Alert>
-      </div>
-
-      {/* Filters */}
-      <div className="flex items-center space-x-4">
-        <div className="relative max-w-sm flex-1">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search inventory..."
-            defaultValue={searchParams.search}
-            className="pl-9"
-          />
-        </div>
-
-        <Select defaultValue={searchParams.category || 'all'}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="rings">Rings</SelectItem>
-            <SelectItem value="earrings">Earrings</SelectItem>
-            <SelectItem value="necklaces">Necklaces</SelectItem>
-            <SelectItem value="anklets">Anklets</SelectItem>
-            <SelectItem value="bracelets">Bracelets</SelectItem>
-            <SelectItem value="combos">Combos</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select defaultValue={searchParams.stockLevel || 'all'}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Stock Level" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Levels</SelectItem>
-            <SelectItem value="in-stock">In Stock</SelectItem>
-            <SelectItem value="low-stock">Low Stock</SelectItem>
-            <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button variant="outline" size="sm">
-          <Filter className="mr-2 h-4 w-4" />
-          More Filters
-        </Button>
-      </div>
-
-      {/* Inventory Table */}
-      <div className="rounded-md border bg-white">
-        <Suspense
-          fallback={
-            <div className="p-8 text-center">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900"></div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Loading inventory...
-              </p>
-            </div>
-          }
-        >
-          <InventoryList searchParams={searchParams} />
-        </Suspense>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <div className="rounded-lg border bg-white p-6">
+      {/* Live Inventory Metrics Bar */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Total Items
-              </p>
-              <p className="text-2xl font-bold">1,234</p>
-              <p className="text-xs text-muted-foreground">
-                +12% from last month
-              </p>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-              <Package className="h-6 w-6 text-blue-600" />
-            </div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Items</span>
+            <Package className="h-4 w-4 text-blue-600" />
           </div>
+          <p className="mt-2 text-2xl font-black text-gray-900">{stats.totalItems}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">{stats.totalUnits} total units in catalog</p>
         </div>
 
-        <div className="rounded-lg border bg-white p-6">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Low Stock
-              </p>
-              <p className="text-2xl font-bold text-yellow-600">23</p>
-              <p className="text-xs text-muted-foreground">Needs attention</p>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
-              <AlertTriangle className="h-6 w-6 text-yellow-600" />
-            </div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">Low Stock Warning</span>
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
           </div>
+          <p className="mt-2 text-2xl font-black text-amber-900">{stats.lowStock}</p>
+          <p className="text-[10px] text-amber-700 mt-0.5">&le; 10 units remaining</p>
         </div>
 
-        <div className="rounded-lg border bg-white p-6">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Out of Stock
-              </p>
-              <p className="text-2xl font-bold text-red-600">8</p>
-              <p className="text-xs text-muted-foreground">Critical</p>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
-            </div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-800">Out of Stock</span>
+            <AlertTriangle className="h-4 w-4 text-rose-600" />
           </div>
+          <p className="mt-2 text-2xl font-black text-rose-900">{stats.outOfStock}</p>
+          <p className="text-[10px] text-rose-700 mt-0.5">0 units available</p>
         </div>
 
-        <div className="rounded-lg border bg-white p-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Total Value
-              </p>
-              <p className="text-2xl font-bold">$486K</p>
-              <p className="flex items-center text-xs text-green-600">
-                <TrendingUp className="mr-1 h-3 w-3" />
-                +8.2%
-              </p>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-              <TrendingUp className="h-6 w-6 text-green-600" />
-            </div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Inventory Valuation</span>
+            <IndianRupee className="h-4 w-4 text-emerald-600" />
           </div>
+          <p className="mt-2 text-2xl font-black text-emerald-700">{formatCurrency(stats.totalValue)}</p>
+          <p className="text-[10px] text-emerald-600 mt-0.5">● Live inventory asset value</p>
         </div>
       </div>
+
+      {/* Stock Filter Tabs & Search */}
+      <div className="space-y-3">
+        {/* Status Pills */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {STOCK_TABS.map(tab => {
+            const isSelected = currentStockLevel === tab.value;
+            const searchObj = new URLSearchParams();
+            if (tab.value !== 'all') searchObj.set('stockLevel', tab.value);
+            if (searchParams.search) searchObj.set('search', searchParams.search);
+            if (searchParams.category) searchObj.set('category', searchParams.category);
+
+            return (
+              <Link
+                key={tab.value}
+                href={`/admin/inventory${searchObj.toString() ? `?${searchObj.toString()}` : ''}`}
+                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold whitespace-nowrap transition-all ${
+                  isSelected
+                    ? 'bg-stone-900 text-white shadow-sm'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-900 hover:text-gray-900'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Search Bar */}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <form method="GET" className="relative flex-1 w-full">
+            {searchParams.stockLevel && (
+              <input type="hidden" name="stockLevel" value={searchParams.stockLevel} />
+            )}
+            <Search className="absolute left-3.5 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              name="search"
+              placeholder="Search inventory by product name, SKU, or tag..."
+              defaultValue={searchParams.search || ''}
+              className="pl-9 text-xs rounded-xl bg-white border-gray-200 shadow-xs"
+            />
+          </form>
+        </div>
+      </div>
+
+      {/* Inventory Table Container */}
+      <Suspense
+        fallback={
+          <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900"></div>
+            <p className="mt-3 text-xs text-gray-500 font-semibold">Loading live inventory from Supabase...</p>
+          </div>
+        }
+      >
+        <InventoryListSection searchParams={searchParams} />
+      </Suspense>
     </div>
   );
 }

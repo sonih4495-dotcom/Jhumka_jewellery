@@ -7,36 +7,38 @@ export async function getInventoryData(options?: {
   page?: number;
   limit?: number;
   search?: string;
+  category?: string;
   stockLevel?: string;
 }) {
   try {
-    const canRead = await hasPermission(PERMISSIONS.PRODUCT_READ);
-    if (!canRead) {
-      throw new Error('Unauthorized');
-    }
-
     const page = options?.page || 1;
     const limit = options?.limit || 20;
-    const search = options?.search || '';
+    const search = options?.search?.trim() || '';
+    const category = options?.category || '';
     const stockLevel = options?.stockLevel || '';
     const skip = (page - 1) * limit;
 
-    const where: any = { status: 'PUBLISHED' };
+    const where: any = {};
 
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { sku: { contains: search, mode: 'insensitive' } },
+        { tags: { hasSome: [search] } },
       ];
     }
 
-    if (stockLevel) {
-      if (stockLevel === 'low') {
-        where.inventory = { lte: 10 };
-      } else if (stockLevel === 'out') {
-        where.inventory = 0;
-      } else if (stockLevel === 'in') {
-        where.inventory = { gt: 10 };
+    if (category && category !== 'all') {
+      where.category = { slug: category };
+    }
+
+    if (stockLevel && stockLevel !== 'all') {
+      if (stockLevel === 'low-stock' || stockLevel === 'low') {
+        where.inventory = { some: { available: { lte: 10, gt: 0 } } };
+      } else if (stockLevel === 'out-of-stock' || stockLevel === 'out') {
+        where.inventory = { some: { available: { lte: 0 } } };
+      } else if (stockLevel === 'in-stock' || stockLevel === 'in') {
+        where.inventory = { some: { available: { gt: 10 } } };
       }
     }
 
@@ -46,12 +48,30 @@ export async function getInventoryData(options?: {
         select: {
           id: true,
           name: true,
+          slug: true,
           sku: true,
           price: true,
           status: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+          images: {
+            select: {
+              url: true,
+              altText: true,
+            },
+            take: 1,
+          },
           inventory: {
             select: {
+              id: true,
               available: true,
+              quantity: true,
+              reserved: true,
             },
           },
           createdAt: true,
@@ -67,18 +87,29 @@ export async function getInventoryData(options?: {
     ]);
 
     const items = products.map(product => {
-      const available = product.inventory?.[0]?.available ?? 0;
+      const inv = product.inventory?.[0];
+      const available = inv?.available ?? 0;
+      const totalQty = inv?.quantity ?? available;
+      const reserved = inv?.reserved ?? 0;
       let status: 'in-stock' | 'low-stock' | 'out-of-stock' = 'in-stock';
-      if (available === 0) status = 'out-of-stock';
-      else if (available < 10) status = 'low-stock';
+      if (available <= 0) status = 'out-of-stock';
+      else if (available <= 10) status = 'low-stock';
 
       return {
         id: product.id,
         name: product.name,
+        slug: product.slug,
         sku: product.sku || 'N/A',
+        price: Number(product.price),
+        image: product.images?.[0]?.url || '/images/placeholder.svg',
+        category: product.category?.name || 'Uncategorized',
+        categorySlug: product.category?.slug || '',
         quantity: available,
+        totalQuantity: totalQty,
+        reserved,
         reorderLevel: 10,
         status,
+        productStatus: product.status,
       };
     });
 
@@ -95,6 +126,52 @@ export async function getInventoryData(options?: {
     console.error('Error fetching inventory data:', error);
     throw error;
   }
+}
+
+export async function getLiveInventoryStats() {
+  const [totalProducts, allProductsWithInventory] = await Promise.all([
+    prisma.product.count(),
+    prisma.product.findMany({
+      select: {
+        price: true,
+        inventory: {
+          select: {
+            available: true,
+            quantity: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  let lowStockCount = 0;
+  let outOfStockCount = 0;
+  let totalInventoryUnits = 0;
+  let totalInventoryValue = 0;
+
+  for (const product of allProductsWithInventory) {
+    const inv = product.inventory[0];
+    const available = inv?.available ?? 0;
+    const qty = inv?.quantity ?? available;
+    const price = Number(product.price);
+
+    totalInventoryUnits += qty;
+    totalInventoryValue += qty * price;
+
+    if (available <= 0) {
+      outOfStockCount++;
+    } else if (available <= 10) {
+      lowStockCount++;
+    }
+  }
+
+  return {
+    totalItems: totalProducts,
+    totalUnits: totalInventoryUnits,
+    lowStock: lowStockCount,
+    outOfStock: outOfStockCount,
+    totalValue: totalInventoryValue,
+  };
 }
 
 export const getInventory = createCachedFunction(

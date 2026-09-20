@@ -427,3 +427,126 @@ export const getOrderAnalytics = createCachedFunction(
   [CACHE_TAGS.orders],
   300
 );
+
+export async function getAdminOrdersList(options?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+  paymentMethod?: string;
+}) {
+  const page = options?.page || 1;
+  const limit = options?.limit || 20;
+  const status = options?.status;
+  const search = options?.search?.trim();
+  const paymentMethod = options?.paymentMethod;
+  const skip = (page - 1) * limit;
+
+  const where: any = {};
+
+  if (status && status !== 'all') {
+    where.status = status.toUpperCase();
+  }
+
+  if (paymentMethod && paymentMethod !== 'all') {
+    where.paymentMethod = paymentMethod.toUpperCase();
+  }
+
+  if (search) {
+    where.OR = [
+      { orderNumber: { contains: search, mode: 'insensitive' } },
+      { customerEmail: { contains: search, mode: 'insensitive' } },
+      { customerPhone: { contains: search, mode: 'insensitive' } },
+      { shippingName: { contains: search, mode: 'insensitive' } },
+      { trackingNumber: { contains: search, mode: 'insensitive' } },
+      { user: { name: { contains: search, mode: 'insensitive' } } },
+      { user: { email: { contains: search, mode: 'insensitive' } } },
+    ];
+  }
+
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      include: {
+        orderItems: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                images: true,
+                slug: true,
+                sku: true,
+              },
+            },
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip,
+      take: limit,
+    }),
+    prisma.order.count({ where }),
+  ]);
+
+  return {
+    orders,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    },
+  };
+}
+
+export async function getAdminOrderStats() {
+  const [
+    total,
+    pending,
+    confirmed,
+    processing,
+    shipped,
+    delivered,
+    cancelled,
+    refunded,
+    revenueResult,
+  ] = await Promise.all([
+    prisma.order.count(),
+    prisma.order.count({ where: { status: 'PENDING' } }),
+    prisma.order.count({ where: { status: 'CONFIRMED' } }),
+    prisma.order.count({ where: { status: 'PROCESSING' } }),
+    prisma.order.count({ where: { status: 'SHIPPED' } }),
+    prisma.order.count({ where: { status: 'DELIVERED' } }),
+    prisma.order.count({ where: { status: 'CANCELLED' } }),
+    prisma.order.count({ where: { status: 'REFUNDED' } }),
+    prisma.order.aggregate({
+      where: {
+        status: { notIn: ['CANCELLED', 'REFUNDED'] },
+      },
+      _sum: { total: true },
+    }),
+  ]);
+
+  return {
+    total,
+    pending,
+    confirmed,
+    processing,
+    shipped,
+    delivered,
+    cancelled,
+    refunded,
+    revenue: Number(revenueResult._sum.total || 0),
+  };
+}
