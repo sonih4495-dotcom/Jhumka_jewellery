@@ -168,12 +168,19 @@ async function ensureBucketExists() {
       BUCKET,
       {
         public: true,
-        fileSizeLimit: 20 * 1024 * 1024, // 20MB
+        fileSizeLimit: 50 * 1024 * 1024, // 50MB
         allowedMimeTypes: [
           'image/jpeg',
           'image/png',
           'image/webp',
+          'image/gif',
           'image/svg+xml',
+          'video/mp4',
+          'video/webm',
+          'video/quicktime',
+          'video/ogg',
+          'video/x-matroska',
+          'application/octet-stream',
           'application/json',
           'text/plain',
           'application/pdf',

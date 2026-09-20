@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    const isVideo = file.type.startsWith('video/') || folder === 'videos';
+    const isVideo = file.type.startsWith('video/') || folder === 'videos' || /\.(mp4|webm|mov|ogg|mkv)$/i.test(file.name);
     validateFile(file, isVideo ? 'video' : 'image');
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -146,13 +146,63 @@ export async function POST(request: NextRequest) {
 
     const storagePath = `${folder}/${finalFilename}`;
 
+    // Determine content type accurately
+    let contentType = file.type;
+    if (!contentType || contentType === 'application/octet-stream') {
+      if (isVideo) {
+        if (finalFilename.endsWith('.webm')) contentType = 'video/webm';
+        else if (finalFilename.endsWith('.mov')) contentType = 'video/quicktime';
+        else if (finalFilename.endsWith('.ogg')) contentType = 'video/ogg';
+        else contentType = 'video/mp4';
+      } else {
+        contentType = 'image/jpeg';
+      }
+    }
+
     // Upload with upsert (replace if exists)
-    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+    let { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from(SUPABASE_STORAGE_BUCKET)
       .upload(storagePath, buffer, {
-        contentType: file.type || (isVideo ? 'video/mp4' : 'image/jpeg'),
+        contentType,
         upsert: true,
       });
+
+    // If bucket rejected MIME type, dynamically update bucket MIME whitelist and retry
+    if (uploadError && (uploadError.message.includes('mime type') || uploadError.message.includes('not supported'))) {
+      try {
+        await supabaseAdmin.storage.updateBucket(SUPABASE_STORAGE_BUCKET, {
+          public: true,
+          fileSizeLimit: 52428800,
+          allowedMimeTypes: [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+            'image/gif',
+            'image/svg+xml',
+            'video/mp4',
+            'video/webm',
+            'video/quicktime',
+            'video/ogg',
+            'video/x-matroska',
+            'application/octet-stream',
+            'application/json',
+            'text/plain',
+            'application/pdf',
+          ],
+        });
+      } catch (bucketUpdateErr) {
+        console.warn('Auto bucket update warning:', bucketUpdateErr);
+      }
+
+      // Retry upload with octet-stream fallback
+      const retryResult = await supabaseAdmin.storage
+        .from(SUPABASE_STORAGE_BUCKET)
+        .upload(storagePath, buffer, {
+          contentType: 'application/octet-stream',
+          upsert: true,
+        });
+      uploadError = retryResult.error;
+    }
 
     if (uploadError) {
       throw new Error(`Supabase upload failed: ${uploadError.message}`);

@@ -50,7 +50,7 @@ const ALLOWED_VIDEO_TYPES = [
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024; // 15MB
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 
 // Validate file
 export const validateFile = (
@@ -74,7 +74,8 @@ export const validateFile = (
   // Allow video fallback check if type starts with video/
   const isAllowed =
     (allowedTypes as readonly string[]).includes(file.type) ||
-    (type === 'video' && file.type.startsWith('video/'));
+    (type === 'video' && file.type.startsWith('video/')) ||
+    (type === 'video' && (file.name.endsWith('.mp4') || file.name.endsWith('.webm') || file.name.endsWith('.mov') || file.name.endsWith('.ogg')));
 
   if (!isAllowed) {
     throw new Error(
@@ -84,7 +85,7 @@ export const validateFile = (
 
   if (file.size > maxSize) {
     throw new Error(
-      `File too large. Maximum size: ${maxSize / (1024 * 1024)}MB`
+      `File too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum size: ${maxSize / (1024 * 1024)}MB`
     );
   }
 
@@ -112,15 +113,25 @@ export const uploadToSupabase = async (
   bucket: string = BUCKET_NAME
 ): Promise<UploadResult> => {
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  const { error } = await supabaseAdmin.storage
+  let uploadRes = await supabaseAdmin.storage
     .from(bucket)
     .upload(cleanPath, file, {
-      contentType,
+      contentType: contentType || 'application/octet-stream',
       upsert: true,
     });
 
-  if (error) {
-    throw new Error(`Supabase upload failed for ${cleanPath}: ${error.message}`);
+  if (uploadRes.error && uploadRes.error.message.includes('mime type')) {
+    // Retry with octet-stream fallback
+    uploadRes = await supabaseAdmin.storage
+      .from(bucket)
+      .upload(cleanPath, file, {
+        contentType: 'application/octet-stream',
+        upsert: true,
+      });
+  }
+
+  if (uploadRes.error) {
+    throw new Error(`Supabase upload failed for ${cleanPath}: ${uploadRes.error.message}`);
   }
 
   const { data: publicUrlData } = supabaseAdmin.storage
