@@ -34,13 +34,12 @@ export async function createCheckout(formData: FormData) {
     const validatedData = checkoutSchema.parse(checkoutData);
     const user = await getCurrentUser();
 
-    // Verify cart items
-    const cart = await getCart();
-    if (cart.items.length === 0) {
-      return { success: false, error: 'Cart is empty' };
+    // Verify checkout items
+    if (!validatedData.items || validatedData.items.length === 0) {
+      return { success: false, error: 'Your cart is empty.' };
     }
 
-    // Check inventory availability
+    // Check inventory availability and build verified price map
     const productsById = new Map<string, { name: string; sku: string | null; price: number }>();
     for (const item of validatedData.items) {
       const product = await prisma.product.findUnique({
@@ -51,7 +50,7 @@ export async function createCheckout(formData: FormData) {
       if (!product || product.status !== 'PUBLISHED') {
         return {
           success: false,
-          error: 'One or more items in your cart are currently unavailable',
+          error: 'One or more items in your order are currently unavailable',
         };
       }
 
@@ -70,7 +69,14 @@ export async function createCheckout(formData: FormData) {
       });
     }
 
-    const subtotal = cart.total;
+    // Calculate verified subtotal directly from real database prices
+    let subtotal = 0;
+    for (const item of validatedData.items) {
+      const pInfo = productsById.get(item.productId);
+      if (pInfo) {
+        subtotal += pInfo.price * item.quantity;
+      }
+    }
 
     // Calculate discount (supports promotional codes + dynamic coupons)
     let discount = 0;

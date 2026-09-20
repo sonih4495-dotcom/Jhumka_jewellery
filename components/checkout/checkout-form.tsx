@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, INDIAN_STATES } from '@/lib/utils';
 import { createCheckout } from '@/server/actions/checkout';
+import { useCart } from '@/components/cart-provider';
 
 interface CheckoutFormProps {
   cart: {
@@ -69,6 +70,25 @@ export function CheckoutForm({
   savedAddress,
 }: CheckoutFormProps) {
   const router = useRouter();
+  const { items: clientItems, clearCart: clearClientCart } = useCart();
+
+  // Combine real-time client cart items with server-side cart items
+  const activeItems = (clientItems && clientItems.length > 0)
+    ? clientItems.map(it => ({
+        id: it.id,
+        quantity: it.quantity,
+        product: {
+          id: it.product?.id || it.productId,
+          name: it.product?.name || 'Handcrafted Jewellery',
+          price: Number(it.price || it.product?.price || 0),
+          images: it.product?.images?.length ? it.product.images : [{ url: '/images/placeholder.svg' }],
+        },
+      }))
+    : (cart?.items || []);
+
+  const itemCount = activeItems.reduce((acc, it) => acc + it.quantity, 0);
+  const subtotal = activeItems.reduce((acc, it) => acc + (it.product.price * it.quantity), 0);
+
   const [addressMode, setAddressMode] = useState<'saved' | 'form'>(
     isLoggedIn && savedAddress ? 'saved' : 'form'
   );
@@ -107,7 +127,6 @@ export function CheckoutForm({
   const UPI_ID = 'sonih4495@ybl';
   const PAYEE_NAME = 'Jhumka Junction';
 
-  const subtotal = cart.total;
   const discount = appliedCoupon?.discountAmount ?? 0;
   const discountedSubtotal = Math.max(0, subtotal - discount);
   const shippingCost = 0; // Always free — we don't charge for shipping 🎉
@@ -164,8 +183,8 @@ export function CheckoutForm({
   const handlePlaceOrder = async () => {
     setError(null);
 
-    if (cart.items.length === 0) {
-      setError('Your cart is empty.');
+    if (activeItems.length === 0) {
+      setError('Your cart is empty. Please add items before checking out.');
       return;
     }
 
@@ -218,7 +237,7 @@ export function CheckoutForm({
       formData.set(
         'items',
         JSON.stringify(
-          cart.items.map(item => ({
+          activeItems.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
             price: item.product.price,
@@ -262,7 +281,8 @@ export function CheckoutForm({
         return;
       }
 
-      // Notify cart listeners and redirect to success page
+      // Clear client cart and notify listeners
+      clearClientCart();
       window.dispatchEvent(new Event('cart-updated'));
       router.push(result.redirectUrl || `/checkout/success?orderNumber=${result.orderNumber}&method=${paymentMethod.toLowerCase()}`);
     } catch (err: any) {
@@ -698,39 +718,48 @@ export function CheckoutForm({
         <Card className="border-gray-200 shadow-sm">
           <CardHeader className="border-b border-gray-100 bg-gray-50/50 py-4">
             <CardTitle className="text-base font-bold text-gray-900">
-              Order Summary ({cart.itemCount} items)
+              Order Summary ({itemCount} {itemCount === 1 ? 'item' : 'items'})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
             {/* Items list */}
-            <div className="max-h-60 divide-y divide-gray-100 overflow-y-auto pr-1">
-              {cart.items.map(item => (
-                <div key={item.id} className="flex items-center gap-3 py-3">
-                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100">
-                    {item.product.images[0] ? (
-                      <Image
-                        src={item.product.images[0].url}
-                        alt={item.product.name}
-                        fill
-                        sizes="56px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <Sparkles className="m-auto h-6 w-6 text-gray-300" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate text-xs font-bold text-gray-900">{item.product.name}</p>
-                    <p className="text-[11px] text-gray-500">
-                      Qty: {item.quantity} × {formatCurrency(item.product.price)}
+            {activeItems.length === 0 ? (
+              <div className="py-8 text-center space-y-3">
+                <p className="text-xs text-gray-500">Your bag is currently empty.</p>
+                <Button asChild variant="outline" size="sm" className="rounded-full text-xs">
+                  <a href="/products">Explore Oxidised Jhumkas</a>
+                </Button>
+              </div>
+            ) : (
+              <div className="max-h-60 divide-y divide-gray-100 overflow-y-auto pr-1">
+                {activeItems.map(item => (
+                  <div key={item.id} className="flex items-center gap-3 py-3">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100">
+                      {item.product.images && item.product.images[0] ? (
+                        <Image
+                          src={item.product.images[0].url}
+                          alt={item.product.name}
+                          fill
+                          sizes="56px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <Sparkles className="m-auto h-6 w-6 text-gray-300" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate text-xs font-bold text-gray-900">{item.product.name}</p>
+                      <p className="text-[11px] text-gray-500">
+                        Qty: {item.quantity} × {formatCurrency(item.product.price)}
+                      </p>
+                    </div>
+                    <p className="text-xs font-extrabold text-gray-900">
+                      {formatCurrency(item.product.price * item.quantity)}
                     </p>
                   </div>
-                  <p className="text-xs font-extrabold text-gray-900">
-                    {formatCurrency(item.product.price * item.quantity)}
-                  </p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             <Separator />
 

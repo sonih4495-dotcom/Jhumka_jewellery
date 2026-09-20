@@ -21,6 +21,7 @@ import {
   getRelatedProducts,
 } from '@/server/queries/products';
 import { AddToCart } from '@/components/add-to-cart';
+import { BuyNowButton } from '@/components/buy-now-button';
 import { ProductCard } from '@/components/product-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -283,20 +284,37 @@ export default async function ProductPage(props: ProductPageProps) {
               </div>
             )}
 
-            {/* Add to Cart CTA */}
+            {/* Add to Cart & Buy Now CTA */}
             <div className="space-y-3 pt-2">
-              <AddToCart
-                productId={product.id}
-                productName={product.name}
-                price={Number(product.price)}
-                comparePrice={product.comparePrice ? Number(product.comparePrice) : null}
-                image={product.images?.[0]?.url}
-                slug={product.slug}
-                maxQuantity={product.inventory?.[0]?.available ?? 10}
-                disabled={product.inventory && product.inventory[0] ? product.inventory[0].available <= 0 : false}
-                size="lg"
-                className="w-full rounded-full bg-gradient-to-r from-rose-600 via-pink-600 to-rani py-6 text-sm font-bold text-white shadow-xl shadow-rose-950/20 hover:opacity-95 border-0"
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <AddToCart
+                  productId={product.id}
+                  productName={product.name}
+                  price={Number(product.price)}
+                  comparePrice={product.comparePrice ? Number(product.comparePrice) : null}
+                  image={product.images?.[0]?.url}
+                  slug={product.slug}
+                  maxQuantity={product.inventory?.[0]?.available ?? 10}
+                  disabled={product.inventory && product.inventory[0] ? product.inventory[0].available <= 0 : false}
+                  size="lg"
+                  className="w-full rounded-2xl bg-stone-900 text-white hover:bg-black font-bold text-sm py-6 shadow-md border-0"
+                />
+
+                <BuyNowButton
+                  productId={product.id}
+                  productName={product.name}
+                  price={Number(product.price)}
+                  comparePrice={product.comparePrice ? Number(product.comparePrice) : null}
+                  image={product.images?.[0]?.url}
+                  slug={product.slug}
+                  maxQuantity={product.inventory?.[0]?.available ?? 10}
+                  disabled={product.inventory && product.inventory[0] ? product.inventory[0].available <= 0 : false}
+                  size="lg"
+                  className="w-full rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 text-stone-950 font-black text-sm py-6 shadow-xl shadow-amber-500/20 hover:scale-[1.02] active:scale-98 transition-all border-0"
+                >
+                  ⚡ Buy Now
+                </BuyNowButton>
+              </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <WishlistButton productId={product.id} variant="full" className="py-5" />

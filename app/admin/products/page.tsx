@@ -2,7 +2,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Filter } from 'lucide-react';
-import { getProducts } from '@/server/queries/products';
+import { getProducts, getProductStats } from '@/server/queries/products';
 import { ProductsDataTable } from '@/components/products-data-table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,7 +49,7 @@ async function ProductsList({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing {(page - 1) * 20 + 1}-
+          Showing {result.pagination.total === 0 ? 0 : (page - 1) * 20 + 1}-
           {Math.min(page * 20, result.pagination.total)} of{' '}
           {result.pagination.total} products
         </p>
@@ -71,7 +71,7 @@ async function ProductsList({
           name: p.name,
           sku: p.sku || '',
           price: Number(p.price),
-          stock: 0,
+          stock: p.inventory?.[0]?.available ?? 0,
           status: p.status === 'PUBLISHED' ? 'active' : 'inactive',
           imageUrl: p.images?.[0]?.url || '',
           images: p.images || [],
@@ -83,7 +83,10 @@ async function ProductsList({
 }
 
 export default async function AdminProductsPage(props: AdminProductsPageProps) {
-  const searchParams = await props.searchParams;
+  const [searchParams, stats] = await Promise.all([
+    props.searchParams,
+    getProductStats(),
+  ]);
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -162,50 +165,50 @@ export default async function AdminProductsPage(props: AdminProductsPageProps) {
 
       {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-4">
-        <div className="rounded-lg border bg-white p-6">
+        <div className="rounded-lg border bg-white p-6 shadow-sm">
           <div className="flex items-center">
             <div className="mr-3 h-8 w-2 rounded bg-blue-500" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">
                 Total Products
               </p>
-              <p className="text-2xl font-bold">1,234</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg border bg-white p-6">
+        <div className="rounded-lg border bg-white p-6 shadow-sm">
           <div className="flex items-center">
             <div className="mr-3 h-8 w-2 rounded bg-green-500" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">
                 Published
               </p>
-              <p className="text-2xl font-bold">1,089</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.published}</p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg border bg-white p-6">
+        <div className="rounded-lg border bg-white p-6 shadow-sm">
           <div className="flex items-center">
             <div className="mr-3 h-8 w-2 rounded bg-yellow-500" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">
                 Low Stock
               </p>
-              <p className="text-2xl font-bold">23</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.lowStock}</p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg border bg-white p-6">
+        <div className="rounded-lg border bg-white p-6 shadow-sm">
           <div className="flex items-center">
             <div className="mr-3 h-8 w-2 rounded bg-red-500" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">
                 Out of Stock
               </p>
-              <p className="text-2xl font-bold">8</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.outOfStock}</p>
             </div>
           </div>
         </div>

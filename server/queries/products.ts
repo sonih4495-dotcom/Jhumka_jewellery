@@ -63,6 +63,11 @@ export const getProducts = createCachedFunction(
             },
           },
           images: true,
+          inventory: {
+            select: {
+              available: true,
+            },
+          },
         },
         orderBy: {
           [sortBy]: sortOrder,
@@ -690,3 +695,36 @@ export const getCategoryBySlug = createCachedFunction(
   [CACHE_TAGS.products],
   3600
 );
+
+export async function getProductStats() {
+  const [total, published, drafts, inventoryList] = await Promise.all([
+    prisma.product.count(),
+    prisma.product.count({ where: { status: 'PUBLISHED' } }),
+    prisma.product.count({ where: { status: 'DRAFT' } }),
+    prisma.inventory.findMany({
+      select: {
+        available: true,
+      },
+    }),
+  ]);
+
+  let lowStock = 0;
+  let outOfStock = 0;
+
+  for (const inv of inventoryList) {
+    if (inv.available <= 0) {
+      outOfStock++;
+    } else if (inv.available <= 5) {
+      lowStock++;
+    }
+  }
+
+  return {
+    total,
+    published,
+    drafts,
+    lowStock,
+    outOfStock,
+  };
+}
+

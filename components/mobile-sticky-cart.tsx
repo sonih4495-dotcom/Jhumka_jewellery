@@ -1,9 +1,9 @@
-// Location: components/mobile-sticky-cart.tsx
 'use client';
 
 import React from 'react';
 import { formatCurrency } from '@/lib/utils';
 import { AddToCart } from './add-to-cart';
+import { BuyNowButton } from './buy-now-button';
 import { useWishlist } from './wishlist-provider';
 import { Heart } from 'lucide-react';
 
@@ -28,8 +28,8 @@ export function MobileStickyCart({
   const isWishlisted = isInWishlist(productId);
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#FAF8F5]/95 backdrop-blur-xl border-t border-stone-200/90 px-4 py-3 shadow-[0_-10px_35px_rgba(0,0,0,0.08)] pb-safe">
-      <div className="flex items-center gap-3">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#FAF8F5]/95 backdrop-blur-xl border-t border-stone-200/90 px-3 py-2.5 shadow-[0_-10px_35px_rgba(0,0,0,0.08)] pb-safe">
+      <div className="flex items-center gap-2">
         {/* Wishlist toggle */}
         <button
           type="button"
@@ -48,24 +48,7 @@ export function MobileStickyCart({
           />
         </button>
 
-        {/* Price info */}
-        <div className="flex flex-col min-w-0 pr-1">
-          <span className="text-[10px] uppercase font-bold text-stone-400 truncate tracking-wider">
-            Price
-          </span>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-black text-stone-900 tracking-tight">
-              {formatCurrency(price)}
-            </span>
-            {comparePrice && comparePrice > price && (
-              <span className="text-[11px] text-stone-400 line-through">
-                {formatCurrency(comparePrice)}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Add to Cart button or Stepper */}
+        {/* Add to Cart button */}
         <div className="flex-1">
           <AddToCart
             productId={productId}
@@ -78,6 +61,21 @@ export function MobileStickyCart({
             size="default"
             className="w-full rounded-xl bg-stone-900 text-xs font-bold text-white shadow-md hover:bg-stone-800 border-0 h-11"
           />
+        </div>
+
+        {/* Direct Buy Now button */}
+        <div className="flex-1">
+          <BuyNowButton
+            productId={productId}
+            productName={productName}
+            price={price}
+            comparePrice={comparePrice}
+            disabled={disabled}
+            maxQuantity={maxQuantity}
+            className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-black text-xs shadow-md border-0 h-11"
+          >
+            ⚡ Buy Now
+          </BuyNowButton>
         </div>
       </div>
     </div>
