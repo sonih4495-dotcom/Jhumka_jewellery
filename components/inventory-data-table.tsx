@@ -1,7 +1,7 @@
 // Location: components/inventory-data-table.tsx
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -28,6 +28,8 @@ import {
   FolderPlus,
   ShieldCheck,
   Star,
+  CornerDownLeft,
+  CheckCircle2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -90,6 +92,14 @@ interface CategoryOption {
   slug: string;
 }
 
+interface SelectedImageItem {
+  id: string;
+  url: string;
+  file?: File;
+  isPrimary: boolean;
+  name?: string;
+}
+
 interface InventoryDataTableProps {
   items: AdminInventoryItem[];
   categories?: CategoryOption[];
@@ -120,12 +130,19 @@ export function InventoryDataTable({
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Photo Uploader state
+  // Multi-image state for "Add Product"
+  const [selectedImages, setSelectedImages] = useState<SelectedImageItem[]>([]);
+  const [manualImageUrl, setManualImageUrl] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const addFileInputRef = useRef<HTMLInputElement>(null);
+  const productNameInputRef = useRef<HTMLInputElement>(null);
+
+  // Photo Uploader state for "Manage Photos" modal
   const [activePhotos, setActivePhotos] = useState<Array<{ id: string; url: string }>>([]);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [singleUploadFile, setSingleUploadFile] = useState<File | null>(null);
+  const [singleUploadPreview, setSingleUploadPreview] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const singleFileInputRef = useRef<HTMLInputElement>(null);
 
   // Add Product Form State
   const [newProduct, setNewProduct] = useState({
@@ -141,7 +158,6 @@ export function InventoryDataTable({
     badge: 'NEW_DROP',
     vibe: 'Garba & Festive Glam',
     description: '',
-    imageUrl: '',
   });
 
   // Edit Product Form State
@@ -162,10 +178,30 @@ export function InventoryDataTable({
     description: '',
   });
 
+  // Auto-focus on first input when opening Add modal
+  useEffect(() => {
+    if (isAddModalOpen) {
+      setTimeout(() => {
+        productNameInputRef.current?.focus();
+      }, 150);
+    }
+  }, [isAddModalOpen]);
+
+  // Global Keyboard Shortcuts (Ctrl+Enter / Cmd+Enter to submit modal)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (isAddModalOpen && !isSaving) {
+        handleCreateProduct();
+      } else if (isEditModalOpen && !isSaving) {
+        handleSaveEdit();
+      }
+    }
+  };
+
   // Quick inline delta adjustment (+1, -1, +10)
   const handleQuickAdjust = async (productId: string, delta: number) => {
     setUpdatingId(productId);
-    // Optimistic UI update
     setItems(prev =>
       prev.map(it => {
         if (it.id === productId) {
@@ -215,7 +251,6 @@ export function InventoryDataTable({
     setUpdatingId(item.id);
     const targetStatus = item.productStatus === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
 
-    // Optimistic update
     setItems(prev =>
       prev.map(it =>
         it.id === item.id ? { ...it, productStatus: targetStatus } : it
@@ -230,7 +265,6 @@ export function InventoryDataTable({
           description: `${item.name} is now ${res.newStatus}.`,
         });
       } else {
-        // Rollback
         setItems(prev =>
           prev.map(it =>
             it.id === item.id ? { ...it, productStatus: item.productStatus } : it
@@ -250,6 +284,165 @@ export function InventoryDataTable({
       });
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  // Handle Multi-File Upload Selection for Add Product
+  const handleAddFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const newItems: SelectedImageItem[] = [];
+
+    Array.from(files).forEach((file, index) => {
+      const isFirst = selectedImages.length === 0 && index === 0;
+      newItems.push({
+        id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        url: URL.createObjectURL(file),
+        file,
+        isPrimary: isFirst,
+        name: file.name,
+      });
+    });
+
+    setSelectedImages(prev => [...prev, ...newItems]);
+  };
+
+  // Handle manual image URL add
+  const handleAddManualUrl = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!manualImageUrl.trim()) return;
+
+    const isFirst = selectedImages.length === 0;
+    setSelectedImages(prev => [
+      ...prev,
+      {
+        id: `url-${Date.now()}`,
+        url: manualImageUrl.trim(),
+        isPrimary: isFirst,
+      },
+    ]);
+    setManualImageUrl('');
+  };
+
+  // Set image as Cover/Primary
+  const handleSetCoverImage = (id: string) => {
+    setSelectedImages(prev =>
+      prev.map(img => ({
+        ...img,
+        isPrimary: img.id === id,
+      }))
+    );
+  };
+
+  // Remove selected image
+  const handleRemoveImage = (id: string) => {
+    setSelectedImages(prev => {
+      const filtered = prev.filter(img => img.id !== id);
+      if (filtered.length > 0 && !filtered.some(img => img.isPrimary)) {
+        const first = filtered[0];
+        if (first) {
+          first.isPrimary = true;
+        }
+      }
+      return filtered;
+    });
+  };
+
+  // Create New Product with Multiple Images
+  const handleCreateProduct = async () => {
+    if (!newProduct.name.trim()) {
+      toast({ title: 'Validation Error', description: 'Product title is required', variant: 'destructive' });
+      productNameInputRef.current?.focus();
+      return;
+    }
+    setIsSaving(true);
+
+    try {
+      const finalImageUrls: string[] = [];
+
+      // Sort images so primary cover image is first
+      const sortedImages = [...selectedImages].sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
+
+      // 1. Upload any local files to Supabase Storage
+      for (const img of sortedImages) {
+        if (img.file) {
+          try {
+            const formData = new FormData();
+            formData.append('file', img.file);
+            formData.append('folder', 'products');
+
+            const res = await fetch('/api/admin/media', {
+              method: 'POST',
+              body: formData,
+            });
+            const result = await res.json();
+            if (result.success && result.file?.publicUrl) {
+              finalImageUrls.push(result.file.publicUrl);
+            }
+          } catch (uploadErr) {
+            console.warn('Failed to upload image file to Supabase:', uploadErr);
+          }
+        } else if (img.url && !img.url.startsWith('blob:')) {
+          finalImageUrls.push(img.url);
+        }
+      }
+
+      // 2. Create Product in database via server action
+      const res = await createProductAction({
+        name: newProduct.name,
+        sku: newProduct.sku,
+        price: newProduct.price,
+        comparePrice: newProduct.comparePrice || null,
+        categoryId: newProduct.categoryId || null,
+        initialStock: newProduct.initialStock,
+        status: newProduct.status,
+        material: newProduct.material,
+        silverPurity: newProduct.silverPurity,
+        badge: newProduct.badge === 'NONE' ? null : newProduct.badge,
+        vibe: newProduct.vibe === 'NONE' ? null : newProduct.vibe,
+        description: newProduct.description,
+        imageUrls: finalImageUrls,
+      });
+
+      if (res.success && res.product) {
+        toast({
+          title: '✨ Jewellery Product Created!',
+          description: `${res.product.name} created with ${finalImageUrls.length} photos and synced to Supabase.`,
+        });
+        setIsAddModalOpen(false);
+
+        // Reset form
+        setNewProduct({
+          name: '',
+          sku: '',
+          price: 999,
+          comparePrice: 1999,
+          categoryId: categories[0]?.id || '',
+          initialStock: 25,
+          status: 'PUBLISHED',
+          material: 'Oxidised Silver Finish',
+          silverPurity: 'Handcrafted Quality',
+          badge: 'NEW_DROP',
+          vibe: 'Garba & Festive Glam',
+          description: '',
+        });
+        setSelectedImages([]);
+        setManualImageUrl('');
+        router.refresh();
+      } else {
+        toast({
+          title: 'Creation Failed',
+          description: res.error,
+          variant: 'destructive',
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err?.message || 'Failed to create product',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -333,8 +526,8 @@ export function InventoryDataTable({
         );
         setIsEditModalOpen(false);
         toast({
-          title: 'Product & Inventory Updated',
-          description: `Successfully saved ${editForm.name}.`,
+          title: 'Product & Stock Saved',
+          description: `Updated ${editForm.name} in Supabase.`,
         });
         router.refresh();
       } else {
@@ -348,72 +541,6 @@ export function InventoryDataTable({
       toast({
         title: 'Error',
         description: err?.message || 'Failed to update product',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Create New Product
-  const handleCreateProduct = async () => {
-    if (!newProduct.name.trim()) {
-      toast({ title: 'Validation Error', description: 'Product name is required', variant: 'destructive' });
-      return;
-    }
-    setIsSaving(true);
-
-    try {
-      const res = await createProductAction({
-        name: newProduct.name,
-        sku: newProduct.sku,
-        price: newProduct.price,
-        comparePrice: newProduct.comparePrice || null,
-        categoryId: newProduct.categoryId || null,
-        initialStock: newProduct.initialStock,
-        status: newProduct.status,
-        material: newProduct.material,
-        silverPurity: newProduct.silverPurity,
-        badge: newProduct.badge === 'NONE' ? null : newProduct.badge,
-        vibe: newProduct.vibe === 'NONE' ? null : newProduct.vibe,
-        description: newProduct.description,
-        imageUrl: newProduct.imageUrl || undefined,
-      });
-
-      if (res.success && res.product) {
-        toast({
-          title: 'Jewellery Product Created! ✨',
-          description: `${res.product.name} created and live in Supabase.`,
-        });
-        setIsAddModalOpen(false);
-        // Reset form
-        setNewProduct({
-          name: '',
-          sku: '',
-          price: 999,
-          comparePrice: 1999,
-          categoryId: categories[0]?.id || '',
-          initialStock: 25,
-          status: 'PUBLISHED',
-          material: 'Oxidised Silver Finish',
-          silverPurity: 'Handcrafted Quality',
-          badge: 'NEW_DROP',
-          vibe: 'Garba & Festive Glam',
-          description: '',
-          imageUrl: '',
-        });
-        router.refresh();
-      } else {
-        toast({
-          title: 'Creation Failed',
-          description: res.error,
-          variant: 'destructive',
-        });
-      }
-    } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: err?.message || 'Failed to create product',
         variant: 'destructive',
       });
     } finally {
@@ -454,31 +581,23 @@ export function InventoryDataTable({
     }
   };
 
-  // Open Photos Modal
+  // Open Photos Modal for existing product
   const openPhotosModal = (item: AdminInventoryItem) => {
     setSelectedProduct(item);
     setActivePhotos(item.images || (item.image ? [{ id: 'main', url: item.image }] : []));
-    setUploadFile(null);
-    setUploadPreview(null);
+    setSingleUploadFile(null);
+    setSingleUploadPreview(null);
     setIsPhotosModalOpen(true);
   };
 
-  // Handle Photo File Select
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadFile(file);
-    setUploadPreview(URL.createObjectURL(file));
-  };
-
-  // Upload Photo to Supabase Storage
-  const handleUploadPhoto = async () => {
-    if (!selectedProduct || !uploadFile) return;
+  // Upload Photo to Supabase Storage for existing product
+  const handleUploadSinglePhoto = async () => {
+    if (!selectedProduct || !singleUploadFile) return;
 
     setIsUploadingPhoto(true);
     try {
       const formData = new FormData();
-      formData.append('file', uploadFile);
+      formData.append('file', singleUploadFile);
       formData.append('folder', 'products');
       formData.append('productId', selectedProduct.id);
 
@@ -506,8 +625,8 @@ export function InventoryDataTable({
               : it
           )
         );
-        setUploadFile(null);
-        setUploadPreview(null);
+        setSingleUploadFile(null);
+        setSingleUploadPreview(null);
         router.refresh();
       } else {
         toast({
@@ -527,7 +646,7 @@ export function InventoryDataTable({
     }
   };
 
-  // Delete Photo
+  // Delete Photo from existing product
   const handleDeletePhoto = async (photoUrl: string) => {
     if (!selectedProduct) return;
 
@@ -573,45 +692,22 @@ export function InventoryDataTable({
     }
   };
 
-  const getStockBadge = (status: AdminInventoryItem['status']) => {
-    switch (status) {
-      case 'in-stock':
-        return (
-          <Badge className="bg-emerald-100 text-emerald-900 border-emerald-300 font-bold hover:bg-emerald-100">
-            ✓ In Stock
-          </Badge>
-        );
-      case 'low-stock':
-        return (
-          <Badge className="bg-amber-100 text-amber-900 border-amber-300 font-bold hover:bg-amber-100">
-            ⚠️ Low Stock (≤10)
-          </Badge>
-        );
-      case 'out-of-stock':
-        return (
-          <Badge className="bg-rose-100 text-rose-900 border-rose-300 font-bold hover:bg-rose-100">
-            ❌ Out of Stock
-          </Badge>
-        );
-    }
-  };
-
   return (
     <>
       {/* Top Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50/70 border-b border-gray-200">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50/80 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-gray-700">Catalog Actions:</span>
-          <Badge variant="outline" className="text-xs font-semibold bg-white">
-            {pagination.total} Total Products
+          <Badge variant="outline" className="text-xs font-semibold bg-white border-gray-300">
+            {pagination.total} Total Jewellery Items
           </Badge>
         </div>
 
         <Button
           onClick={() => setIsAddModalOpen(true)}
-          className="rounded-xl bg-gray-900 text-white hover:bg-black font-bold text-xs gap-1.5 shadow-sm"
+          className="rounded-xl bg-stone-900 hover:bg-black text-white font-black text-xs gap-2 shadow-sm transition-all active:scale-95"
         >
-          <Plus className="h-4 w-4 text-amber-400" />
+          <Sparkles className="h-4 w-4 text-amber-400" />
           Add New Jewellery Product
         </Button>
       </div>
@@ -624,7 +720,7 @@ export function InventoryDataTable({
           <p className="text-xs text-gray-400 mt-1">Try changing your search query or add a new product.</p>
           <Button
             onClick={() => setIsAddModalOpen(true)}
-            className="mt-4 rounded-xl bg-gray-900 text-white hover:bg-black font-bold text-xs"
+            className="mt-4 rounded-xl bg-stone-900 text-white hover:bg-black font-bold text-xs"
           >
             <Plus className="h-3.5 w-3.5 mr-1" /> Add Product Now
           </Button>
@@ -632,7 +728,7 @@ export function InventoryDataTable({
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="border-b border-gray-200 bg-gray-50/80 text-[11px] uppercase font-bold text-gray-600">
+            <thead className="border-b border-gray-200 bg-gray-50/90 text-[11px] uppercase font-black text-gray-700 tracking-wider">
               <tr>
                 <th className="px-5 py-4">Product &amp; Photo</th>
                 <th className="px-5 py-4">SKU &amp; Category</th>
@@ -645,7 +741,7 @@ export function InventoryDataTable({
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
               {items.map(item => (
-                <tr key={item.id} className="hover:bg-gray-50/70 transition-colors">
+                <tr key={item.id} className="hover:bg-amber-50/30 transition-colors">
                   {/* Photo & Name */}
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
@@ -662,12 +758,12 @@ export function InventoryDataTable({
                           className="object-cover group-hover:scale-105 transition-transform"
                         />
                         {item.images && item.images.length > 1 && (
-                          <span className="absolute bottom-0 right-0 rounded-tl-md bg-stone-900/90 px-1 py-0.2 text-[8px] font-bold text-white">
+                          <span className="absolute bottom-0 right-0 rounded-tl-md bg-stone-900/90 px-1.5 py-0.2 text-[8px] font-black text-white">
                             +{item.images.length}
                           </span>
                         )}
                       </div>
-                      <div className="min-w-0 max-w-[200px]">
+                      <div className="min-w-0 max-w-[210px]">
                         <Link
                           href={`/products/${item.slug}`}
                           target="_blank"
@@ -792,7 +888,7 @@ export function InventoryDataTable({
                         size="sm"
                         onClick={() => openPhotosModal(item)}
                         className="h-8 px-2 text-xs font-bold rounded-lg border-gray-200 hover:bg-gray-100 gap-1"
-                        title="Manage Photos"
+                        title="Manage Photos in Supabase"
                       >
                         <ImageIcon className="h-3.5 w-3.5 text-stone-600" />
                         Photos
@@ -830,242 +926,461 @@ export function InventoryDataTable({
         </div>
       )}
 
-      {/* ── MODAL 1: Add New Jewellery Product ── */}
+      {/* ── MODAL 1: Add New Jewellery Product (Multi-Image & Keyboard Friendly) ── */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="max-w-2xl p-6 bg-white rounded-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black text-gray-900 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-amber-500" />
-              Add New Jewellery Product
-            </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500">
-              Create product item with initial stock and live Supabase synchronization.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2 text-xs">
-            {/* Row 1: Name & SKU */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="sm:col-span-2 space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Product Name *</Label>
-                <Input
-                  value={newProduct.name}
-                  onChange={e => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g. Royal Kashmiri Mirror Dome Jhumka"
-                  className="rounded-xl bg-white font-medium"
-                />
+        <DialogContent
+          onKeyDown={handleKeyDown}
+          className="max-w-3xl p-0 bg-white rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col border border-stone-200"
+        >
+          {/* Header */}
+          <div className="bg-stone-900 px-6 py-5 flex items-center justify-between text-white shrink-0">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400 text-stone-900 font-black">
+                  <Sparkles className="h-4 w-4" />
+                </span>
+                <h2 className="text-lg font-black tracking-tight text-white">
+                  Add New Jewellery Product
+                </h2>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">SKU (Optional)</Label>
-                <Input
-                  value={newProduct.sku}
-                  onChange={e => setNewProduct(prev => ({ ...prev, sku: e.target.value }))}
-                  placeholder="e.g. JJ-KASH-01"
-                  className="rounded-xl font-mono text-xs bg-white"
-                />
+              <p className="text-xs text-stone-300 mt-0.5">
+                Upload multiple photos, set pricing, inventory, and sync live with Supabase.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(false)}
+              className="rounded-xl p-1.5 text-stone-400 hover:bg-stone-800 hover:text-white transition-colors"
+              title="Close (Esc)"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Form Scrollable Body */}
+          <div className="p-6 overflow-y-auto space-y-6 text-xs bg-stone-50/40 flex-1">
+            {/* Section 1: Core Details */}
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs space-y-3">
+              <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
+                <span className="rounded-md bg-stone-900 px-2 py-0.5 text-[10px] font-black text-amber-400 uppercase">
+                  1. Product Details
+                </span>
+                <span className="text-[11px] text-stone-400">Basic catalog identity</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2 space-y-1">
+                  <Label className="text-xs font-bold text-stone-800">
+                    Product Title * <span className="text-rose-500">*</span>
+                  </Label>
+                  <Input
+                    ref={productNameInputRef}
+                    value={newProduct.name}
+                    onChange={e => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. Royal Kashmiri Mirror Dome Jhumka"
+                    className="rounded-xl border-stone-300 bg-white font-medium focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 text-xs h-9"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-stone-800">SKU (Auto or Custom)</Label>
+                  <Input
+                    value={newProduct.sku}
+                    onChange={e => setNewProduct(prev => ({ ...prev, sku: e.target.value }))}
+                    placeholder="e.g. JJ-KASH-01"
+                    className="rounded-xl border-stone-300 font-mono text-xs bg-white h-9 focus:border-stone-900"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-stone-800">Category</Label>
+                  <Select
+                    value={newProduct.categoryId}
+                    onValueChange={val => setNewProduct(prev => ({ ...prev, categoryId: val }))}
+                  >
+                    <SelectTrigger className="rounded-xl border-stone-300 bg-white h-9 text-xs">
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(c => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-stone-800">Live Status</Label>
+                  <Select
+                    value={newProduct.status}
+                    onValueChange={(val: 'PUBLISHED' | 'DRAFT') =>
+                      setNewProduct(prev => ({ ...prev, status: val }))
+                    }
+                  >
+                    <SelectTrigger className="rounded-xl border-stone-300 bg-white h-9 text-xs font-semibold">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PUBLISHED">Published (Store Live)</SelectItem>
+                      <SelectItem value="DRAFT">Draft (Hidden)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-stone-800">Storefront Badge</Label>
+                  <Select
+                    value={newProduct.badge}
+                    onValueChange={val => setNewProduct(prev => ({ ...prev, badge: val }))}
+                  >
+                    <SelectTrigger className="rounded-xl border-stone-300 bg-white h-9 text-xs">
+                      <SelectValue placeholder="Badge" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NONE">None</SelectItem>
+                      <SelectItem value="NEW_DROP">NEW DROP ✨</SelectItem>
+                      <SelectItem value="TRENDING">TRENDING 🔥</SelectItem>
+                      <SelectItem value="BESTSELLER">BESTSELLER 👑</SelectItem>
+                      <SelectItem value="VIRAL_ON_REELS">VIRAL ON REELS 📱</SelectItem>
+                      <SelectItem value="LIMITED_EDITION">LIMITED EDITION 💎</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
-            {/* Row 2: Category, Status, Badge */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Category</Label>
-                <Select
-                  value={newProduct.categoryId}
-                  onValueChange={val => setNewProduct(prev => ({ ...prev, categoryId: val }))}
+            {/* Section 2: Pricing & Stock */}
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs space-y-3">
+              <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
+                <span className="rounded-md bg-stone-900 px-2 py-0.5 text-[10px] font-black text-amber-400 uppercase">
+                  2. Pricing &amp; Inventory
+                </span>
+                <span className="text-[11px] text-stone-400">Live stock units and pricing in ₹</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-stone-800">
+                    Regular Price (₹) <span className="text-rose-500">*</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={newProduct.price}
+                    onChange={e => setNewProduct(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                    className="rounded-xl border-stone-300 font-extrabold text-stone-900 bg-white h-9 text-sm focus:border-stone-900"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-stone-800">Compare Price / MRP (₹)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={newProduct.comparePrice}
+                    onChange={e => setNewProduct(prev => ({ ...prev, comparePrice: parseFloat(e.target.value) || 0 }))}
+                    className="rounded-xl border-stone-300 font-bold bg-white text-stone-400 line-through h-9 text-sm focus:border-stone-900"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-stone-800">
+                    Initial Stock (Units) <span className="text-rose-500">*</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={newProduct.initialStock}
+                    onChange={e => setNewProduct(prev => ({ ...prev, initialStock: parseInt(e.target.value) || 0 }))}
+                    className="rounded-xl border-stone-300 font-black bg-emerald-50 text-emerald-800 h-9 text-sm focus:border-emerald-600"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Jewellery Specs */}
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs space-y-3">
+              <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
+                <span className="rounded-md bg-stone-900 px-2 py-0.5 text-[10px] font-black text-amber-400 uppercase">
+                  3. Jewellery Specs
+                </span>
+                <span className="text-[11px] text-stone-400">Purity and occasion vibes</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-stone-800">Material Finish</Label>
+                  <Input
+                    value={newProduct.material}
+                    onChange={e => setNewProduct(prev => ({ ...prev, material: e.target.value }))}
+                    placeholder="e.g. Oxidised Silver Finish"
+                    className="rounded-xl border-stone-300 bg-white h-9 text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-stone-800">Silver Purity</Label>
+                  <Input
+                    value={newProduct.silverPurity}
+                    onChange={e => setNewProduct(prev => ({ ...prev, silverPurity: e.target.value }))}
+                    placeholder="e.g. Handcrafted Quality"
+                    className="rounded-xl border-stone-300 bg-white h-9 text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold text-stone-800">Occasion / Vibe</Label>
+                  <Input
+                    value={newProduct.vibe}
+                    onChange={e => setNewProduct(prev => ({ ...prev, vibe: e.target.value }))}
+                    placeholder="e.g. Garba & Festive Glam"
+                    className="rounded-xl border-stone-300 bg-white h-9 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Multi-Image Uploader Dropzone */}
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-md bg-stone-900 px-2 py-0.5 text-[10px] font-black text-amber-400 uppercase">
+                    4. Product Media &amp; Photos
+                  </span>
+                  <span className="text-[11px] text-stone-500 font-semibold">
+                    ({selectedImages.length} photos selected)
+                  </span>
+                </div>
+                <span className="text-[10px] text-stone-400">Direct upload to Supabase</span>
+              </div>
+
+              {/* Dropzone Container */}
+              <div
+                onDragOver={e => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={e => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  handleAddFiles(e.dataTransfer.files);
+                }}
+                onClick={() => addFileInputRef.current?.click()}
+                className={`relative rounded-2xl border-2 border-dashed p-6 text-center transition-all cursor-pointer ${
+                  isDragging
+                    ? 'border-amber-500 bg-amber-50/50 scale-[0.99]'
+                    : 'border-stone-300 bg-stone-50 hover:bg-stone-100/70 hover:border-stone-400'
+                }`}
+              >
+                <input
+                  type="file"
+                  ref={addFileInputRef}
+                  onChange={e => handleAddFiles(e.target.files)}
+                  multiple
+                  accept="image/*"
+                  className="hidden"
+                />
+                <div className="space-y-2">
+                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-xs border border-stone-200 text-stone-700">
+                    <Upload className="h-5 w-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-stone-900">
+                      Drag &amp; drop multiple product photos, or{' '}
+                      <span className="text-amber-600 underline">browse files</span>
+                    </p>
+                    <p className="text-[10px] text-stone-400 mt-0.5">
+                      Select multiple angles (Front, Dome, Hook, Model Preview). PNG, JPG, WEBP up to 5MB.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Manual URL Input Option */}
+              <div className="flex items-center gap-2 pt-1">
+                <Input
+                  value={manualImageUrl}
+                  onChange={e => setManualImageUrl(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddManualUrl();
+                    }
+                  }}
+                  placeholder="Or paste image URL (https://...) and press Add"
+                  className="rounded-xl border-stone-300 text-xs bg-white h-8"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleAddManualUrl()}
+                  className="rounded-xl text-xs font-bold h-8 shrink-0 bg-white hover:bg-stone-900 hover:text-white"
                 >
-                  <SelectTrigger className="rounded-xl bg-white">
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(c => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  Add URL
+                </Button>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Live Status</Label>
-                <Select
-                  value={newProduct.status}
-                  onValueChange={(val: 'PUBLISHED' | 'DRAFT') =>
-                    setNewProduct(prev => ({ ...prev, status: val }))
-                  }
-                >
-                  <SelectTrigger className="rounded-xl bg-white">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PUBLISHED">Published (Live)</SelectItem>
-                    <SelectItem value="DRAFT">Draft (Hidden)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Selected Images Grid with Cover Star */}
+              {selectedImages.length > 0 && (
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 pt-2">
+                  {selectedImages.map((img, idx) => (
+                    <div
+                      key={img.id}
+                      className={`group relative h-24 rounded-2xl overflow-hidden border-2 bg-stone-100 transition-all ${
+                        img.isPrimary ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-stone-200'
+                      }`}
+                    >
+                      <Image
+                        src={img.url}
+                        alt="Product preview"
+                        fill
+                        sizes="100px"
+                        className="object-cover"
+                      />
 
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Badge</Label>
-                <Select
-                  value={newProduct.badge}
-                  onValueChange={val => setNewProduct(prev => ({ ...prev, badge: val }))}
-                >
-                  <SelectTrigger className="rounded-xl bg-white">
-                    <SelectValue placeholder="Badge" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NONE">None</SelectItem>
-                    <SelectItem value="NEW_DROP">NEW DROP</SelectItem>
-                    <SelectItem value="TRENDING">TRENDING</SelectItem>
-                    <SelectItem value="BESTSELLER">BESTSELLER</SelectItem>
-                    <SelectItem value="VIRAL_ON_REELS">VIRAL ON REELS</SelectItem>
-                    <SelectItem value="LIMITED_EDITION">LIMITED EDITION</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                      {/* Cover Badge */}
+                      {img.isPrimary && (
+                        <span className="absolute top-1 left-1 flex items-center gap-0.5 rounded-md bg-stone-900/90 px-1.5 py-0.5 text-[8px] font-black text-amber-400 shadow-xs">
+                          <Star className="h-2.5 w-2.5 fill-amber-400" />
+                          Cover
+                        </span>
+                      )}
+
+                      {/* Action buttons on hover */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
+                        {!img.isPrimary && (
+                          <button
+                            type="button"
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleSetCoverImage(img.id);
+                            }}
+                            className="flex h-6 w-6 items-center justify-center rounded-lg bg-stone-900 text-amber-400 hover:bg-black shadow-sm"
+                            title="Set as Cover photo"
+                          >
+                            <Star className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleRemoveImage(img.id);
+                          }}
+                          className="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-600 text-white hover:bg-rose-700 shadow-sm"
+                          title="Remove image"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Row 3: Price, Compare Price, Initial Stock */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Regular Price (₹) *</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={newProduct.price}
-                  onChange={e => setNewProduct(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                  className="rounded-xl font-bold bg-white"
-                />
+            {/* Section 5: Description */}
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs space-y-2">
+              <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
+                <span className="rounded-md bg-stone-900 px-2 py-0.5 text-[10px] font-black text-amber-400 uppercase">
+                  5. Product Description
+                </span>
+                <span className="text-[11px] text-stone-400">Detailed craft and jewellery features</span>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Compare Price (₹)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={newProduct.comparePrice}
-                  onChange={e => setNewProduct(prev => ({ ...prev, comparePrice: parseFloat(e.target.value) || 0 }))}
-                  className="rounded-xl font-bold bg-white text-gray-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Initial Stock (Units) *</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={newProduct.initialStock}
-                  onChange={e => setNewProduct(prev => ({ ...prev, initialStock: parseInt(e.target.value) || 0 }))}
-                  className="rounded-xl font-bold bg-white text-emerald-700"
-                />
-              </div>
-            </div>
 
-            {/* Row 4: Material, Purity, Vibe */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Material</Label>
-                <Input
-                  value={newProduct.material}
-                  onChange={e => setNewProduct(prev => ({ ...prev, material: e.target.value }))}
-                  placeholder="e.g. Oxidised Silver Finish"
-                  className="rounded-xl bg-white"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Silver Purity</Label>
-                <Input
-                  value={newProduct.silverPurity}
-                  onChange={e => setNewProduct(prev => ({ ...prev, silverPurity: e.target.value }))}
-                  placeholder="e.g. Handcrafted Quality"
-                  className="rounded-xl bg-white"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Occasion / Vibe</Label>
-                <Input
-                  value={newProduct.vibe}
-                  onChange={e => setNewProduct(prev => ({ ...prev, vibe: e.target.value }))}
-                  placeholder="e.g. Garba & Festive Glam"
-                  className="rounded-xl bg-white"
-                />
-              </div>
-            </div>
-
-            {/* Row 5: Image URL */}
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-gray-700">Cover Image URL (Optional)</Label>
-              <Input
-                value={newProduct.imageUrl}
-                onChange={e => setNewProduct(prev => ({ ...prev, imageUrl: e.target.value }))}
-                placeholder="https://... (or upload directly after creating)"
-                className="rounded-xl bg-white font-mono text-xs"
-              />
-            </div>
-
-            {/* Row 6: Description */}
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-gray-700">Product Description</Label>
               <textarea
                 value={newProduct.description}
                 onChange={e => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Handcrafted authentic oxidised silver jhumka with antique finish..."
+                placeholder="Handcrafted authentic oxidised silver jhumka featuring artisan filigree dome..."
                 rows={3}
-                className="w-full rounded-xl border border-gray-200 p-3 text-xs focus:border-stone-900 focus:outline-none"
+                className="w-full rounded-xl border border-stone-300 p-3 text-xs focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 focus:outline-none bg-white"
               />
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsAddModalOpen(false)}
-              className="rounded-xl text-xs"
-            >
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleCreateProduct}
-              disabled={isSaving}
-              className="rounded-xl bg-stone-900 text-white hover:bg-black font-bold text-xs"
-            >
-              {isSaving ? 'Creating in Supabase...' : 'Create Jewellery Product'}
-            </Button>
-          </DialogFooter>
+          {/* Sticky Non-Clipped Footer */}
+          <div className="sticky bottom-0 bg-white border-t border-stone-200 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 shadow-lg">
+            <div className="flex items-center gap-2 text-[11px] text-stone-500 font-medium">
+              <span className="inline-flex items-center rounded-md bg-stone-100 px-2 py-1 font-mono text-[10px] font-bold text-stone-700">
+                Ctrl + Enter
+              </span>
+              <span>to Save &amp; Sync with Supabase</span>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsAddModalOpen(false)}
+                className="rounded-xl border-stone-300 text-xs font-semibold hover:bg-stone-100 h-9 flex-1 sm:flex-initial"
+              >
+                Cancel (Esc)
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleCreateProduct}
+                disabled={isSaving}
+                className="rounded-xl bg-stone-900 text-white hover:bg-black font-black text-xs gap-1.5 shadow-md h-9 flex-1 sm:flex-initial"
+              >
+                <Sparkles className="h-4 w-4 text-amber-400" />
+                {isSaving ? 'Uploading Photos & Saving...' : 'Create Jewellery Product'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* ── MODAL 2: Edit Product & Stock ── */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-2xl p-6 bg-white rounded-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black text-gray-900 flex items-center gap-2">
-              <Edit3 className="h-5 w-5 text-rose-600" />
-              Edit Product &amp; Stock Levels
-            </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500">
-              Live updates for pricing, metadata, and inventory count in Supabase.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent
+          onKeyDown={handleKeyDown}
+          className="max-w-2xl p-0 bg-white rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col border border-stone-200"
+        >
+          {/* Header */}
+          <div className="bg-stone-900 px-6 py-5 flex items-center justify-between text-white shrink-0">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-500 text-white font-black">
+                  <Edit3 className="h-4 w-4" />
+                </span>
+                <h2 className="text-lg font-black tracking-tight text-white">
+                  Edit Product &amp; Stock Levels
+                </h2>
+              </div>
+              <p className="text-xs text-stone-300 mt-0.5">
+                Live updates for pricing, metadata, and inventory count in Supabase.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(false)}
+              className="rounded-xl p-1.5 text-stone-400 hover:bg-stone-800 hover:text-white transition-colors"
+              title="Close (Esc)"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-          <div className="space-y-4 py-2 text-xs">
+          <div className="p-6 overflow-y-auto space-y-4 text-xs bg-stone-50/40 flex-1">
             {/* Name & SKU */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2 space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Product Name *</Label>
+                <Label className="text-xs font-bold text-stone-800">Product Name *</Label>
                 <Input
                   value={editForm.name}
                   onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="rounded-xl bg-white font-medium"
+                  className="rounded-xl border-stone-300 bg-white font-medium focus:border-stone-900 h-9"
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">SKU</Label>
+                <Label className="text-xs font-bold text-stone-800">SKU</Label>
                 <Input
                   value={editForm.sku}
                   onChange={e => setEditForm(prev => ({ ...prev, sku: e.target.value }))}
-                  className="rounded-xl font-mono text-xs bg-white"
+                  className="rounded-xl border-stone-300 font-mono text-xs bg-white h-9 focus:border-stone-900"
                 />
               </div>
             </div>
@@ -1073,12 +1388,12 @@ export function InventoryDataTable({
             {/* Category & Status */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Category</Label>
+                <Label className="text-xs font-bold text-stone-800">Category</Label>
                 <Select
                   value={editForm.categoryId}
                   onValueChange={val => setEditForm(prev => ({ ...prev, categoryId: val }))}
                 >
-                  <SelectTrigger className="rounded-xl bg-white">
+                  <SelectTrigger className="rounded-xl border-stone-300 bg-white h-9">
                     <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1092,39 +1407,39 @@ export function InventoryDataTable({
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Live Status</Label>
+                <Label className="text-xs font-bold text-stone-800">Live Status</Label>
                 <Select
                   value={editForm.status}
                   onValueChange={(val: 'PUBLISHED' | 'DRAFT') =>
                     setEditForm(prev => ({ ...prev, status: val }))
                   }
                 >
-                  <SelectTrigger className="rounded-xl bg-white">
+                  <SelectTrigger className="rounded-xl border-stone-300 bg-white h-9 font-semibold">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PUBLISHED">Published (Live)</SelectItem>
+                    <SelectItem value="PUBLISHED">Published (Store Live)</SelectItem>
                     <SelectItem value="DRAFT">Draft (Hidden)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Badge</Label>
+                <Label className="text-xs font-bold text-stone-800">Badge</Label>
                 <Select
                   value={editForm.badge || 'NONE'}
                   onValueChange={val => setEditForm(prev => ({ ...prev, badge: val }))}
                 >
-                  <SelectTrigger className="rounded-xl bg-white">
+                  <SelectTrigger className="rounded-xl border-stone-300 bg-white h-9">
                     <SelectValue placeholder="Badge" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="NONE">None</SelectItem>
-                    <SelectItem value="NEW_DROP">NEW DROP</SelectItem>
-                    <SelectItem value="TRENDING">TRENDING</SelectItem>
-                    <SelectItem value="BESTSELLER">BESTSELLER</SelectItem>
-                    <SelectItem value="VIRAL_ON_REELS">VIRAL ON REELS</SelectItem>
-                    <SelectItem value="LIMITED_EDITION">LIMITED EDITION</SelectItem>
+                    <SelectItem value="NEW_DROP">NEW DROP ✨</SelectItem>
+                    <SelectItem value="TRENDING">TRENDING 🔥</SelectItem>
+                    <SelectItem value="BESTSELLER">BESTSELLER 👑</SelectItem>
+                    <SelectItem value="VIRAL_ON_REELS">VIRAL ON REELS 📱</SelectItem>
+                    <SelectItem value="LIMITED_EDITION">LIMITED EDITION 💎</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1133,56 +1448,56 @@ export function InventoryDataTable({
             {/* Price & Compare Price */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Price (₹) *</Label>
+                <Label className="text-xs font-bold text-stone-800">Price (₹) *</Label>
                 <Input
                   type="number"
                   min={0}
                   value={editForm.price}
                   onChange={e => setEditForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                  className="rounded-xl font-bold bg-white"
+                  className="rounded-xl border-stone-300 font-extrabold text-stone-900 bg-white h-9 text-sm"
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Compare Price (₹)</Label>
+                <Label className="text-xs font-bold text-stone-800">Compare Price (₹)</Label>
                 <Input
                   type="number"
                   min={0}
                   value={editForm.comparePrice}
                   onChange={e => setEditForm(prev => ({ ...prev, comparePrice: parseFloat(e.target.value) || 0 }))}
-                  className="rounded-xl font-bold bg-white text-gray-500"
+                  className="rounded-xl border-stone-300 font-bold bg-white text-stone-400 line-through h-9 text-sm"
                 />
               </div>
             </div>
 
             {/* Inventory Controls */}
-            <div className="rounded-2xl bg-gray-50 p-4 border border-gray-200 space-y-3">
+            <div className="rounded-2xl bg-white p-4 border border-stone-200 shadow-2xs space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-gray-900 text-xs flex items-center gap-1.5">
+                <span className="font-bold text-stone-900 text-xs flex items-center gap-1.5">
                   <Package className="h-4 w-4 text-rose-600" />
                   Live Stock Units
                 </span>
-                <span className="text-[11px] text-gray-500">Synced directly with store cart &amp; checkout</span>
+                <span className="text-[11px] text-stone-500">Synced directly with store cart &amp; checkout</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-gray-700">Available Stock (Units) *</Label>
+                  <Label className="text-xs font-semibold text-stone-700">Available Stock (Units) *</Label>
                   <Input
                     type="number"
                     min={0}
                     value={editForm.availableStock}
                     onChange={e => setEditForm(prev => ({ ...prev, availableStock: parseInt(e.target.value) || 0 }))}
-                    className="font-mono text-sm rounded-xl font-black bg-white text-emerald-700"
+                    className="font-mono text-sm rounded-xl font-black bg-emerald-50 text-emerald-800 h-9 border-stone-300"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-gray-700">Total Stock (Units) *</Label>
+                  <Label className="text-xs font-semibold text-stone-700">Total Stock (Units) *</Label>
                   <Input
                     type="number"
                     min={0}
                     value={editForm.totalStock}
                     onChange={e => setEditForm(prev => ({ ...prev, totalStock: parseInt(e.target.value) || 0 }))}
-                    className="font-mono text-sm rounded-xl font-black bg-white"
+                    className="font-mono text-sm rounded-xl font-black bg-white h-9 border-stone-300"
                   />
                 </div>
               </div>
@@ -1201,7 +1516,7 @@ export function InventoryDataTable({
                         totalStock: prev.totalStock + qty,
                       }));
                     }}
-                    className="h-7 flex-1 rounded-xl text-xs font-bold"
+                    className="h-7 flex-1 rounded-xl text-xs font-bold border-stone-200 hover:bg-stone-100"
                   >
                     +{qty}
                   </Button>
@@ -1212,176 +1527,193 @@ export function InventoryDataTable({
             {/* Material & Vibe */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Material Finish</Label>
+                <Label className="text-xs font-bold text-stone-800">Material Finish</Label>
                 <Input
                   value={editForm.material}
                   onChange={e => setEditForm(prev => ({ ...prev, material: e.target.value }))}
-                  className="rounded-xl bg-white"
+                  className="rounded-xl border-stone-300 bg-white h-9"
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs font-bold text-gray-700">Occasion / Vibe</Label>
+                <Label className="text-xs font-bold text-stone-800">Occasion / Vibe</Label>
                 <Input
                   value={editForm.vibe}
                   onChange={e => setEditForm(prev => ({ ...prev, vibe: e.target.value }))}
-                  className="rounded-xl bg-white"
+                  className="rounded-xl border-stone-300 bg-white h-9"
                 />
               </div>
             </div>
 
             {/* Description */}
             <div className="space-y-1">
-              <Label className="text-xs font-bold text-gray-700">Description</Label>
+              <Label className="text-xs font-bold text-stone-800">Description</Label>
               <textarea
                 value={editForm.description}
                 onChange={e => setEditForm(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className="w-full rounded-xl border border-gray-200 p-3 text-xs focus:border-stone-900 focus:outline-none"
+                className="w-full rounded-xl border border-stone-300 p-3 text-xs focus:border-stone-900 focus:outline-none bg-white"
               />
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          {/* Sticky Footer */}
+          <div className="sticky bottom-0 bg-white border-t border-stone-200 px-6 py-4 flex items-center justify-end gap-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsEditModalOpen(false)}
-              className="rounded-xl text-xs"
+              className="rounded-xl border-stone-300 text-xs h-9 font-semibold"
             >
-              Cancel
+              Cancel (Esc)
             </Button>
             <Button
               size="sm"
               onClick={handleSaveEdit}
               disabled={isSaving}
-              className="rounded-xl bg-stone-900 text-white hover:bg-black font-bold text-xs"
+              className="rounded-xl bg-stone-900 text-white hover:bg-black font-black text-xs h-9 px-4"
             >
               {isSaving ? 'Saving to Supabase...' : 'Save Changes'}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* ── MODAL 3: Manage Supabase Photos Drawer ── */}
       <Dialog open={isPhotosModalOpen} onOpenChange={setIsPhotosModalOpen}>
-        <DialogContent className="max-w-xl p-6 bg-white rounded-3xl">
-          {selectedProduct && (
-            <div className="space-y-4">
-              <DialogHeader>
-                <DialogTitle className="text-lg font-black text-gray-900 flex items-center gap-2">
-                  <ImageIcon className="h-5 w-5 text-purple-600" />
-                  Product Photos: {selectedProduct.name}
-                </DialogTitle>
-                <DialogDescription className="text-xs text-gray-500">
-                  Upload directly to Supabase Storage bucket (`jewellery`).
-                </DialogDescription>
-              </DialogHeader>
-
-              {/* Photo Gallery Grid */}
-              <div className="grid grid-cols-3 gap-3 max-h-56 overflow-y-auto p-1">
-                {activePhotos.map((photo, idx) => (
-                  <div
-                    key={photo.id || idx}
-                    className="group relative h-28 w-full rounded-2xl overflow-hidden border border-gray-200 bg-stone-50 shadow-xs"
-                  >
-                    <Image
-                      src={photo.url}
-                      alt={selectedProduct.name}
-                      fill
-                      sizes="150px"
-                      className="object-cover"
-                    />
-                    {idx === 0 && (
-                      <span className="absolute top-1.5 left-1.5 rounded-md bg-stone-900/80 px-1.5 py-0.5 text-[8px] font-black text-white">
-                        Cover Photo
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleDeletePhoto(photo.url)}
-                      className="absolute top-1.5 right-1.5 h-6 w-6 rounded-lg bg-rose-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-700 shadow-sm"
-                      title="Delete from Supabase"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
+        <DialogContent className="max-w-xl p-0 bg-white rounded-3xl shadow-2xl overflow-hidden border border-stone-200">
+          <div className="bg-stone-900 px-6 py-5 flex items-center justify-between text-white shrink-0">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-500 text-white font-black">
+                  <ImageIcon className="h-4 w-4" />
+                </span>
+                <h2 className="text-lg font-black tracking-tight text-white">
+                  Product Photos: {selectedProduct?.name}
+                </h2>
               </div>
+              <p className="text-xs text-stone-300 mt-0.5">
+                Upload multiple images directly to Supabase Storage bucket (`jewellery`).
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPhotosModalOpen(false)}
+              className="rounded-xl p-1.5 text-stone-400 hover:bg-stone-800 hover:text-white transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-              {/* Upload New Photo Section */}
-              <div className="rounded-2xl border-2 border-dashed border-gray-200 p-4 text-center bg-stone-50/50">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  accept="image/*"
-                  className="hidden"
-                />
+          <div className="p-6 space-y-4 text-xs bg-stone-50/40">
+            {/* Photo Gallery Grid */}
+            <div className="grid grid-cols-3 gap-3 max-h-56 overflow-y-auto p-1">
+              {activePhotos.map((photo, idx) => (
+                <div
+                  key={photo.id || idx}
+                  className="group relative h-28 w-full rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-xs"
+                >
+                  <Image
+                    src={photo.url}
+                    alt={selectedProduct?.name || 'Photo'}
+                    fill
+                    sizes="150px"
+                    className="object-cover"
+                  />
+                  {idx === 0 && (
+                    <span className="absolute top-1.5 left-1.5 rounded-md bg-stone-900/90 px-1.5 py-0.5 text-[8px] font-black text-white">
+                      Cover Photo
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePhoto(photo.url)}
+                    className="absolute top-1.5 right-1.5 h-6 w-6 rounded-lg bg-rose-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-700 shadow-sm"
+                    title="Delete from Supabase"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
 
-                {uploadPreview ? (
-                  <div className="space-y-3">
-                    <div className="relative mx-auto h-24 w-24 overflow-hidden rounded-xl border border-gray-300">
-                      <Image src={uploadPreview} alt="Preview" fill className="object-cover" />
-                    </div>
-                    <div className="flex justify-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setUploadFile(null);
-                          setUploadPreview(null);
-                        }}
-                        className="rounded-xl text-xs"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={handleUploadPhoto}
-                        disabled={isUploadingPhoto}
-                        className="rounded-xl bg-purple-600 text-white hover:bg-purple-700 text-xs font-bold gap-1"
-                      >
-                        <Upload className="h-3.5 w-3.5" />
-                        {isUploadingPhoto ? 'Uploading to Supabase...' : 'Confirm Upload'}
-                      </Button>
-                    </div>
+            {/* Upload New Photo Section */}
+            <div className="rounded-2xl border-2 border-dashed border-stone-300 p-4 text-center bg-white">
+              <input
+                type="file"
+                ref={singleFileInputRef}
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setSingleUploadFile(file);
+                  setSingleUploadPreview(URL.createObjectURL(file));
+                }}
+                accept="image/*"
+                className="hidden"
+              />
+
+              {singleUploadPreview ? (
+                <div className="space-y-3">
+                  <div className="relative mx-auto h-24 w-24 overflow-hidden rounded-xl border border-stone-300">
+                    <Image src={singleUploadPreview} alt="Preview" fill className="object-cover" />
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    <ImageIcon className="mx-auto h-8 w-8 text-gray-400" />
-                    <p className="text-xs font-bold text-gray-700">Upload additional photo</p>
-                    <p className="text-[10px] text-gray-400">PNG, JPG, WEBP up to 5MB</p>
+                  <div className="flex justify-center gap-2">
                     <Button
-                      type="button"
-                      variant="outline"
                       size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="rounded-xl text-xs font-bold mt-1"
+                      variant="outline"
+                      onClick={() => {
+                        setSingleUploadFile(null);
+                        setSingleUploadPreview(null);
+                      }}
+                      className="rounded-xl text-xs"
                     >
-                      <Upload className="h-3.5 w-3.5 mr-1" /> Choose File
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleUploadSinglePhoto}
+                      disabled={isUploadingPhoto}
+                      className="rounded-xl bg-purple-600 text-white hover:bg-purple-700 text-xs font-bold gap-1"
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      {isUploadingPhoto ? 'Uploading to Supabase...' : 'Confirm Upload'}
                     </Button>
                   </div>
-                )}
-              </div>
-
-              <DialogFooter>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setIsPhotosModalOpen(false)}
-                  className="rounded-xl text-xs"
-                >
-                  Close
-                </Button>
-              </DialogFooter>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <ImageIcon className="mx-auto h-8 w-8 text-stone-400" />
+                  <p className="text-xs font-bold text-stone-800">Upload additional photo</p>
+                  <p className="text-[10px] text-stone-400">PNG, JPG, WEBP up to 5MB</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => singleFileInputRef.current?.click()}
+                    className="rounded-xl text-xs font-bold mt-1 border-stone-300 hover:bg-stone-100"
+                  >
+                    <Upload className="h-3.5 w-3.5 mr-1" /> Choose File
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          <div className="bg-white border-t border-stone-200 px-6 py-4 flex justify-end">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsPhotosModalOpen(false)}
+              className="rounded-xl text-xs font-semibold h-9"
+            >
+              Close
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* ── MODAL 4: Delete Product Confirmation ── */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="max-w-md p-6 bg-white rounded-3xl">
+        <DialogContent className="max-w-md p-6 bg-white rounded-3xl border border-stone-200 shadow-2xl">
           {selectedProduct && (
             <div className="space-y-4">
               <DialogHeader>
@@ -1394,7 +1726,7 @@ export function InventoryDataTable({
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="rounded-2xl bg-rose-50 p-4 border border-rose-200 text-xs text-rose-800">
+              <div className="rounded-2xl bg-rose-50 p-4 border border-rose-200 text-xs text-rose-800 font-medium">
                 ⚠️ This action cannot be undone. Product will be removed from customer view immediately.
               </div>
 
@@ -1403,7 +1735,7 @@ export function InventoryDataTable({
                   variant="outline"
                   size="sm"
                   onClick={() => setIsDeleteModalOpen(false)}
-                  className="rounded-xl text-xs"
+                  className="rounded-xl text-xs font-semibold"
                 >
                   Cancel
                 </Button>
@@ -1423,4 +1755,3 @@ export function InventoryDataTable({
     </>
   );
 }
-

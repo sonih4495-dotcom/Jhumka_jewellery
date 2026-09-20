@@ -19,6 +19,7 @@ export interface CreateProductInput {
   vibe?: string | null;
   description?: string;
   imageUrl?: string;
+  imageUrls?: string[];
 }
 
 export interface UpdateProductInput {
@@ -39,7 +40,7 @@ export interface UpdateProductInput {
 }
 
 /**
- * Create a new jewellery product with its initial stock and image directly in Supabase
+ * Create a new jewellery product with its initial stock and multiple images directly in Supabase
  */
 export async function createProductAction(data: CreateProductInput) {
   try {
@@ -72,6 +73,25 @@ export async function createProductAction(data: CreateProductInput) {
 
     const initialStock = Math.max(0, Number(data.initialStock) || 0);
 
+    const imagesToCreate: Array<{ url: string; position: number; altText: string }> = [];
+    if (data.imageUrls && data.imageUrls.length > 0) {
+      data.imageUrls.forEach((url, idx) => {
+        if (url && url.trim()) {
+          imagesToCreate.push({
+            url: url.trim(),
+            position: idx,
+            altText: name,
+          });
+        }
+      });
+    } else if (data.imageUrl && data.imageUrl.trim()) {
+      imagesToCreate.push({
+        url: data.imageUrl.trim(),
+        position: 0,
+        altText: name,
+      });
+    }
+
     const product = await prisma.$transaction(async (tx) => {
       const newProduct = await tx.product.create({
         data: {
@@ -87,13 +107,9 @@ export async function createProductAction(data: CreateProductInput) {
           badge: data.badge && data.badge !== 'NONE' ? data.badge : null,
           vibe: data.vibe && data.vibe !== 'NONE' ? data.vibe : null,
           categoryId: data.categoryId && data.categoryId !== 'none' ? data.categoryId : null,
-          images: data.imageUrl
+          images: imagesToCreate.length > 0
             ? {
-                create: {
-                  url: data.imageUrl,
-                  position: 0,
-                  altText: name,
-                },
+                create: imagesToCreate,
               }
             : undefined,
         },
