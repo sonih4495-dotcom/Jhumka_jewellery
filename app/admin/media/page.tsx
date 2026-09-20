@@ -25,6 +25,7 @@ import {
   Volume2,
   VolumeX,
   Eye,
+  Edit3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -91,6 +92,23 @@ export default function AdminMediaPage() {
   const [reelThumbnailPreview, setReelThumbnailPreview] = useState<string | null>(null);
   const [isSavingReel, setIsSavingReel] = useState(false);
 
+  // Edit Reel modal state
+  const [isEditReelModalOpen, setIsEditReelModalOpen] = useState(false);
+  const [editingReelId, setEditingReelId] = useState('');
+  const [editReelCreator, setEditReelCreator] = useState('');
+  const [editReelHandle, setEditReelHandle] = useState('');
+  const [editReelTitle, setEditReelTitle] = useState('');
+  const [editReelLikes, setEditReelLikes] = useState('');
+  const [editReelInstagramUrl, setEditReelInstagramUrl] = useState('');
+  const [editReelProductId, setEditReelProductId] = useState('');
+  const [editReelVideoUrl, setEditReelVideoUrl] = useState('');
+  const [editReelThumbnailUrl, setEditReelThumbnailUrl] = useState('');
+  const [editReelVideoFile, setEditReelVideoFile] = useState<File | null>(null);
+  const [editReelThumbnailFile, setEditReelThumbnailFile] = useState<File | null>(null);
+  const [editReelVideoPreview, setEditReelVideoPreview] = useState<string | null>(null);
+  const [editReelThumbnailPreview, setEditReelThumbnailPreview] = useState<string | null>(null);
+  const [isSavingEditReel, setIsSavingEditReel] = useState(false);
+
   // Replace modal state
   const [replacingItem, setReplacingItem] = useState<MediaItem | null>(null);
   const [replaceFile, setReplaceFile] = useState<File | null>(null);
@@ -113,6 +131,8 @@ export default function AdminMediaPage() {
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const reelVideoInputRef = useRef<HTMLInputElement>(null);
   const reelThumbInputRef = useRef<HTMLInputElement>(null);
+  const editReelVideoInputRef = useRef<HTMLInputElement>(null);
+  const editReelThumbInputRef = useRef<HTMLInputElement>(null);
   const adminVideoRef = useRef<HTMLVideoElement>(null);
 
   const fetchMedia = async () => {
@@ -348,6 +368,101 @@ export default function AdminMediaPage() {
       toast.error(err.message || 'Error creating reel', { id: 'reel-upload' });
     } finally {
       setIsSavingReel(false);
+    }
+  };
+
+  const openEditReelModal = (reel: ReelItem) => {
+    setEditingReelId(reel.id);
+    setEditReelCreator(reel.creator);
+    setEditReelHandle(reel.handle);
+    setEditReelTitle(reel.title);
+    setEditReelLikes(reel.likes);
+    setEditReelInstagramUrl(reel.instagramUrl || '');
+    setEditReelProductId(reel.taggedProduct?.id || '');
+    setEditReelVideoUrl(reel.videoUrl || '');
+    setEditReelThumbnailUrl(reel.thumbnail || '');
+    setEditReelVideoFile(null);
+    setEditReelThumbnailFile(null);
+    setEditReelVideoPreview(null);
+    setEditReelThumbnailPreview(null);
+    setIsEditReelModalOpen(true);
+  };
+
+  const handleEditReelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editReelCreator || !editReelTitle) {
+      toast.error('Creator name and title are required');
+      return;
+    }
+
+    setIsSavingEditReel(true);
+    try {
+      let finalVideoUrl = editReelVideoUrl;
+      let finalThumbUrl = editReelThumbnailUrl;
+
+      // 1. Upload new video file to Supabase Storage if chosen
+      if (editReelVideoFile) {
+        toast.loading('Uploading replacement video to Supabase Storage...', { id: 'reel-edit' });
+        const videoData = new FormData();
+        videoData.append('file', editReelVideoFile);
+        videoData.append('folder', 'videos');
+        const videoRes = await fetch('/api/admin/media', {
+          method: 'POST',
+          body: videoData,
+        });
+        const videoJson = await videoRes.json();
+        if (!videoJson.success) {
+          throw new Error(videoJson.error || 'Failed to upload video to Supabase');
+        }
+        finalVideoUrl = videoJson.file.publicUrl;
+      }
+
+      // 2. Upload new thumbnail if chosen
+      if (editReelThumbnailFile) {
+        const thumbData = new FormData();
+        thumbData.append('file', editReelThumbnailFile);
+        thumbData.append('folder', 'uploads');
+        const thumbRes = await fetch('/api/admin/media', {
+          method: 'POST',
+          body: thumbData,
+        });
+        const thumbJson = await thumbRes.json();
+        if (thumbJson.success) {
+          finalThumbUrl = thumbJson.file.publicUrl;
+        }
+      }
+
+      toast.loading('Saving Reel updates...', { id: 'reel-edit' });
+
+      // 3. Send PUT request
+      const res = await fetch('/api/admin/reels', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingReelId,
+          creator: editReelCreator,
+          handle: editReelHandle,
+          title: editReelTitle,
+          likes: editReelLikes,
+          videoUrl: finalVideoUrl,
+          instagramUrl: editReelInstagramUrl,
+          thumbnail: finalThumbUrl,
+          productId: editReelProductId,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Reel updated successfully! ✨', { id: 'reel-edit' });
+        setIsEditReelModalOpen(false);
+        fetchMedia();
+      } else {
+        toast.error(data.error || 'Failed to update reel', { id: 'reel-edit' });
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error updating reel', { id: 'reel-edit' });
+    } finally {
+      setIsSavingEditReel(false);
     }
   };
 
@@ -656,6 +771,15 @@ export default function AdminMediaPage() {
                       className="px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:text-white bg-stone-800 hover:bg-stone-700 rounded-lg flex items-center gap-1 transition-colors"
                     >
                       <Eye className="h-3.5 w-3.5" /> Preview
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => openEditReelModal(reel)}
+                      className="px-2.5 py-1 text-[11px] font-bold text-stone-200 hover:text-white bg-stone-800 hover:bg-stone-700 rounded-lg flex items-center gap-1 transition-colors"
+                      title="Edit Reel details, captions or video file"
+                    >
+                      <Edit3 className="h-3.5 w-3.5 text-amber-400" /> Edit
                     </button>
 
                     {reel.instagramUrl && (
@@ -1020,6 +1144,212 @@ export default function AdminMediaPage() {
                     </>
                   ) : (
                     'Save & Publish Reel'
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Reel & Video Modal ── */}
+      {isEditReelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="relative w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl border border-stone-200 animate-in zoom-in-95 my-8">
+            <div className="flex items-center justify-between border-b pb-3.5">
+              <div className="flex items-center gap-2">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-rose-600 text-white shadow-sm">
+                  <Edit3 className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-base font-bold text-stone-900">Edit Styling Reel / Video</h2>
+                  <p className="text-[11px] text-stone-500">Update creator, captions, tagged product, or replace video file</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsEditReelModalOpen(false)}
+                className="h-8 w-8 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-500"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditReelSubmit} className="mt-4 space-y-4">
+              {/* Creator Info */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-stone-700">Creator Name *</label>
+                  <Input
+                    type="text"
+                    required
+                    placeholder="e.g. Ananya Sharma"
+                    value={editReelCreator}
+                    onChange={(e) => setEditReelCreator(e.target.value)}
+                    className="h-9 text-xs rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-stone-700">Instagram Handle</label>
+                  <Input
+                    type="text"
+                    placeholder="e.g. @ananya.glam"
+                    value={editReelHandle}
+                    onChange={(e) => setEditReelHandle(e.target.value)}
+                    className="h-9 text-xs rounded-xl"
+                  />
+                </div>
+              </div>
+
+              {/* Title / Caption */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-stone-700">Reel Caption / Styling Description *</label>
+                <Input
+                  type="text"
+                  required
+                  placeholder="e.g. Garba night styling with Royal Chandbali jhumkas! 🌙✨"
+                  value={editReelTitle}
+                  onChange={(e) => setEditReelTitle(e.target.value)}
+                  className="h-9 text-xs rounded-xl"
+                />
+              </div>
+
+              {/* Likes & Instagram Link */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-stone-700">Likes Count</label>
+                  <Input
+                    type="text"
+                    placeholder="e.g. 18.5K"
+                    value={editReelLikes}
+                    onChange={(e) => setEditReelLikes(e.target.value)}
+                    className="h-9 text-xs rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-stone-700 flex items-center gap-1">
+                    <Instagram className="h-3 w-3 text-pink-500" />
+                    <span>Instagram Reel URL</span>
+                  </label>
+                  <Input
+                    type="url"
+                    placeholder="https://www.instagram.com/reel/..."
+                    value={editReelInstagramUrl}
+                    onChange={(e) => setEditReelInstagramUrl(e.target.value)}
+                    className="h-9 text-xs rounded-xl"
+                  />
+                </div>
+              </div>
+
+              {/* Video File / Direct Video URL */}
+              <div className="space-y-2 border-t pt-3">
+                <label className="text-xs font-bold text-stone-800 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Video className="h-4 w-4 text-emerald-600" />
+                    <span>Replace or Update Video File (MP4/WebM)</span>
+                  </span>
+                  <span className="text-[10px] text-stone-400">Direct upload to Supabase</span>
+                </label>
+
+                {/* Video Dropzone */}
+                <div
+                  onClick={() => editReelVideoInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-stone-300 p-3.5 text-center cursor-pointer hover:border-emerald-500 hover:bg-emerald-50/30 transition-all"
+                >
+                  <input
+                    ref={editReelVideoInputRef}
+                    type="file"
+                    accept="video/mp4,video/webm,video/quicktime"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) {
+                        setEditReelVideoFile(f);
+                        setEditReelVideoPreview(URL.createObjectURL(f));
+                      }
+                    }}
+                    className="hidden"
+                  />
+
+                  {editReelVideoFile ? (
+                    <div className="flex items-center gap-2 text-emerald-700">
+                      <Check className="h-5 w-5" />
+                      <span className="text-xs font-bold">{editReelVideoFile.name} ({(editReelVideoFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
+                    </div>
+                  ) : editReelVideoUrl ? (
+                    <div className="flex items-center gap-2 text-stone-700">
+                      <Video className="h-4 w-4 text-emerald-600" />
+                      <span className="text-xs font-medium truncate max-w-[320px]">Current Video: {editReelVideoUrl.split('/').pop()}</span>
+                      <span className="text-[10px] text-amber-600 underline ml-1">Click to replace</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-stone-600">
+                      <Upload className="h-4 w-4 text-stone-400" />
+                      <span className="text-xs font-medium">Click to select replacement MP4 / WebM video</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Direct Video URL Textfield */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-stone-500">Or Paste Direct MP4 Video URL</label>
+                  <Input
+                    type="url"
+                    placeholder="https://.../video.mp4"
+                    value={editReelVideoUrl}
+                    onChange={(e) => setEditReelVideoUrl(e.target.value)}
+                    className="h-8 text-xs rounded-xl"
+                  />
+                </div>
+              </div>
+
+              {/* Tag Product in Store for 1-Click Buy */}
+              <div className="space-y-1.5 border-t pt-3">
+                <label className="text-xs font-bold text-stone-700 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    <span>Tag Featured Jewellery Piece</span>
+                  </span>
+                  <span className="text-[10px] text-amber-700 font-semibold">Powers 1-Click Buy button</span>
+                </label>
+                <select
+                  value={editReelProductId}
+                  onChange={(e) => setEditReelProductId(e.target.value)}
+                  className="w-full h-9 px-3 rounded-xl border border-stone-200 text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
+                >
+                  <option value="">-- Choose a jewellery piece --</option>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditReelModalOpen(false)}
+                  className="rounded-full text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSavingEditReel}
+                  className="rounded-full bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white font-bold text-xs px-6 shadow-md"
+                >
+                  {isSavingEditReel ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      Saving Changes...
+                    </>
+                  ) : (
+                    'Update Reel'
                   )}
                 </Button>
               </div>

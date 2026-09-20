@@ -705,10 +705,10 @@ export function InventoryDataTable({
 
         <Button
           onClick={() => setIsAddModalOpen(true)}
-          className="rounded-xl bg-stone-900 hover:bg-black text-white font-black text-xs gap-2 shadow-sm transition-all active:scale-95"
+          className="rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-stone-950 font-black text-xs px-4 py-2.5 shadow-md border border-amber-300 flex items-center gap-2 transition-all active:scale-95"
         >
-          <Sparkles className="h-4 w-4 text-amber-400" />
-          Add New Jewellery Product
+          <Sparkles className="h-4 w-4 text-stone-950 fill-stone-950" />
+          + Add New Jewellery Product
         </Button>
       </div>
 
@@ -720,7 +720,7 @@ export function InventoryDataTable({
           <p className="text-xs text-gray-400 mt-1">Try changing your search query or add a new product.</p>
           <Button
             onClick={() => setIsAddModalOpen(true)}
-            className="mt-4 rounded-xl bg-stone-900 text-white hover:bg-black font-bold text-xs"
+            className="mt-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-stone-950 font-black text-xs px-4 py-2"
           >
             <Plus className="h-3.5 w-3.5 mr-1" /> Add Product Now
           </Button>
@@ -800,7 +800,7 @@ export function InventoryDataTable({
                       <span className="font-extrabold text-gray-900 block text-xs">
                         {formatCurrency(item.price)}
                       </span>
-                      {item.comparePrice && item.comparePrice > item.price && (
+                      {item.comparePrice && (
                         <span className="text-[10px] text-gray-400 line-through block">
                           {formatCurrency(item.comparePrice)}
                         </span>
@@ -808,64 +808,67 @@ export function InventoryDataTable({
                     </div>
                   </td>
 
-                  {/* 1-Click Status Toggle */}
+                  {/* Live Status Switcher */}
                   <td className="px-5 py-4">
                     <button
                       type="button"
                       disabled={updatingId === item.id}
                       onClick={() => handleToggleStatus(item)}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black uppercase transition-all shadow-2xs ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wide uppercase transition-all shadow-2xs ${
                         item.productStatus === 'PUBLISHED'
-                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200'
-                          : 'bg-stone-200 text-stone-700 border border-stone-300 hover:bg-stone-300'
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
+                          : 'bg-stone-100 text-stone-600 border border-stone-300 hover:bg-stone-200'
                       }`}
-                      title="Click to toggle Published / Draft status"
+                      title="Click to toggle Published / Draft"
                     >
                       <span
                         className={`h-1.5 w-1.5 rounded-full ${
-                          item.productStatus === 'PUBLISHED' ? 'bg-emerald-600 animate-pulse' : 'bg-stone-500'
+                          item.productStatus === 'PUBLISHED' ? 'bg-emerald-600 animate-pulse' : 'bg-stone-400'
                         }`}
                       />
-                      {item.productStatus}
+                      {item.productStatus === 'PUBLISHED' ? 'Published' : 'Draft'}
                     </button>
                   </td>
 
-                  {/* Available Quantity */}
+                  {/* Available Stock */}
                   <td className="px-5 py-4 text-center">
-                    <span
-                      className={`inline-flex items-center justify-center rounded-xl px-3 py-1 font-mono text-sm font-black shadow-xs ${
-                        item.quantity === 0
-                          ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                          : item.quantity <= 10
-                          ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                          : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                      }`}
-                    >
-                      {item.quantity} units
-                    </span>
+                    <div className="inline-flex flex-col items-center">
+                      <span
+                        className={`font-black text-sm ${
+                          item.status === 'out-of-stock'
+                            ? 'text-rose-600'
+                            : item.status === 'low-stock'
+                            ? 'text-amber-600'
+                            : 'text-emerald-700'
+                        }`}
+                      >
+                        {item.quantity}
+                      </span>
+                      <span className="text-[9px] text-gray-400">of {item.totalQuantity} units</span>
+                    </div>
                   </td>
 
-                  {/* Quick Inline Increment/Decrement */}
+                  {/* Quick Adjust Buttons */}
                   <td className="px-5 py-4 text-center">
-                    <div className="inline-flex items-center gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200/80">
+                    <div className="inline-flex items-center justify-center gap-1">
                       <button
                         type="button"
                         disabled={updatingId === item.id || item.quantity <= 0}
                         onClick={() => handleQuickAdjust(item.id, -1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-gray-700 hover:bg-gray-200 shadow-xs disabled:opacity-40 transition-all active:scale-95"
-                        title="Decrease by 1"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-700 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-30 transition-colors shadow-2xs"
+                        title="Reduce 1 unit"
                       >
-                        <Minus className="h-3 w-3" />
+                        <Minus className="h-3.5 w-3.5" />
                       </button>
 
                       <button
                         type="button"
                         disabled={updatingId === item.id}
                         onClick={() => handleQuickAdjust(item.id, 1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-gray-700 hover:bg-gray-200 shadow-xs transition-all active:scale-95"
-                        title="Increase by 1"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors shadow-2xs"
+                        title="Add 1 unit"
                       >
-                        <Plus className="h-3 w-3" />
+                        <Plus className="h-3.5 w-3.5" />
                       </button>
 
                       <button
@@ -926,81 +929,82 @@ export function InventoryDataTable({
         </div>
       )}
 
-      {/* ── MODAL 1: Add New Jewellery Product (Multi-Image & Keyboard Friendly) ── */}
+      {/* ── MODAL 1: Add New Jewellery Product (Single-Screen High Density & Keyboard Friendly) ── */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent
           onKeyDown={handleKeyDown}
-          className="max-w-3xl p-0 bg-white rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col border border-stone-200"
+          className="max-w-5xl p-0 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-stone-200"
         >
           {/* Header */}
-          <div className="bg-stone-900 px-6 py-5 flex items-center justify-between text-white shrink-0">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400 text-stone-900 font-black">
-                  <Sparkles className="h-4 w-4" />
-                </span>
-                <h2 className="text-lg font-black tracking-tight text-white">
+          <div className="bg-stone-900 px-6 py-3.5 flex items-center justify-between text-white shrink-0">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400 text-stone-900 font-black">
+                <Sparkles className="h-4 w-4 fill-stone-900" />
+              </span>
+              <div>
+                <h2 className="text-base font-black tracking-tight text-white leading-none">
                   Add New Jewellery Product
                 </h2>
+                <p className="text-[11px] text-stone-300 mt-0.5">
+                  Multi-photo upload &amp; live Supabase synchronization
+                </p>
               </div>
-              <p className="text-xs text-stone-300 mt-0.5">
-                Upload multiple photos, set pricing, inventory, and sync live with Supabase.
-              </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsAddModalOpen(false)}
-              className="rounded-xl p-1.5 text-stone-400 hover:bg-stone-800 hover:text-white transition-colors"
-              title="Close (Esc)"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-flex items-center rounded-md bg-stone-800 px-2 py-0.5 font-mono text-[10px] text-amber-300 border border-stone-700">
+                Ctrl + Enter to Save
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="rounded-xl p-1 text-stone-400 hover:bg-stone-800 hover:text-white transition-colors"
+                title="Close (Esc)"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
-          {/* Form Scrollable Body */}
-          <div className="p-6 overflow-y-auto space-y-6 text-xs bg-stone-50/40 flex-1">
-            {/* Section 1: Core Details */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs space-y-3">
-              <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
-                <span className="rounded-md bg-stone-900 px-2 py-0.5 text-[10px] font-black text-amber-400 uppercase">
-                  1. Product Details
-                </span>
-                <span className="text-[11px] text-stone-400">Basic catalog identity</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-2 space-y-1">
-                  <Label className="text-xs font-bold text-stone-800">
-                    Product Title * <span className="text-rose-500">*</span>
+          {/* Form High-Density 2-Column Body */}
+          <div className="p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 text-xs bg-stone-50/50">
+            {/* Left Column: Product Info & Pricing & Specs (7 cols) */}
+            <div className="lg:col-span-7 space-y-3">
+              {/* Row 1: Title & SKU */}
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="col-span-2 space-y-1">
+                  <Label className="text-[11px] font-bold text-stone-800 flex items-center justify-between">
+                    <span>Product Title *</span>
+                    <span className="text-[10px] text-stone-400 font-normal">Auto-generates slug</span>
                   </Label>
                   <Input
                     ref={productNameInputRef}
                     value={newProduct.name}
                     onChange={e => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="e.g. Royal Kashmiri Mirror Dome Jhumka"
-                    className="rounded-xl border-stone-300 bg-white font-medium focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 text-xs h-9"
+                    className="rounded-xl border-stone-300 bg-white font-medium focus:border-stone-900 text-xs h-8"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-stone-800">SKU (Auto or Custom)</Label>
+                  <Label className="text-[11px] font-bold text-stone-800">SKU</Label>
                   <Input
                     value={newProduct.sku}
                     onChange={e => setNewProduct(prev => ({ ...prev, sku: e.target.value }))}
-                    placeholder="e.g. JJ-KASH-01"
-                    className="rounded-xl border-stone-300 font-mono text-xs bg-white h-9 focus:border-stone-900"
+                    placeholder="JJ-KASH-01"
+                    className="rounded-xl border-stone-300 font-mono text-xs bg-white h-8 focus:border-stone-900"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Row 2: Category, Status, Badge */}
+              <div className="grid grid-cols-3 gap-2.5">
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-stone-800">Category</Label>
+                  <Label className="text-[11px] font-bold text-stone-800">Category</Label>
                   <Select
                     value={newProduct.categoryId}
                     onValueChange={val => setNewProduct(prev => ({ ...prev, categoryId: val }))}
                   >
-                    <SelectTrigger className="rounded-xl border-stone-300 bg-white h-9 text-xs">
-                      <SelectValue placeholder="Select Category" />
+                    <SelectTrigger className="rounded-xl border-stone-300 bg-white h-8 text-xs">
+                      <SelectValue placeholder="Category" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map(c => (
@@ -1013,30 +1017,30 @@ export function InventoryDataTable({
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-stone-800">Live Status</Label>
+                  <Label className="text-[11px] font-bold text-stone-800">Live Status</Label>
                   <Select
                     value={newProduct.status}
                     onValueChange={(val: 'PUBLISHED' | 'DRAFT') =>
                       setNewProduct(prev => ({ ...prev, status: val }))
                     }
                   >
-                    <SelectTrigger className="rounded-xl border-stone-300 bg-white h-9 text-xs font-semibold">
+                    <SelectTrigger className="rounded-xl border-stone-300 bg-white h-8 text-xs font-semibold">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="PUBLISHED">Published (Store Live)</SelectItem>
+                      <SelectItem value="PUBLISHED">Published (Live)</SelectItem>
                       <SelectItem value="DRAFT">Draft (Hidden)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-stone-800">Storefront Badge</Label>
+                  <Label className="text-[11px] font-bold text-stone-800">Store Badge</Label>
                   <Select
                     value={newProduct.badge}
                     onValueChange={val => setNewProduct(prev => ({ ...prev, badge: val }))}
                   >
-                    <SelectTrigger className="rounded-xl border-stone-300 bg-white h-9 text-xs">
+                    <SelectTrigger className="rounded-xl border-stone-300 bg-white h-8 text-xs">
                       <SelectValue placeholder="Badge" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1050,283 +1054,265 @@ export function InventoryDataTable({
                   </Select>
                 </div>
               </div>
-            </div>
 
-            {/* Section 2: Pricing & Stock */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs space-y-3">
-              <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
-                <span className="rounded-md bg-stone-900 px-2 py-0.5 text-[10px] font-black text-amber-400 uppercase">
-                  2. Pricing &amp; Inventory
-                </span>
-                <span className="text-[11px] text-stone-400">Live stock units and pricing in ₹</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Row 3: Pricing & Stock */}
+              <div className="grid grid-cols-3 gap-2.5 p-2.5 rounded-2xl bg-amber-50/60 border border-amber-200/70">
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-stone-800">
-                    Regular Price (₹) <span className="text-rose-500">*</span>
+                  <Label className="text-[11px] font-bold text-stone-900">
+                    Price (₹) <span className="text-rose-500">*</span>
                   </Label>
                   <Input
                     type="number"
                     min={0}
                     value={newProduct.price}
                     onChange={e => setNewProduct(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                    className="rounded-xl border-stone-300 font-extrabold text-stone-900 bg-white h-9 text-sm focus:border-stone-900"
+                    className="rounded-xl border-amber-300 font-extrabold text-stone-900 bg-white h-8 text-xs focus:border-stone-900"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-stone-800">Compare Price / MRP (₹)</Label>
+                  <Label className="text-[11px] font-bold text-stone-600">MRP / Compare (₹)</Label>
                   <Input
                     type="number"
                     min={0}
                     value={newProduct.comparePrice}
                     onChange={e => setNewProduct(prev => ({ ...prev, comparePrice: parseFloat(e.target.value) || 0 }))}
-                    className="rounded-xl border-stone-300 font-bold bg-white text-stone-400 line-through h-9 text-sm focus:border-stone-900"
+                    className="rounded-xl border-stone-300 font-bold bg-white text-stone-400 line-through h-8 text-xs focus:border-stone-900"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-stone-800">
-                    Initial Stock (Units) <span className="text-rose-500">*</span>
+                  <Label className="text-[11px] font-bold text-emerald-900">
+                    Stock Units <span className="text-rose-500">*</span>
                   </Label>
                   <Input
                     type="number"
                     min={0}
                     value={newProduct.initialStock}
                     onChange={e => setNewProduct(prev => ({ ...prev, initialStock: parseInt(e.target.value) || 0 }))}
-                    className="rounded-xl border-stone-300 font-black bg-emerald-50 text-emerald-800 h-9 text-sm focus:border-emerald-600"
+                    className="rounded-xl border-emerald-300 font-black bg-emerald-50 text-emerald-900 h-8 text-xs focus:border-emerald-600"
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Section 3: Jewellery Specs */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs space-y-3">
-              <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
-                <span className="rounded-md bg-stone-900 px-2 py-0.5 text-[10px] font-black text-amber-400 uppercase">
-                  3. Jewellery Specs
-                </span>
-                <span className="text-[11px] text-stone-400">Purity and occasion vibes</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Row 4: Material & Silver Purity & Vibe */}
+              <div className="grid grid-cols-3 gap-2.5">
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-stone-800">Material Finish</Label>
+                  <Label className="text-[11px] font-bold text-stone-800">Material Finish</Label>
                   <Input
                     value={newProduct.material}
                     onChange={e => setNewProduct(prev => ({ ...prev, material: e.target.value }))}
-                    placeholder="e.g. Oxidised Silver Finish"
-                    className="rounded-xl border-stone-300 bg-white h-9 text-xs"
+                    placeholder="Oxidised Silver Finish"
+                    className="rounded-xl border-stone-300 bg-white h-8 text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-stone-800">Silver Purity</Label>
+                  <Label className="text-[11px] font-bold text-stone-800">Silver Purity</Label>
                   <Input
                     value={newProduct.silverPurity}
                     onChange={e => setNewProduct(prev => ({ ...prev, silverPurity: e.target.value }))}
-                    placeholder="e.g. Handcrafted Quality"
-                    className="rounded-xl border-stone-300 bg-white h-9 text-xs"
+                    placeholder="Handcrafted Quality"
+                    className="rounded-xl border-stone-300 bg-white h-8 text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-stone-800">Occasion / Vibe</Label>
+                  <Label className="text-[11px] font-bold text-stone-800">Occasion / Vibe</Label>
                   <Input
                     value={newProduct.vibe}
                     onChange={e => setNewProduct(prev => ({ ...prev, vibe: e.target.value }))}
-                    placeholder="e.g. Garba & Festive Glam"
-                    className="rounded-xl border-stone-300 bg-white h-9 text-xs"
+                    placeholder="Garba & Festive Glam"
+                    className="rounded-xl border-stone-300 bg-white h-8 text-xs"
                   />
                 </div>
               </div>
+
+              {/* Row 5: Product Description */}
+              <div className="space-y-1">
+                <Label className="text-[11px] font-bold text-stone-800">Product Description</Label>
+                <textarea
+                  value={newProduct.description}
+                  onChange={e => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Handcrafted authentic oxidised silver jhumka featuring artisan filigree dome..."
+                  rows={2}
+                  className="w-full rounded-xl border border-stone-300 p-2 text-xs focus:border-stone-900 focus:outline-none bg-white resize-none"
+                />
+              </div>
             </div>
 
-            {/* Section 4: Multi-Image Uploader Dropzone */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs space-y-3">
-              <div className="flex items-center justify-between border-b border-stone-100 pb-2">
-                <div className="flex items-center gap-2">
-                  <span className="rounded-md bg-stone-900 px-2 py-0.5 text-[10px] font-black text-amber-400 uppercase">
-                    4. Product Media &amp; Photos
-                  </span>
-                  <span className="text-[11px] text-stone-500 font-semibold">
-                    ({selectedImages.length} photos selected)
-                  </span>
+            {/* Right Column: Multi-Image Uploader Dropzone & Live Cover (5 cols) */}
+            <div className="lg:col-span-5 flex flex-col justify-between space-y-2.5 bg-white p-3.5 rounded-2xl border border-stone-200">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[11px] font-bold text-stone-900 flex items-center gap-1.5">
+                    <ImageIcon className="h-3.5 w-3.5 text-amber-500" />
+                    Product Photos ({selectedImages.length})
+                  </Label>
+                  <span className="text-[10px] text-stone-400">★ Star = Cover Image</span>
                 </div>
-                <span className="text-[10px] text-stone-400">Direct upload to Supabase</span>
-              </div>
 
-              {/* Dropzone Container */}
-              <div
-                onDragOver={e => {
-                  e.preventDefault();
-                  setIsDragging(true);
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={e => {
-                  e.preventDefault();
-                  setIsDragging(false);
-                  handleAddFiles(e.dataTransfer.files);
-                }}
-                onClick={() => addFileInputRef.current?.click()}
-                className={`relative rounded-2xl border-2 border-dashed p-6 text-center transition-all cursor-pointer ${
-                  isDragging
-                    ? 'border-amber-500 bg-amber-50/50 scale-[0.99]'
-                    : 'border-stone-300 bg-stone-50 hover:bg-stone-100/70 hover:border-stone-400'
-                }`}
-              >
-                <input
-                  type="file"
-                  ref={addFileInputRef}
-                  onChange={e => handleAddFiles(e.target.files)}
-                  multiple
-                  accept="image/*"
-                  className="hidden"
-                />
-                <div className="space-y-2">
-                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-xs border border-stone-200 text-stone-700">
-                    <Upload className="h-5 w-5 text-amber-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-stone-900">
-                      Drag &amp; drop multiple product photos, or{' '}
-                      <span className="text-amber-600 underline">browse files</span>
-                    </p>
-                    <p className="text-[10px] text-stone-400 mt-0.5">
-                      Select multiple angles (Front, Dome, Hook, Model Preview). PNG, JPG, WEBP up to 5MB.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Manual URL Input Option */}
-              <div className="flex items-center gap-2 pt-1">
-                <Input
-                  value={manualImageUrl}
-                  onChange={e => setManualImageUrl(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddManualUrl();
-                    }
+                {/* Compact Dropzone */}
+                <div
+                  onDragOver={e => {
+                    e.preventDefault();
+                    setIsDragging(true);
                   }}
-                  placeholder="Or paste image URL (https://...) and press Add"
-                  className="rounded-xl border-stone-300 text-xs bg-white h-8"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleAddManualUrl()}
-                  className="rounded-xl text-xs font-bold h-8 shrink-0 bg-white hover:bg-stone-900 hover:text-white"
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={e => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    handleAddFiles(e.dataTransfer.files);
+                  }}
+                  onClick={() => addFileInputRef.current?.click()}
+                  className={`relative rounded-xl border-2 border-dashed p-3 text-center transition-all cursor-pointer ${
+                    isDragging
+                      ? 'border-amber-500 bg-amber-50/50 scale-[0.99]'
+                      : 'border-stone-300 bg-stone-50 hover:bg-stone-100 hover:border-stone-400'
+                  }`}
                 >
-                  Add URL
-                </Button>
-              </div>
+                  <input
+                    type="file"
+                    ref={addFileInputRef}
+                    onChange={e => handleAddFiles(e.target.files)}
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white shadow-xs border border-stone-200 text-stone-700">
+                      <Upload className="h-3.5 w-3.5 text-amber-500" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[11px] font-bold text-stone-800 leading-tight">
+                        Upload multi-angle photos <span className="text-amber-600 underline font-normal">(Click/Drop)</span>
+                      </p>
+                      <p className="text-[9px] text-stone-400">Front, Dome, Hook, Wearing Look</p>
+                    </div>
+                  </div>
+                </div>
 
-              {/* Selected Images Grid with Cover Star */}
-              {selectedImages.length > 0 && (
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 pt-2">
-                  {selectedImages.map((img, idx) => (
-                    <div
-                      key={img.id}
-                      className={`group relative h-24 rounded-2xl overflow-hidden border-2 bg-stone-100 transition-all ${
-                        img.isPrimary ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-stone-200'
-                      }`}
-                    >
-                      <Image
-                        src={img.url}
-                        alt="Product preview"
-                        fill
-                        sizes="100px"
-                        className="object-cover"
-                      />
+                {/* Manual URL Input Option */}
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    value={manualImageUrl}
+                    onChange={e => setManualImageUrl(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddManualUrl();
+                      }
+                    }}
+                    placeholder="Paste image URL (https://...)"
+                    className="rounded-xl border-stone-300 text-[11px] bg-white h-7.5"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAddManualUrl()}
+                    className="rounded-xl text-[11px] font-bold h-7.5 shrink-0 bg-stone-100 hover:bg-stone-900 hover:text-white px-2.5"
+                  >
+                    Add
+                  </Button>
+                </div>
 
-                      {/* Cover Badge */}
-                      {img.isPrimary && (
-                        <span className="absolute top-1 left-1 flex items-center gap-0.5 rounded-md bg-stone-900/90 px-1.5 py-0.5 text-[8px] font-black text-amber-400 shadow-xs">
-                          <Star className="h-2.5 w-2.5 fill-amber-400" />
-                          Cover
-                        </span>
-                      )}
+                {/* Selected Images Grid with Star Badge */}
+                {selectedImages.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-2 max-h-[140px] overflow-y-auto pr-1">
+                    {selectedImages.map((img) => (
+                      <div
+                        key={img.id}
+                        className={`group relative h-20 rounded-xl overflow-hidden border-2 bg-stone-100 transition-all ${
+                          img.isPrimary ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-stone-200'
+                        }`}
+                      >
+                        <Image
+                          src={img.url}
+                          alt="Product preview"
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                        />
 
-                      {/* Action buttons on hover */}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
-                        {!img.isPrimary && (
+                        {/* Cover Badge */}
+                        {img.isPrimary && (
+                          <span className="absolute top-1 left-1 flex items-center gap-0.5 rounded-md bg-stone-900/90 px-1 py-0.2 text-[8px] font-black text-amber-400 shadow-xs">
+                            <Star className="h-2.5 w-2.5 fill-amber-400" /> Cover
+                          </span>
+                        )}
+
+                        {/* Action buttons on hover */}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 p-1">
+                          {!img.isPrimary && (
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleSetCoverImage(img.id);
+                              }}
+                              className="flex h-5 w-5 items-center justify-center rounded-md bg-stone-900 text-amber-400 hover:bg-black shadow-sm"
+                              title="Set as Cover photo"
+                            >
+                              <Star className="h-3 w-3" />
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={e => {
                               e.stopPropagation();
-                              handleSetCoverImage(img.id);
+                              handleRemoveImage(img.id);
                             }}
-                            className="flex h-6 w-6 items-center justify-center rounded-lg bg-stone-900 text-amber-400 hover:bg-black shadow-sm"
-                            title="Set as Cover photo"
+                            className="flex h-5 w-5 items-center justify-center rounded-md bg-rose-600 text-white hover:bg-rose-700 shadow-sm"
+                            title="Remove image"
                           >
-                            <Star className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3 w-3" />
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleRemoveImage(img.id);
-                          }}
-                          className="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-600 text-white hover:bg-rose-700 shadow-sm"
-                          title="Remove image"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Section 5: Description */}
-            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs space-y-2">
-              <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
-                <span className="rounded-md bg-stone-900 px-2 py-0.5 text-[10px] font-black text-amber-400 uppercase">
-                  5. Product Description
-                </span>
-                <span className="text-[11px] text-stone-400">Detailed craft and jewellery features</span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-xl border border-dashed border-stone-200 text-center bg-stone-50/50">
+                    <p className="text-[11px] text-stone-400">No photos added yet</p>
+                    <p className="text-[9px] text-stone-400 mt-0.5">Select photos above or add a direct image URL</p>
+                  </div>
+                )}
               </div>
 
-              <textarea
-                value={newProduct.description}
-                onChange={e => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Handcrafted authentic oxidised silver jhumka featuring artisan filigree dome..."
-                rows={3}
-                className="w-full rounded-xl border border-stone-300 p-3 text-xs focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 focus:outline-none bg-white"
-              />
+              {/* Mini Summary Hint */}
+              <div className="p-2 rounded-xl bg-stone-50 border border-stone-200/80 flex items-center justify-between text-[11px] text-stone-600">
+                <span className="font-semibold text-stone-700">Preview:</span>
+                <span className="truncate max-w-[170px] font-medium text-stone-900">{newProduct.name || 'Untitled Piece'}</span>
+                <span className="font-bold text-amber-700">₹{newProduct.price}</span>
+              </div>
             </div>
           </div>
 
-          {/* Sticky Non-Clipped Footer */}
-          <div className="sticky bottom-0 bg-white border-t border-stone-200 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 shadow-lg">
-            <div className="flex items-center gap-2 text-[11px] text-stone-500 font-medium">
-              <span className="inline-flex items-center rounded-md bg-stone-100 px-2 py-1 font-mono text-[10px] font-bold text-stone-700">
-                Ctrl + Enter
+          {/* Compact Non-Clipped Footer */}
+          <div className="bg-white border-t border-stone-200 px-6 py-3 flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-1.5 text-[11px] text-stone-500 font-medium">
+              <span className="inline-flex items-center rounded-md bg-stone-100 px-2 py-0.5 font-mono text-[10px] font-bold text-stone-700">
+                Esc
               </span>
-              <span>to Save &amp; Sync with Supabase</span>
+              <span>to Close</span>
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setIsAddModalOpen(false)}
-                className="rounded-xl border-stone-300 text-xs font-semibold hover:bg-stone-100 h-9 flex-1 sm:flex-initial"
+                className="rounded-xl border-stone-300 text-xs font-semibold hover:bg-stone-100 h-8"
               >
-                Cancel (Esc)
+                Cancel
               </Button>
               <Button
                 type="button"
                 size="sm"
                 onClick={handleCreateProduct}
                 disabled={isSaving}
-                className="rounded-xl bg-stone-900 text-white hover:bg-black font-black text-xs gap-1.5 shadow-md h-9 flex-1 sm:flex-initial"
+                className="rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-stone-950 font-black text-xs gap-1.5 shadow-md h-8 px-4"
               >
-                <Sparkles className="h-4 w-4 text-amber-400" />
-                {isSaving ? 'Uploading Photos & Saving...' : 'Create Jewellery Product'}
+                <Sparkles className="h-3.5 w-3.5 text-stone-950 fill-stone-950" />
+                {isSaving ? 'Saving to Supabase...' : 'Create Jewellery Product'}
               </Button>
             </div>
           </div>

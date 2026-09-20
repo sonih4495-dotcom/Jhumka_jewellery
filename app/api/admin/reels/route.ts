@@ -105,6 +105,88 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PUT: Update an existing Reel
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user || (session.user as any).role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const {
+      id,
+      creator,
+      handle,
+      avatar,
+      thumbnail,
+      videoUrl,
+      instagramUrl,
+      title,
+      likes,
+      productId,
+    } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Reel ID is required' }, { status: 400 });
+    }
+
+    const currentReels = getStoredReels();
+    const existingIndex = currentReels.findIndex(r => r.id === id);
+
+    if (existingIndex === -1) {
+      return NextResponse.json({ error: 'Reel not found' }, { status: 404 });
+    }
+
+    const existingReel = currentReels[existingIndex]!;
+
+    let taggedProduct = existingReel.taggedProduct;
+    if (productId && productId !== taggedProduct?.id) {
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+        include: { images: { take: 1, orderBy: { position: 'asc' } } },
+      });
+
+      if (product) {
+        taggedProduct = {
+          id: product.id,
+          name: product.name,
+          price: Number(product.price),
+          comparePrice: product.comparePrice ? Number(product.comparePrice) : undefined,
+          slug: product.slug,
+          image: product.images[0]?.url || existingReel.taggedProduct?.image || '/images/placeholder.svg',
+        };
+      }
+    }
+
+    const updatedReel: ReelItem = {
+      ...existingReel,
+      creator: creator !== undefined ? creator.trim() : existingReel.creator,
+      handle: handle !== undefined ? (handle.startsWith('@') ? handle.trim() : `@${handle.trim()}`) : existingReel.handle,
+      avatar: avatar || existingReel.avatar,
+      thumbnail: thumbnail || (taggedProduct?.image || existingReel.thumbnail),
+      videoUrl: videoUrl !== undefined ? (videoUrl.trim() || undefined) : existingReel.videoUrl,
+      instagramUrl: instagramUrl !== undefined ? (instagramUrl.trim() || undefined) : existingReel.instagramUrl,
+      title: title !== undefined ? title.trim() : existingReel.title,
+      likes: likes !== undefined ? likes.trim() : existingReel.likes,
+      taggedProduct: taggedProduct || existingReel.taggedProduct,
+    };
+
+    currentReels[existingIndex] = updatedReel;
+    saveStoredReels(currentReels);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Reel updated successfully!',
+      reel: updatedReel,
+      reels: currentReels,
+    });
+  } catch (error: any) {
+    console.error('Admin reels PUT error:', error);
+    return NextResponse.json({ error: error.message || 'Failed to update reel' }, { status: 500 });
+  }
+}
+
 // DELETE: Delete a Reel
 export async function DELETE(request: NextRequest) {
   try {
