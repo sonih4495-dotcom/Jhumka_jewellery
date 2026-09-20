@@ -172,6 +172,7 @@ function ReelProductCard({ reel }: { reel: ReelItem }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   // Bulletproof universal auto-play
   useEffect(() => {
@@ -254,6 +255,16 @@ function ReelProductCard({ reel }: { reel: ReelItem }) {
     >
       {/* 9:16 Ratio Video Container */}
       <div className="relative aspect-[9/16] w-full overflow-hidden bg-stone-900">
+        {/* Real-time Video Progress Bar at Top */}
+        {reel.videoUrl && (
+          <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 z-30 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 transition-all duration-100 ease-linear shadow-sm"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
+
         {/* Seamlessly Playing Reel Video or Fallback Image */}
         {reel.videoUrl ? (
           <video
@@ -265,6 +276,12 @@ function ReelProductCard({ reel }: { reel: ReelItem }) {
             muted
             playsInline
             preload="auto"
+            onTimeUpdate={(e) => {
+              const v = e.currentTarget;
+              if (v.duration) {
+                setProgress((v.currentTime / v.duration) * 100);
+              }
+            }}
             onCanPlay={(e) => {
               const v = e.currentTarget;
               v.muted = isMuted;
@@ -290,13 +307,19 @@ function ReelProductCard({ reel }: { reel: ReelItem }) {
         {/* Ambient Dark Gradient Overlays */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-black/50 pointer-events-none" />
 
-        {/* Top Header: Creator Tag & Sound Toggle */}
+        {/* Top Header: Creator Tag, Live Status & Sound Toggle */}
         <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between z-10">
-          <div className="flex items-center gap-2 rounded-full bg-black/65 backdrop-blur-md px-2.5 py-1 text-[11px] text-stone-100 border border-white/15 shadow">
+          <div className="flex items-center gap-2 rounded-full bg-black/75 backdrop-blur-md px-2.5 py-1 text-[11px] text-stone-100 border border-white/15 shadow">
             <div className="relative h-4 w-4 overflow-hidden rounded-full border border-amber-400">
               <Image src={reel.avatar} alt={reel.creator} fill sizes="16px" className="object-cover" />
             </div>
-            <span className="font-bold truncate max-w-[100px]">{reel.handle}</span>
+            <span className="font-bold truncate max-w-[85px]">{reel.handle}</span>
+            {isPlaying && reel.videoUrl && (
+              <span className="flex items-center gap-1 text-[9px] font-black uppercase text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded-full border border-emerald-500/30">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
