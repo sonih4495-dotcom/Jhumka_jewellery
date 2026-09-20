@@ -8,20 +8,20 @@ import { cn } from '@/lib/utils';
 
 const adminNavItems = [
   {
-    href: '/admin/products',
-    label: 'Products',
-  },
-  {
-    href: '/admin/media',
-    label: 'Media & Images',
+    href: '/admin/inventory',
+    label: 'Products & Inventory',
   },
   {
     href: '/admin/orders',
     label: 'Orders',
   },
   {
-    href: '/admin/inventory',
-    label: 'Inventory',
+    href: '/admin/customers',
+    label: 'Customers',
+  },
+  {
+    href: '/admin/media',
+    label: 'Media & Images',
   },
 ];
 

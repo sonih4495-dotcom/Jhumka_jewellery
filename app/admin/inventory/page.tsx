@@ -10,8 +10,14 @@ import {
   Layers,
   Sparkles,
   IndianRupee,
+  CheckCircle2,
+  FileEdit,
 } from 'lucide-react';
-import { getInventoryData, getLiveInventoryStats } from '@/server/queries/inventory';
+import {
+  getInventoryData,
+  getLiveInventoryStats,
+  getInventoryCategories,
+} from '@/server/queries/inventory';
 import { InventoryDataTable } from '@/components/inventory-data-table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,19 +31,23 @@ interface AdminInventoryPageProps {
     search?: string;
     category?: string;
     stockLevel?: string;
+    productStatus?: string;
     page?: string;
   }>;
 }
 
 async function InventoryListSection({
   searchParams,
+  categories,
 }: {
   searchParams: Awaited<AdminInventoryPageProps['searchParams']>;
+  categories: Array<{ id: string; name: string; slug: string }>;
 }) {
   const page = parseInt(searchParams.page || '1');
   const search = searchParams.search || '';
   const category = searchParams.category || '';
   const stockLevel = searchParams.stockLevel || '';
+  const productStatus = searchParams.productStatus || '';
 
   const result = await getInventoryData({
     page,
@@ -45,6 +55,7 @@ async function InventoryListSection({
     search,
     category,
     stockLevel,
+    productStatus,
   });
 
   return (
@@ -57,18 +68,26 @@ async function InventoryListSection({
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <InventoryDataTable items={result.items} pagination={result.pagination} />
+        <InventoryDataTable
+          items={result.items}
+          categories={categories}
+          pagination={result.pagination}
+        />
       </div>
     </div>
   );
 }
 
 export default async function AdminInventoryPage(props: AdminInventoryPageProps) {
-  const searchParams = await props.searchParams;
-  const currentStockLevel = searchParams.stockLevel || 'all';
+  const [searchParams, stats, categories] = await Promise.all([
+    props.searchParams,
+    getLiveInventoryStats(),
+    getInventoryCategories(),
+  ]);
 
-  // Real-time dynamic stats directly from Supabase
-  const stats = await getLiveInventoryStats();
+  const currentStockLevel = searchParams.stockLevel || 'all';
+  const currentCategory = searchParams.category || 'all';
+  const currentStatus = searchParams.productStatus || 'all';
 
   const STOCK_TABS = [
     { label: 'All Products', value: 'all', count: stats.totalItems },
@@ -82,33 +101,47 @@ export default async function AdminInventoryPage(props: AdminInventoryPageProps)
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
-            Inventory &amp; Stock Management
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-500">
-            Real-time stock tracking, automatic order deductions, and quick inline stock adjustments.
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">
+              Products &amp; Inventory Hub
+            </h1>
+            <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-bold border-0">
+              ● Supabase Live
+            </Badge>
+          </div>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+            Unified catalog management: create jewellery, upload photos to Supabase, update prices, and adjust live stock.
           </p>
         </div>
       </div>
 
-      {/* Live Inventory Metrics Bar */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {/* Live Inventory & Products Metrics Bar */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Items</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Products</span>
             <Package className="h-4 w-4 text-blue-600" />
           </div>
           <p className="mt-2 text-2xl font-black text-gray-900">{stats.totalItems}</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">{stats.totalUnits} total units in catalog</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">{stats.totalUnits} total units in stock</p>
+        </div>
+
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Published</span>
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+          </div>
+          <p className="mt-2 text-2xl font-black text-emerald-900">{stats.publishedCount}</p>
+          <p className="text-[10px] text-emerald-700 mt-0.5">Live in customer store</p>
         </div>
 
         <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">Low Stock Warning</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">Low Stock Alert</span>
             <AlertTriangle className="h-4 w-4 text-amber-600" />
           </div>
           <p className="mt-2 text-2xl font-black text-amber-900">{stats.lowStock}</p>
-          <p className="text-[10px] text-amber-700 mt-0.5">&le; 10 units remaining</p>
+          <p className="text-[10px] text-amber-700 mt-0.5">≤ 10 units remaining</p>
         </div>
 
         <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-4 shadow-sm">
@@ -120,13 +153,13 @@ export default async function AdminInventoryPage(props: AdminInventoryPageProps)
           <p className="text-[10px] text-rose-700 mt-0.5">0 units available</p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm col-span-2 sm:col-span-1">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Inventory Valuation</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Valuation</span>
             <IndianRupee className="h-4 w-4 text-emerald-600" />
           </div>
           <p className="mt-2 text-2xl font-black text-emerald-700">{formatCurrency(stats.totalValue)}</p>
-          <p className="text-[10px] text-emerald-600 mt-0.5">● Live inventory asset value</p>
+          <p className="text-[10px] text-emerald-600 mt-0.5">● Total inventory asset value</p>
         </div>
       </div>
 
@@ -139,7 +172,8 @@ export default async function AdminInventoryPage(props: AdminInventoryPageProps)
             const searchObj = new URLSearchParams();
             if (tab.value !== 'all') searchObj.set('stockLevel', tab.value);
             if (searchParams.search) searchObj.set('search', searchParams.search);
-            if (searchParams.category) searchObj.set('category', searchParams.category);
+            if (searchParams.category && searchParams.category !== 'all') searchObj.set('category', searchParams.category);
+            if (searchParams.productStatus && searchParams.productStatus !== 'all') searchObj.set('productStatus', searchParams.productStatus);
 
             return (
               <Link
@@ -170,33 +204,79 @@ export default async function AdminInventoryPage(props: AdminInventoryPageProps)
           })}
         </div>
 
-        {/* Search Bar */}
+        {/* Search & Filter Bar */}
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <form method="GET" className="relative flex-1 w-full">
             {searchParams.stockLevel && (
               <input type="hidden" name="stockLevel" value={searchParams.stockLevel} />
             )}
+            {searchParams.category && (
+              <input type="hidden" name="category" value={searchParams.category} />
+            )}
+            {searchParams.productStatus && (
+              <input type="hidden" name="productStatus" value={searchParams.productStatus} />
+            )}
             <Search className="absolute left-3.5 top-3 h-4 w-4 text-gray-400" />
             <Input
               name="search"
-              placeholder="Search inventory by product name, SKU, or tag..."
+              placeholder="Search jewellery by name, SKU, or tag..."
               defaultValue={searchParams.search || ''}
               className="pl-9 text-xs rounded-xl bg-white border-gray-200 shadow-xs"
             />
           </form>
+
+          {/* Quick Category Filter */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <select
+              defaultValue={currentCategory}
+              onChange={(e) => {
+                const searchObj = new URLSearchParams();
+                if (searchParams.stockLevel && searchParams.stockLevel !== 'all') searchObj.set('stockLevel', searchParams.stockLevel);
+                if (searchParams.search) searchObj.set('search', searchParams.search);
+                if (searchParams.productStatus && searchParams.productStatus !== 'all') searchObj.set('productStatus', searchParams.productStatus);
+                if (e.target.value !== 'all') searchObj.set('category', e.target.value);
+                window.location.href = `/admin/inventory${searchObj.toString() ? `?${searchObj.toString()}` : ''}`;
+              }}
+              className="h-9 px-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 shadow-xs focus:outline-none focus:border-stone-900"
+            >
+              <option value="all">All Categories</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              defaultValue={currentStatus}
+              onChange={(e) => {
+                const searchObj = new URLSearchParams();
+                if (searchParams.stockLevel && searchParams.stockLevel !== 'all') searchObj.set('stockLevel', searchParams.stockLevel);
+                if (searchParams.search) searchObj.set('search', searchParams.search);
+                if (searchParams.category && searchParams.category !== 'all') searchObj.set('category', searchParams.category);
+                if (e.target.value !== 'all') searchObj.set('productStatus', e.target.value);
+                window.location.href = `/admin/inventory${searchObj.toString() ? `?${searchObj.toString()}` : ''}`;
+              }}
+              className="h-9 px-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 shadow-xs focus:outline-none focus:border-stone-900"
+            >
+              <option value="all">All Status</option>
+              <option value="PUBLISHED">Published Only</option>
+              <option value="DRAFT">Draft Only</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Inventory Table Container */}
+      {/* Inventory & Products Table Container */}
       <Suspense
         fallback={
           <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
             <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900"></div>
-            <p className="mt-3 text-xs text-gray-500 font-semibold">Loading live inventory from Supabase...</p>
+            <p className="mt-3 text-xs text-gray-500 font-semibold">Loading live products &amp; inventory from Supabase...</p>
           </div>
         }
       >
-        <InventoryListSection searchParams={searchParams} />
+        <InventoryListSection searchParams={searchParams} categories={categories} />
       </Suspense>
     </div>
   );

@@ -79,8 +79,8 @@ export default async function AdminDashboardPage() {
 
         <div className="flex items-center gap-2">
           <Button asChild className="rounded-xl bg-gray-900 text-xs font-bold text-white hover:bg-black shadow-sm">
-            <Link href="/admin/products/new">
-              <Package className="mr-1.5 h-4 w-4" /> Add New Jewellery
+            <Link href="/admin/inventory">
+              <Package className="mr-1.5 h-4 w-4" /> Products &amp; Inventory
             </Link>
           </Button>
         </div>
@@ -143,8 +143,8 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
           <p className="mt-2 text-2xl font-black text-gray-900">{totalProducts}</p>
-          <Link href="/admin/products" className="text-xs text-amber-600 hover:underline mt-1 block">
-            Manage catalog →
+          <Link href="/admin/inventory" className="text-xs text-amber-600 hover:underline mt-1 block">
+            Manage catalog &amp; stock →
           </Link>
         </div>
       </div>

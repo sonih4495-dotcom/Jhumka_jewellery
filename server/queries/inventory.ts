@@ -9,6 +9,7 @@ export async function getInventoryData(options?: {
   search?: string;
   category?: string;
   stockLevel?: string;
+  productStatus?: string;
 }) {
   try {
     const page = options?.page || 1;
@@ -16,6 +17,7 @@ export async function getInventoryData(options?: {
     const search = options?.search?.trim() || '';
     const category = options?.category || '';
     const stockLevel = options?.stockLevel || '';
+    const productStatus = options?.productStatus || '';
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -29,7 +31,15 @@ export async function getInventoryData(options?: {
     }
 
     if (category && category !== 'all') {
-      where.category = { slug: category };
+      where.OR = [
+        ...(where.OR || []),
+        { category: { slug: category } },
+        { category: { id: category } },
+      ];
+    }
+
+    if (productStatus && productStatus !== 'all') {
+      where.status = productStatus;
     }
 
     if (stockLevel && stockLevel !== 'all') {
@@ -51,7 +61,14 @@ export async function getInventoryData(options?: {
           slug: true,
           sku: true,
           price: true,
+          comparePrice: true,
+          description: true,
           status: true,
+          material: true,
+          silverPurity: true,
+          badge: true,
+          vibe: true,
+          categoryId: true,
           category: {
             select: {
               id: true,
@@ -61,10 +78,14 @@ export async function getInventoryData(options?: {
           },
           images: {
             select: {
+              id: true,
               url: true,
               altText: true,
+              position: true,
             },
-            take: 1,
+            orderBy: {
+              position: 'asc',
+            },
           },
           inventory: {
             select: {
@@ -101,7 +122,16 @@ export async function getInventoryData(options?: {
         slug: product.slug,
         sku: product.sku || 'N/A',
         price: Number(product.price),
+        comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
+        description: product.description || '',
         image: product.images?.[0]?.url || '/images/placeholder.svg',
+        images: product.images.map(img => ({
+          id: img.id,
+          url: img.url,
+          altText: img.altText,
+          position: img.position,
+        })),
+        categoryId: product.categoryId,
         category: product.category?.name || 'Uncategorized',
         categorySlug: product.category?.slug || '',
         quantity: available,
@@ -109,7 +139,11 @@ export async function getInventoryData(options?: {
         reserved,
         reorderLevel: 10,
         status,
-        productStatus: product.status,
+        productStatus: product.status as 'PUBLISHED' | 'DRAFT' | 'ARCHIVED',
+        material: product.material || 'Oxidised Silver Finish',
+        silverPurity: product.silverPurity || 'Handcrafted Quality',
+        badge: product.badge,
+        vibe: product.vibe,
       };
     });
 
@@ -128,9 +162,29 @@ export async function getInventoryData(options?: {
   }
 }
 
+export async function getInventoryCategories() {
+  try {
+    return await prisma.category.findMany({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return [];
+  }
+}
+
 export async function getLiveInventoryStats() {
-  const [totalProducts, allProductsWithInventory] = await Promise.all([
+  const [totalProducts, publishedCount, draftCount, allProductsWithInventory] = await Promise.all([
     prisma.product.count(),
+    prisma.product.count({ where: { status: 'PUBLISHED' } }),
+    prisma.product.count({ where: { status: 'DRAFT' } }),
     prisma.product.findMany({
       select: {
         price: true,
@@ -167,6 +221,8 @@ export async function getLiveInventoryStats() {
 
   return {
     totalItems: totalProducts,
+    publishedCount,
+    draftCount,
     totalUnits: totalInventoryUnits,
     lowStock: lowStockCount,
     outOfStock: outOfStockCount,
