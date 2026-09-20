@@ -60,24 +60,22 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleWishlist = useCallback((productId: string) => {
-    setWishlistIds(prev => {
-      const isAlreadyIn = prev.includes(productId);
-      const next = isAlreadyIn
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId];
+    const isAlreadyIn = wishlistIds.includes(productId);
+    const next = isAlreadyIn
+      ? wishlistIds.filter(id => id !== productId)
+      : [...wishlistIds, productId];
 
-      try {
-        localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(next));
-      } catch {}
+    setWishlistIds(next);
 
-      if (isAlreadyIn) {
-        toast('Removed from Wishlist', { icon: '💔', id: `wishlist-${productId}`, duration: 1500 });
-      } else {
-        toast.success('Saved to Wishlist ❤️', { id: `wishlist-${productId}`, duration: 1500 });
-      }
+    try {
+      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(next));
+    } catch {}
 
-      return next;
-    });
+    if (isAlreadyIn) {
+      toast('Removed from Wishlist', { icon: '💔', id: `wishlist-${productId}`, duration: 1500 });
+    } else {
+      toast.success('Saved to Wishlist ❤️', { id: `wishlist-${productId}`, duration: 1500 });
+    }
 
     window.dispatchEvent(new Event('wishlist-updated'));
 
@@ -87,7 +85,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ productId }),
     }).catch(e => console.warn('Background wishlist sync:', e));
-  }, []);
+  }, [wishlistIds]);
 
   const isInWishlist = useCallback(
     (productId: string) => wishlistIds.includes(productId),

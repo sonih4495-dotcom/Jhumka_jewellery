@@ -11,6 +11,7 @@ import {
   Users,
   LogOut,
   Sparkles,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +25,7 @@ interface AdminSidebarProps {
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/products', label: 'Products', icon: Package },
+  { href: '/admin/media', label: 'Media & Images', icon: ImageIcon },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/inventory', label: 'Inventory', icon: Package },
   { href: '/admin/customers', label: 'Customers', icon: Users },

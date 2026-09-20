@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { signInSchema, type SignInInput } from '@/lib/validators';
 import { mapAuthError } from './auth-error';
+import { Eye, EyeOff } from 'lucide-react';
 
 export function SignInForm() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export function SignInForm() {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -48,7 +50,24 @@ export function SignInForm() {
         return;
       }
 
-      router.push(result.url ?? callbackUrl);
+      let targetUrl = callbackUrl || '/';
+      if (result?.url) {
+        try {
+          const parsed = new URL(result.url);
+          if (
+            typeof window !== 'undefined' &&
+            (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+          ) {
+            targetUrl = parsed.pathname + parsed.search + parsed.hash;
+          } else {
+            targetUrl = result.url;
+          }
+        } catch {
+          targetUrl = result.url;
+        }
+      }
+
+      router.push(targetUrl);
       router.refresh();
     } catch (err) {
       console.error('Sign-in error:', err);
@@ -89,13 +108,28 @@ export function SignInForm() {
 
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            placeholder="••••••••"
-            {...register('password')}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              placeholder="••••••••"
+              className="pr-10"
+              {...register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-900 focus:outline-none transition-colors p-1"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
           {errors.password && (
             <p className="text-sm text-destructive">
               {errors.password.message}

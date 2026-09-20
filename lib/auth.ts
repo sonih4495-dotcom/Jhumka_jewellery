@@ -160,6 +160,23 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // Allows relative callback URLs
+      if (url.startsWith('/')) return `${baseUrl}${url}`;
+      // Allows callback URLs on the same origin
+      try {
+        const urlObj = new URL(url);
+        const baseObj = new URL(baseUrl);
+        if (urlObj.origin === baseObj.origin) return url;
+        // If baseUrl is localhost, stay on localhost
+        if (baseObj.hostname === 'localhost' || baseObj.hostname === '127.0.0.1') {
+          return `${baseUrl}${urlObj.pathname}${urlObj.search}${urlObj.hash}`;
+        }
+      } catch {
+        return baseUrl;
+      }
+      return baseUrl;
+    },
   },
   pages: {
     signIn: '/auth/signin',

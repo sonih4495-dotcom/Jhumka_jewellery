@@ -73,6 +73,8 @@ async function ProductsList({
           price: Number(p.price),
           stock: 0,
           status: p.status === 'PUBLISHED' ? 'active' : 'inactive',
+          imageUrl: p.images?.[0]?.url || '',
+          images: p.images || [],
         }))}
         isLoading={false}
       />

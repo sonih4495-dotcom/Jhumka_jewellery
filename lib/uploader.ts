@@ -1,24 +1,8 @@
 // lib/uploader.ts
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import sharp from 'sharp';
+import { supabaseAdmin, SUPABASE_STORAGE_BUCKET } from './supabase';
 
-// S3 Configuration
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'ap-south-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy_access_key',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy_secret_key',
-  },
-});
-
-const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || 'jhumka-jewellery';
-const CDN_URL =
-  process.env.CDN_URL || `https://${BUCKET_NAME}.s3.amazonaws.com`;
+const BUCKET_NAME = SUPABASE_STORAGE_BUCKET;
 
 export interface UploadResult {
   url: string;
@@ -45,17 +29,19 @@ const ALLOWED_IMAGE_TYPES = [
   'image/jpg',
   'image/png',
   'image/webp',
+  'image/svg+xml',
 ] as const;
 
 const ALLOWED_DOCUMENT_TYPES = [
   'application/pdf',
   'text/csv',
+  'application/json',
   'application/vnd.ms-excel',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ] as const;
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 
 // Validate file
 export const validateFile = (
@@ -68,7 +54,7 @@ export const validateFile = (
 
   if (!(allowedTypes as readonly string[]).includes(file.type)) {
     throw new Error(
-      `Invalid file type. Allowed types: ${allowedTypes.join(', ')}`
+      `Invalid file type (${file.type}). Allowed types: ${allowedTypes.join(', ')}`
     );
   }
 
@@ -84,53 +70,66 @@ export const validateFile = (
 // Generate unique filename
 export const generateFileName = (originalName: string, folder = '') => {
   const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(2, 15);
+  const randomString = Math.random().toString(36).substring(2, 10);
   const extension = originalName.split('.').pop();
   const baseName = originalName
     .replace(/\.[^/.]+$/, '')
-    .replace(/[^a-zA-Z0-9]/g, '_');
+    .replace(/[^a-zA-Z0-9_-]/g, '_');
 
   const fileName = `${baseName}_${timestamp}_${randomString}.${extension}`;
   return folder ? `${folder}/${fileName}` : fileName;
 };
 
-// Upload file to S3
-export const uploadToS3 = async (
-  file: Buffer,
-  key: string,
-  contentType: string
+// Upload buffer/file directly to Supabase Bucket
+export const uploadToSupabase = async (
+  file: Buffer | Uint8Array,
+  path: string,
+  contentType: string,
+  bucket: string = BUCKET_NAME
 ): Promise<UploadResult> => {
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-    Body: file,
-    ContentType: contentType,
-    ACL: 'public-read',
-  });
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  const { error } = await supabaseAdmin.storage
+    .from(bucket)
+    .upload(cleanPath, file, {
+      contentType,
+      upsert: true,
+    });
 
-  await s3Client.send(command);
+  if (error) {
+    throw new Error(`Supabase upload failed for ${cleanPath}: ${error.message}`);
+  }
+
+  const { data: publicUrlData } = supabaseAdmin.storage
+    .from(bucket)
+    .getPublicUrl(cleanPath);
 
   return {
-    url: `${CDN_URL}/${key}`,
-    key,
+    url: publicUrlData.publicUrl,
+    key: cleanPath,
     size: file.length,
   };
 };
 
-// Delete file from S3
-export const deleteFromS3 = async (key: string): Promise<void> => {
-  const command = new DeleteObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-  });
+// Delete file from Supabase Bucket
+export const deleteFromSupabase = async (
+  path: string,
+  bucket: string = BUCKET_NAME
+): Promise<void> => {
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  const { error } = await supabaseAdmin.storage
+    .from(bucket)
+    .remove([cleanPath]);
 
-  await s3Client.send(command);
+  if (error) {
+    console.error(`Failed to delete ${cleanPath} from Supabase:`, error.message);
+  }
 };
 
 // Process and upload image with variants
 export const uploadImageWithVariants = async (
   file: File,
-  folder = 'products'
+  folder = 'products',
+  bucket: string = BUCKET_NAME
 ): Promise<{
   original: UploadResult;
   variants: Record<string, UploadResult>;
@@ -143,7 +142,7 @@ export const uploadImageWithVariants = async (
   const extension = fileName.split('.').pop();
 
   // Upload original
-  const original = await uploadToS3(buffer, fileName, file.type);
+  const original = await uploadToSupabase(buffer, fileName, file.type, bucket);
 
   // Create and upload variants
   const variants: Record<string, UploadResult> = {};
@@ -155,14 +154,15 @@ export const uploadImageWithVariants = async (
           fit: 'cover',
           position: 'center',
         })
-        .jpeg({ quality: 80 })
+        .jpeg({ quality: 85 })
         .toBuffer();
 
       const variantKey = `${baseName}${config.suffix}.${extension}`;
-      variants[variantName] = await uploadToS3(
+      variants[variantName] = await uploadToSupabase(
         resizedBuffer,
         variantKey,
-        'image/jpeg'
+        'image/jpeg',
+        bucket
       );
     } catch (error) {
       console.error(`Failed to create ${variantName} variant:`, error);
@@ -172,68 +172,59 @@ export const uploadImageWithVariants = async (
   return { original, variants };
 };
 
-// Upload single file
+// Upload single file (image or document or json data)
 export const uploadFile = async (
   file: File,
   folder = 'uploads',
-  type: 'image' | 'document' = 'image'
+  type: 'image' | 'document' = 'image',
+  bucket: string = BUCKET_NAME
 ): Promise<UploadResult> => {
   validateFile(file, type);
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const fileName = generateFileName(file.name, folder);
 
-  return await uploadToS3(buffer, fileName, file.type);
+  return await uploadToSupabase(buffer, fileName, file.type, bucket);
 };
 
-// Generate presigned URL for direct upload
-export const generatePresignedUrl = async (
-  key: string,
-  contentType: string,
-  expiresIn = 3600 // 1 hour
-): Promise<string> => {
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-    ContentType: contentType,
-    ACL: 'public-read',
-  });
-
-  return await getSignedUrl(s3Client, command, { expiresIn });
-};
-
-// Extract key from URL
-export const extractKeyFromUrl = (url: string): string => {
-  return url.replace(`${CDN_URL}/`, '');
+// Extract key/path from public URL
+export const extractKeyFromUrl = (url: string, bucket: string = BUCKET_NAME): string => {
+  const marker = `/storage/v1/object/public/${bucket}/`;
+  if (url.includes(marker)) {
+    return url.split(marker)[1] || '';
+  }
+  return url;
 };
 
 // Delete image and its variants
 export const deleteImageWithVariants = async (
-  originalUrl: string
+  originalUrl: string,
+  bucket: string = BUCKET_NAME
 ): Promise<void> => {
-  const key = extractKeyFromUrl(originalUrl);
+  const key = extractKeyFromUrl(originalUrl, bucket);
   const baseName = key.replace(/\.[^/.]+$/, '');
 
   // Delete original
-  await deleteFromS3(key);
+  await deleteFromSupabase(key, bucket);
 
   // Delete variants
-  for (const config of Object.values(IMAGE_VARIANTS)) {
-    try {
-      const variantKey = `${baseName}${config.suffix}.jpg`;
-      await deleteFromS3(variantKey);
-    } catch (error) {
-      console.error(`Failed to delete variant ${config.suffix}:`, error);
-    }
+  const variantKeys = Object.values(IMAGE_VARIANTS).map(
+    config => `${baseName}${config.suffix}.jpg`
+  );
+  for (const vKey of variantKeys) {
+    await deleteFromSupabase(vKey, bucket);
   }
 };
 
 // Batch delete files
-export const batchDelete = async (urls: string[]): Promise<void> => {
-  const deletePromises = urls.map(url => {
-    const key = extractKeyFromUrl(url);
-    return deleteFromS3(key);
-  });
-
-  await Promise.allSettled(deletePromises);
+export const batchDelete = async (
+  urls: string[],
+  bucket: string = BUCKET_NAME
+): Promise<void> => {
+  const paths = urls.map(url => extractKeyFromUrl(url, bucket));
+  await supabaseAdmin.storage.from(bucket).remove(paths);
 };
+
+// Backward compatibility alias
+export const uploadToS3 = uploadToSupabase;
+export const deleteFromS3 = deleteFromSupabase;

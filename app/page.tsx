@@ -41,47 +41,49 @@ export const metadata: Metadata = {
   },
 };
 
+const SUPABASE_BUCKET_URL = 'https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery';
+
 const SHOP_CATEGORIES = [
   {
-    name: 'Statement Rings',
-    slug: 'rings',
-    tagline: 'Adjustable & Stackable',
-    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=500&auto=format&fit=crop&q=80',
-    emoji: '💍',
+    name: 'Chandbali Jhumkas',
+    slug: 'chandbali-jhumkas',
+    tagline: 'Royal Crescent Drops',
+    image: `${SUPABASE_BUCKET_URL}/categories/chandbali-jhumkas.jpg?v=2`,
+    emoji: '🌙',
   },
   {
-    name: 'Oxidised Jhumkas & Studs',
-    slug: 'earrings',
-    tagline: 'Festive & College Glow',
-    image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=500&auto=format&fit=crop&q=80',
-    emoji: '✨',
-  },
-  {
-    name: 'Necklaces & Chokers',
-    slug: 'necklaces',
-    tagline: 'Layered & Evil Eye Chains',
-    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500&auto=format&fit=crop&q=80',
-    emoji: '📿',
-  },
-  {
-    name: 'Ghungroo Payal (Anklets)',
-    slug: 'anklets',
-    tagline: 'Tribal Chimes & Daily Payal',
-    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=500&auto=format&fit=crop&q=80',
+    name: 'Temple Dome Jhumkas',
+    slug: 'dome-temple-jhumkas',
+    tagline: 'Melodic Ghungroo Chimes',
+    image: `${SUPABASE_BUCKET_URL}/categories/dome-temple-jhumkas.jpg?v=2`,
     emoji: '🔔',
   },
   {
-    name: 'Tennis & Charm Bracelets',
-    slug: 'bracelets',
-    tagline: 'Pure Sterling Sparkle',
-    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500&auto=format&fit=crop&q=80',
-    emoji: '💫',
+    name: 'Kashmiri & Afghan Jhumkas',
+    slug: 'kashmiri-afghan-jhumkas',
+    tagline: 'Tribal Mirrors & Coins',
+    image: `${SUPABASE_BUCKET_URL}/categories/kashmiri-afghan-jhumkas.jpg?v=2`,
+    emoji: '✨',
   },
   {
-    name: 'Festive Gift Combos',
-    slug: 'combos',
-    tagline: 'Bestie & Navratri Sets',
-    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=500&auto=format&fit=crop&q=80',
+    name: 'Peacock & Floral Jhumkas',
+    slug: 'peacock-floral-jhumkas',
+    tagline: 'Twin Dome Handcrafted',
+    image: `${SUPABASE_BUCKET_URL}/categories/peacock-floral-jhumkas.jpg?v=2`,
+    emoji: '🦚',
+  },
+  {
+    name: 'Mini Everyday Jhumkas',
+    slug: 'mini-everyday-jhumkas',
+    tagline: 'Lightweight College Wear',
+    image: `${SUPABASE_BUCKET_URL}/categories/mini-everyday-jhumkas.jpg?v=2`,
+    emoji: '🌸',
+  },
+  {
+    name: 'Festive Jhumka Combos & Sets',
+    slug: 'festive-jhumka-combos',
+    tagline: 'Hasli Chokers & Boxes',
+    image: `${SUPABASE_BUCKET_URL}/categories/festive-jhumka-combos.jpg?v=2`,
     emoji: '🎁',
   },
 ];
@@ -90,38 +92,38 @@ const CUSTOMER_REVIEWS = [
   {
     name: 'Ananya Deshmukh',
     city: 'Mumbai',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    avatar: `${SUPABASE_BUCKET_URL}/ui/avatar-ananya.jpg`,
     rating: 5,
     verified: true,
-    review: 'Wore the Chandbali oxidised jhumkas all 9 nights of Navratri! Zero irritation, super lightweight and got at least 20 compliments every night! 🌙✨',
-    product: 'Chandbali Oxidised Silver Jhumkas',
+    review: 'Wore the Royal Chandbali oxidised jhumkas all 9 nights of Navratri! Zero irritation, super lightweight and got at least 20 compliments every night! 🌙✨',
+    product: 'Royal Chandbali Oxidised Silver Jhumkas',
   },
   {
     name: 'Kashish Parekh',
     city: 'Ahmedabad',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80',
+    avatar: `${SUPABASE_BUCKET_URL}/ui/avatar-priya.jpg`,
     rating: 5,
     verified: true,
-    review: 'The oxidised adjustable ring is stunning! Looks so unique and aesthetic, and since it is adjustable it fits both my index and ring finger perfectly. 💖',
-    product: 'Dainty Oxidised Adjustable Statement Ring',
+    review: 'The Kashmiri mirror-work tribal jhumkas are out of this world! They reflect light so gorgeously and are surprisingly lightweight. 🪞💖',
+    product: 'Kashmiri Long Mirror-Work Tribal Jhumkas',
   },
   {
     name: 'Shreya Sengupta',
     city: 'Bengaluru',
-    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&auto=format&fit=crop&q=80',
+    avatar: `${SUPABASE_BUCKET_URL}/ui/avatar-tanvi.jpg`,
     rating: 5,
     verified: true,
-    review: 'Sent the Bestie Gift Box to my college roommate. The packaging is aesthetic with an authenticity certificate card. COD delivery was super fast! 👯‍♀️',
-    product: 'Garba Queen Festive Gift Combo',
+    review: 'Sent the Garba Queen Jumbo Jhumka Box to my sister. The packaging with velvet box is aesthetic and the jhumkas are huge yet comfortable! 👯‍♀️',
+    product: 'Navratri Garba Queen Jumbo Jhumka Gift Combo',
   },
 ];
 
 const VIBE_BACKGROUNDS: Record<string, string> = {
-  'garba-glam': 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop&q=80',
-  'minimal-daily': 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&auto=format&fit=crop&q=80',
-  'date-night': 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=600&auto=format&fit=crop&q=80',
-  'evil-eye': 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&auto=format&fit=crop&q=80',
-  'bestie-gifting': 'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=600&auto=format&fit=crop&q=80',
+  'garba-glam': `${SUPABASE_BUCKET_URL}/vibes/garba-glam.jpg?v=2`,
+  'minimal-daily': `${SUPABASE_BUCKET_URL}/vibes/minimal-daily.jpg?v=2`,
+  'date-night': `${SUPABASE_BUCKET_URL}/vibes/date-night.jpg?v=2`,
+  'evil-eye': `${SUPABASE_BUCKET_URL}/vibes/evil-eye.jpg?v=2`,
+  'bestie-gifting': `${SUPABASE_BUCKET_URL}/vibes/bestie-gifting.jpg?v=2`,
 };
 
 async function FeaturedProductsSection() {
@@ -258,8 +260,8 @@ export default function HomePage() {
               <div className="relative mx-auto max-w-sm rounded-3xl border border-amber-400/30 bg-stone-900/60 p-3 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.6)] gold-border-glow">
                 <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
                   <Image
-                    src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80"
-                    alt="Jhumka Junction Handcrafted Jewellery"
+                    src={`${SUPABASE_BUCKET_URL}/products/royal-chandbali-1.jpg?v=2`}
+                    alt="Jhumka Junction Handcrafted Royal Chandbali Jhumkas"
                     fill
                     priority
                     sizes="(max-width: 768px) 100vw, 400px"
@@ -270,9 +272,9 @@ export default function HomePage() {
                     <span className="inline-flex items-center rounded-full bg-rani px-2.5 py-0.5 text-[10px] font-bold text-white mb-2 shadow-md">
                       🔥 Navratri Bestseller
                     </span>
-                    <p className="font-display font-bold text-base text-white">Chandbali Oxidised Jhumkas</p>
+                    <p className="font-display font-bold text-base text-white">Royal Chandbali Oxidised Jhumkas</p>
                     <p className="text-sm text-amber-300 font-extrabold mt-0.5">
-                      ₹1,199 <span className="line-through text-stone-400 font-normal text-xs ml-1">₹1,999</span>
+                      ₹1,299 <span className="line-through text-stone-400 font-normal text-xs ml-1">₹2,199</span>
                     </p>
                   </div>
                 </div>

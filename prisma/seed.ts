@@ -4,8 +4,13 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+const SUPABASE_STORAGE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'jewellery'}`
+  : 'https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery';
+
 async function main() {
-  console.log('🌱 Starting Jhumka Junction Fashion & Oxidised Jewellery Database Seeding...');
+  console.log('🌱 Starting Jhumka Junction - Pure Oxidised Jewellery & Jhumka Database Seeding...');
+  console.log(`📦 Using Supabase Storage: ${SUPABASE_STORAGE_URL}`);
 
   // 1. Clean existing products and categories
   await prisma.review.deleteMany({});
@@ -48,196 +53,241 @@ async function main() {
   });
   console.log('✅ Demo Customer created:', customer.email);
 
-  // 4. Create Categories
-  const ringsCat = await prisma.category.create({
+  // 4. Create Dedicated Oxidised Jhumka Categories
+  const chandbaliCat = await prisma.category.create({
     data: {
-      name: 'Statement Rings',
-      slug: 'rings',
-      description: 'Dainty, stackable, and adjustable fashion rings.',
-      image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80',
+      name: 'Chandbali Jhumkas',
+      slug: 'chandbali-jhumkas',
+      description: 'Iconic royal crescent-moon oxidised chandelier drops with soft bell clusters.',
+      image: `${SUPABASE_STORAGE_URL}/categories/chandbali-jhumkas.jpg`,
     },
   });
 
-  const earringsCat = await prisma.category.create({
+  const domeTempleCat = await prisma.category.create({
     data: {
-      name: 'Oxidised Earrings & Jhumkas',
-      slug: 'earrings',
-      description: 'Viral Chandbali jhumkas, lightweight studs, and Navratri oxidised statement drops.',
-      image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=800&auto=format&fit=crop&q=80',
+      name: 'Dome Temple Jhumkas',
+      slug: 'dome-temple-jhumkas',
+      description: 'Traditional South Indian and temple dome bells with melodic ghungroo chimes.',
+      image: `${SUPABASE_STORAGE_URL}/categories/dome-temple-jhumkas.jpg`,
     },
   });
 
-  const necklacesCat = await prisma.category.create({
+  const kashmiriAfghanCat = await prisma.category.create({
     data: {
-      name: 'Pendants & Chokers',
-      slug: 'necklaces',
-      description: 'Layered evil eye charms, choker sets, and college daily chains.',
-      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80',
+      name: 'Kashmiri & Afghan Jhumkas',
+      slug: 'kashmiri-afghan-jhumkas',
+      description: 'Bohemian shoulder-dusters with tribal mirrors, vintage coins, and turquoise stone insets.',
+      image: `${SUPABASE_STORAGE_URL}/categories/kashmiri-afghan-jhumkas.jpg`,
     },
   });
 
-  const ankletsCat = await prisma.category.create({
+  const peacockCat = await prisma.category.create({
     data: {
-      name: 'Ghungroo Payal (Anklets)',
-      slug: 'anklets',
-      description: 'Traditional tribal ghungroo anklets and sleek daily payal pairs.',
-      image: 'https://images.unsplash.com/photo-1611591475155-426477a20026?w=800&auto=format&fit=crop&q=80',
+      name: 'Peacock & Floral Jhumkas',
+      slug: 'peacock-floral-jhumkas',
+      description: 'Intricately handcrafted antique filigree motifs with twin bell hangings.',
+      image: `${SUPABASE_STORAGE_URL}/categories/peacock-floral-jhumkas.jpg`,
     },
   });
 
-  const braceletsCat = await prisma.category.create({
+  const miniDailyCat = await prisma.category.create({
     data: {
-      name: 'Charm Bracelets & Bangles',
-      slug: 'bracelets',
-      description: 'Aesthetic charm bracelets and adjustable open cuffs.',
-      image: 'https://images.unsplash.com/photo-1611591475155-426477a20026?w=800&auto=format&fit=crop&q=80',
+      name: 'Mini Everyday Jhumkas',
+      slug: 'mini-everyday-jhumkas',
+      description: 'Featherlight oxidised studs and mini drops for college and daily office wear.',
+      image: `${SUPABASE_STORAGE_URL}/categories/mini-everyday-jhumkas.jpg`,
     },
   });
 
   const combosCat = await prisma.category.create({
     data: {
-      name: 'Festive Gift Combos',
-      slug: 'combos',
-      description: 'Bestie twinning sets and complete Navratri jewellery gift boxes.',
-      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&auto=format&fit=crop&q=80',
+      name: 'Festive Jhumka Combos & Sets',
+      slug: 'festive-jhumka-combos',
+      description: 'Complete Navratri gifting boxes and grand Hasli choker + statement jhumka sets.',
+      image: `${SUPABASE_STORAGE_URL}/categories/festive-jhumka-combos.jpg`,
     },
   });
 
-  console.log('✅ 6 Categories created.');
+  console.log('✅ 6 Dedicated Oxidised Jhumka Categories created.');
 
-  // 5. Seed Products
+  // 5. Seed Authentic Handcrafted Oxidised Jhumka Products
   const productsData = [
     {
-      name: 'Chandbali Oxidised Jhumkas',
-      slug: 'chandbali-oxidised-silver-jhumkas',
-      description: 'Iconic crescent-moon Chandbali jhumkas featuring delicate floral filigree and soft bell hangings. Crafted in premium antique oxidised metal with protective polish.',
-      price: 1199,
-      comparePrice: 1999,
-      costPrice: 600,
-      sku: 'JJ-EAR-001',
+      name: 'Royal Chandbali Oxidised Silver Jhumkas',
+      slug: 'royal-chandbali-oxidised-jhumkas',
+      description: 'Handcrafted crescent-moon Chandbali jhumkas featuring delicate floral filigree, antique oxidised silver polish, and melodic bell drops. The iconic Navratri & wedding festival statement.',
+      price: 1299,
+      comparePrice: 2199,
+      costPrice: 550,
+      sku: 'JJ-JHM-001',
       status: ProductStatus.PUBLISHED,
-      categoryId: earringsCat.id,
-      material: 'Oxidised Alloy',
-      silverPurity: 'Antique Finish',
-      weight: 12.5,
+      categoryId: chandbaliCat.id,
+      material: 'Antique Oxidised Silver Alloy',
+      silverPurity: 'Anti-Tarnish Polish',
+      weight: 16.5,
       adjustability: 'Standard Post & Push Back',
       badge: 'BESTSELLER',
       vibe: 'Garba & Festive Glam',
-      tags: ['garba', 'jhumka', 'oxidised', 'chandbali', 'navratri', 'statement'],
+      tags: ['chandbali', 'jhumka', 'oxidised', 'garba', 'navratri', 'statement earring'],
       images: [
-        'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80',
+        `${SUPABASE_STORAGE_URL}/products/royal-chandbali-1.jpg`,
+        `${SUPABASE_STORAGE_URL}/products/royal-chandbali-2.jpg`,
       ],
     },
     {
-      name: 'Dainty Sparkling Solitaire Adjustable Ring',
-      slug: 'dainty-sparkling-925-solitaire-ring',
-      description: 'A brilliant-cut AAA Zircon center stone embedded in polished silver-tone alloy with rhodium anti-tarnish coating. Features a free-size adjustable band.',
-      price: 899,
-      comparePrice: 1499,
-      costPrice: 400,
-      sku: 'JJ-RNG-001',
+      name: 'Kashmiri Long Mirror-Work Tribal Jhumkas',
+      slug: 'kashmiri-long-tribal-jhumkas',
+      description: 'Vintage shoulder-dusting tribal jhumkas hand-set with circular mirrors and tiered oxidised bells that reflect festive lights gorgeously. Lightweight hollow-cast structure for painless all-night wear.',
+      price: 1699,
+      comparePrice: 2699,
+      costPrice: 750,
+      sku: 'JJ-JHM-002',
       status: ProductStatus.PUBLISHED,
-      categoryId: ringsCat.id,
-      material: 'Silver-Tone Alloy',
-      silverPurity: 'AAA Zircon Polish',
-      weight: 3.2,
-      adjustability: 'Adjustable / Free Size',
-      badge: 'NEW_DROP',
-      vibe: 'Minimalist Everyday',
-      tags: ['solitaire', 'ring', 'adjustable', 'college daily', 'zircon'],
+      categoryId: kashmiriAfghanCat.id,
+      material: 'Oxidised Tribal Brass Alloy',
+      silverPurity: 'Vintage Mirror Insets',
+      weight: 24.0,
+      adjustability: 'Fish Hook Wire Fitting',
+      badge: 'VIRAL_ON_REELS',
+      vibe: 'Garba & Festive Glam',
+      tags: ['kashmiri', 'tribal', 'mirror work', 'shoulder duster', 'jhumka', 'boho'],
       images: [
-        'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=800&auto=format&fit=crop&q=80',
+        `${SUPABASE_STORAGE_URL}/products/kashmiri-tribal-1.jpg`,
+        `${SUPABASE_STORAGE_URL}/products/kashmiri-tribal-2.jpg`,
       ],
     },
     {
-      name: 'Layered Evil Eye Pendant & Chain',
-      slug: 'layered-evil-eye-pure-silver-pendant',
-      description: 'Ward off negative energy and look effortless with this handcrafted turquoise-enamel evil eye charm on an adjustable 16-18 inch delicate chain.',
+      name: 'Peacock Filigree Dual Dome Jhumkas',
+      slug: 'peacock-filigree-dual-dome-jhumkas',
+      description: 'Artisan carved dancing peacock crest supporting a tiered double bell dome with micro-pearl detailing and antique black patina polish.',
       price: 1499,
-      comparePrice: 2299,
-      costPrice: 700,
-      sku: 'JJ-NEC-001',
+      comparePrice: 2399,
+      costPrice: 650,
+      sku: 'JJ-JHM-003',
       status: ProductStatus.PUBLISHED,
-      categoryId: necklacesCat.id,
-      material: 'Brass & Enamel Alloy',
-      silverPurity: 'Anti-Tarnish Polish',
-      weight: 5.8,
-      adjustability: '16 + 2 Inch Extender',
+      categoryId: peacockCat.id,
+      material: 'Oxidised Antique Alloy',
+      silverPurity: 'Handcrafted Filigree',
+      weight: 18.2,
+      adjustability: 'Push Back with Comfort Pad',
       badge: 'TRENDING',
-      vibe: 'Evil Eye & Spiritual',
-      tags: ['evil eye', 'pendant', 'chain', 'spiritual', 'aesthetic', 'daily glow'],
+      vibe: 'Date Night Sparkle',
+      tags: ['peacock', 'filigree', 'double dome', 'jhumki', 'ethnic chic', 'royal'],
       images: [
-        'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&auto=format&fit=crop&q=80',
+        `${SUPABASE_STORAGE_URL}/products/peacock-jhumka-1.jpg`,
+        `${SUPABASE_STORAGE_URL}/products/peacock-jhumka-2.jpg`,
       ],
     },
     {
-      name: 'Boho Tribal Ghungroo Anklet Pair',
-      slug: 'boho-tribal-ghungroo-silver-anklet',
-      description: 'Traditional Gujarati ghungroo payal with melodic soft chimes. Intricate tribal engraving in premium oxidised finish with secure S-hook closure.',
-      price: 1799,
-      comparePrice: 2599,
-      costPrice: 850,
-      sku: 'JJ-ANK-001',
+      name: 'Traditional Gujarati Ghungroo Dome Jhumkas',
+      slug: 'gujarati-ghungroo-dome-jhumkas',
+      description: 'Authentic Gujarati garba jhumkas surrounded by 24 hand-tied brass ghungroo beads that ring with a sweet melodic chime with every step.',
+      price: 1399,
+      comparePrice: 2299,
+      costPrice: 600,
+      sku: 'JJ-JHM-004',
       status: ProductStatus.PUBLISHED,
-      categoryId: ankletsCat.id,
-      material: 'Oxidised Alloy',
-      silverPurity: 'Tribal Finish',
-      weight: 22.0,
-      adjustability: '9.5 + 1 Inch Extender',
+      categoryId: domeTempleCat.id,
+      material: 'Oxidised Alloy with Ghungroo Bells',
+      silverPurity: 'Matte Antique Finish',
+      weight: 19.5,
+      adjustability: 'Standard Post & Push Back',
       badge: 'BESTSELLER',
       vibe: 'Garba & Festive Glam',
-      tags: ['payal', 'anklet', 'ghungroo', 'boho', 'gujarati', 'garba'],
+      tags: ['ghungroo', 'gujarati', 'temple dome', 'jhumka', 'navratri classic', 'chimes'],
       images: [
-        'https://images.unsplash.com/photo-1611591475155-426477a20026?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&auto=format&fit=crop&q=80',
+        `${SUPABASE_STORAGE_URL}/products/gujarati-ghungroo-1.jpg`,
+        `${SUPABASE_STORAGE_URL}/products/gujarati-ghungroo-2.jpg`,
       ],
     },
     {
-      name: 'Garba Queen Festive Gift Combo',
-      slug: 'garba-queen-festive-gift-combo',
-      description: 'The ultimate Navratri gifting box! Includes Chandbali Jhumkas, Ghungroo Payal, adjustable Nose Pin, and matching Boho ring in a signature pink gift box.',
+      name: 'Afghan Coin & Turquoise Tribal Jhumkas',
+      slug: 'afghan-turquoise-tribal-jhumkas',
+      description: 'Distinctive nomadic Afghan jhumkas adorned with raw turquoise cabochon stones, repoussé coin charms, and antique tribal silver hangings.',
+      price: 1599,
+      comparePrice: 2499,
+      costPrice: 700,
+      sku: 'JJ-JHM-005',
+      status: ProductStatus.PUBLISHED,
+      categoryId: kashmiriAfghanCat.id,
+      material: 'Afghan Tribal Silver Alloy',
+      silverPurity: 'Natural Turquoise Stones',
+      weight: 21.0,
+      adjustability: 'S-Hook Wire Clasp',
+      badge: 'NEW_DROP',
+      vibe: 'Evil Eye & Spiritual',
+      tags: ['afghan', 'turquoise', 'coin jhumka', 'boho silver', 'nomadic jewellery'],
+      images: [
+        `${SUPABASE_STORAGE_URL}/products/afghan-turquoise-1.jpg`,
+        `${SUPABASE_STORAGE_URL}/products/afghan-turquoise-2.jpg`,
+      ],
+    },
+    {
+      name: 'Mini Floral Lightweight Daily Jhumkas',
+      slug: 'mini-everyday-jhumkas',
+      description: 'Charming mini oxidised flower stud flowing into a delicate bell. Weighs under 7 grams, crafted specially for comfortable all-day college, kurtis, and office wear.',
+      price: 799,
+      comparePrice: 1299,
+      costPrice: 320,
+      sku: 'JJ-JHM-006',
+      status: ProductStatus.PUBLISHED,
+      categoryId: miniDailyCat.id,
+      material: 'Lightweight Oxidised Alloy',
+      silverPurity: 'Hypoallergenic Post',
+      weight: 6.8,
+      adjustability: 'Push Back with Silicone Stopper',
+      badge: 'NEW_DROP',
+      vibe: 'Minimalist Everyday',
+      tags: ['mini jhumka', 'daily wear', 'lightweight', 'college girl', 'office ethnic'],
+      images: [
+        `${SUPABASE_STORAGE_URL}/products/mini-floral-1.jpg`,
+        `${SUPABASE_STORAGE_URL}/products/mini-floral-2.jpg`,
+      ],
+    },
+    {
+      name: 'Hasli Choker & Grand Chandbali Jhumka Set',
+      slug: 'hasli-choker-grand-jhumka-set',
+      description: 'The ultimate royal oxidised set! Hand-forged rigid silver hasli neck collar paired with matching jumbo Chandbali jhumkas with hanging pearl drops.',
+      price: 2899,
+      comparePrice: 4599,
+      costPrice: 1400,
+      sku: 'JJ-SET-001',
+      status: ProductStatus.PUBLISHED,
+      categoryId: combosCat.id,
+      material: 'Oxidised Silver Finish Set',
+      silverPurity: 'Handcrafted Heritage Quality',
+      weight: 52.0,
+      adjustability: 'Adjustable Cotton Thread Dori Choker',
+      badge: 'BESTSELLER',
+      vibe: 'Garba & Festive Glam',
+      isCombo: true,
+      tags: ['hasli set', 'choker set', 'chandbali jhumkas', 'royal set', 'bridal oxidised'],
+      images: [
+        `${SUPABASE_STORAGE_URL}/products/hasli-choker-set-1.jpg`,
+        `${SUPABASE_STORAGE_URL}/products/hasli-choker-set-2.jpg`,
+      ],
+    },
+    {
+      name: 'Navratri Garba Queen Jumbo Jhumka Gift Combo',
+      slug: 'garba-queen-jumbo-jhumka-combo',
+      description: 'Signature pink velvet festive gift box containing Jumbo 3-Tier Chandbali Jhumkas, matching adjustable Peacock Ring, clip-on Nose Pin, and micro-cloth jewelry care kit.',
       price: 3499,
-      comparePrice: 5299,
+      comparePrice: 5499,
       costPrice: 1800,
       sku: 'JJ-CMB-001',
       status: ProductStatus.PUBLISHED,
       categoryId: combosCat.id,
-      material: 'Oxidised Jewellery Set',
-      silverPurity: 'Artisan Finish',
+      material: 'Complete Oxidised Jewellery Gift Box',
+      silverPurity: 'Premium Artisan Finish',
       weight: 48.0,
-      adjustability: 'Free Size Set',
+      adjustability: 'Free Size Combo Set',
       badge: 'BESTSELLER',
       vibe: 'Bestie Gifting Combos',
       isCombo: true,
-      tags: ['combo', 'gift box', 'navratri set', 'bestie', 'garba queen', 'full set'],
+      tags: ['combo box', 'garba queen', 'gift box', 'jumbo jhumka', 'nose pin', 'ring combo'],
       images: [
-        'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=800&auto=format&fit=crop&q=80',
-      ],
-    },
-    {
-      name: 'Shimmering Charm Bracelet',
-      slug: 'shimmering-charm-bracelet',
-      description: 'Handcrafted link bracelet with star and moon charms with sparkling crystal insets.',
-      price: 1299,
-      comparePrice: 1999,
-      costPrice: 600,
-      sku: 'JJ-BRC-001',
-      status: ProductStatus.PUBLISHED,
-      categoryId: braceletsCat.id,
-      material: 'Polished Alloy',
-      silverPurity: 'Rhodium Coating',
-      weight: 6.5,
-      adjustability: '7 + 1 Inch Extender',
-      badge: 'NEW_DROP',
-      vibe: 'Date Night Sparkle',
-      tags: ['bracelet', 'charm', 'date night', 'crystals'],
-      images: [
-        'https://images.unsplash.com/photo-1611591475155-426477a20026?w=800&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80',
+        `${SUPABASE_STORAGE_URL}/products/garba-queen-combo-1.jpg`,
+        `${SUPABASE_STORAGE_URL}/products/garba-queen-combo-2.jpg`,
       ],
     },
   ];
@@ -250,7 +300,6 @@ async function main() {
         images: {
           create: images.map((url, index) => ({
             url,
-            isPrimary: index === 0,
             position: index,
           })),
         },
@@ -263,36 +312,41 @@ async function main() {
         },
       },
     });
-    console.log(`✨ Seeded product: ${createdProduct.name}`);
+    console.log(`✨ Seeded Jhumka product: ${createdProduct.name} (${createdProduct.slug})`);
   }
 
   // 6. Seed Promo Coupons
-  await prisma.coupon.createMany({
-    data: [
-      {
-        code: 'DRIP10',
-        discountPercent: 10,
-        minOrderAmount: 499,
-        maxDiscount: 500,
-        isActive: true,
-      },
-      {
-        code: 'BESTIE20',
-        discountPercent: 20,
-        minOrderAmount: 999,
-        maxDiscount: 1000,
-        isActive: true,
-      },
-      {
-        code: 'FESTIVE500',
-        discountAmount: 500,
-        minOrderAmount: 1999,
-        isActive: true,
-      },
-    ],
-  });
+  try {
+    await prisma.coupon.createMany({
+      data: [
+        {
+          code: 'JHUMKA10',
+          discountPercent: 10,
+          minOrderAmount: 499,
+          maxDiscount: 500,
+          isActive: true,
+        },
+        {
+          code: 'GARBA20',
+          discountPercent: 20,
+          minOrderAmount: 999,
+          maxDiscount: 1000,
+          isActive: true,
+        },
+        {
+          code: 'FESTIVE500',
+          discountAmount: 500,
+          minOrderAmount: 1999,
+          isActive: true,
+        },
+      ],
+      skipDuplicates: true,
+    });
+    console.log('✅ Coupons seeded (JHUMKA10, GARBA20, FESTIVE500).');
+  } catch (couponErr: any) {
+    console.warn('⚠️ Coupons seeding note:', couponErr?.message || couponErr);
+  }
 
-  console.log('✅ Coupons seeded (DRIP10, BESTIE20, FESTIVE500).');
   console.log('🎉 Seeding completed successfully!');
 }
 

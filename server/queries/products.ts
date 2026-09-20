@@ -62,6 +62,7 @@ export const getProducts = createCachedFunction(
               slug: true,
             },
           },
+          images: true,
         },
         orderBy: {
           [sortBy]: sortOrder,

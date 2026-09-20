@@ -30,48 +30,50 @@ const RingSizeGuideModal = dynamic(
   { ssr: false }
 );
 
+const SUPABASE_BUCKET_URL = 'https://ahfsgcxydbuaxvnvtjtn.supabase.co/storage/v1/object/public/jewellery';
+
 const categories = [
   {
-    href: '/category/rings',
-    label: 'Rings',
-    emoji: '💍',
-    tagline: 'Adjustable & Stackable',
-    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=200&auto=format&fit=crop&q=80',
+    href: '/category/chandbali-jhumkas',
+    label: 'Chandbali Jhumkas',
+    emoji: '🌙',
+    tagline: 'Royal Crescent Drops',
+    image: `${SUPABASE_BUCKET_URL}/categories/chandbali-jhumkas.jpg`,
   },
   {
-    href: '/category/earrings',
-    label: 'Earrings & Jhumkas',
-    emoji: '✨',
-    tagline: 'Festive & College Glow',
-    image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=200&auto=format&fit=crop&q=80',
-  },
-  {
-    href: '/category/necklaces',
-    label: 'Necklaces & Chokers',
-    emoji: '📿',
-    tagline: 'Layered & Evil Eye Chains',
-    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=200&auto=format&fit=crop&q=80',
-  },
-  {
-    href: '/category/anklets',
-    label: 'Anklets (Payal)',
+    href: '/category/dome-temple-jhumkas',
+    label: 'Temple Dome Jhumkas',
     emoji: '🔔',
-    tagline: 'Tribal Chimes & Daily Payal',
-    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=200&auto=format&fit=crop&q=80',
+    tagline: 'Melodic Ghungroo Chimes',
+    image: `${SUPABASE_BUCKET_URL}/categories/dome-temple-jhumkas.jpg`,
   },
   {
-    href: '/category/bracelets',
-    label: 'Bracelets & Bangles',
-    emoji: '💫',
-    tagline: 'Pure Sterling Sparkle',
-    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=200&auto=format&fit=crop&q=80',
+    href: '/category/kashmiri-afghan-jhumkas',
+    label: 'Kashmiri & Afghan',
+    emoji: '✨',
+    tagline: 'Tribal Mirrors & Coins',
+    image: `${SUPABASE_BUCKET_URL}/categories/kashmiri-afghan-jhumkas.jpg`,
   },
   {
-    href: '/category/combos',
-    label: 'Festive Combos',
+    href: '/category/peacock-floral-jhumkas',
+    label: 'Peacock Filigree',
+    emoji: '🦚',
+    tagline: 'Twin Dome Handcrafted',
+    image: `${SUPABASE_BUCKET_URL}/categories/peacock-floral-jhumkas.jpg`,
+  },
+  {
+    href: '/category/mini-everyday-jhumkas',
+    label: 'Mini Daily Drops',
+    emoji: '🌸',
+    tagline: 'Lightweight College Wear',
+    image: `${SUPABASE_BUCKET_URL}/categories/mini-everyday-jhumkas.jpg`,
+  },
+  {
+    href: '/category/festive-jhumka-combos',
+    label: 'Jhumka Sets & Combos',
     emoji: '🎁',
-    tagline: 'Bestie & Navratri Sets',
-    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=200&auto=format&fit=crop&q=80',
+    tagline: 'Hasli Chokers & Gift Sets',
+    image: `${SUPABASE_BUCKET_URL}/categories/festive-jhumka-combos.jpg`,
   },
 ];
 
@@ -236,7 +238,7 @@ export function Header() {
               asChild
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-full text-stone-700 hover:text-rani hover:bg-stone-200/50"
+              className="h-9 w-9 rounded-full text-stone-800 hover:text-[#BE185D] hover:bg-stone-200/70 transition-colors"
             >
               <Link href="/search" aria-label="Search Jewellery">
                 <Search className="h-4 w-4" />
@@ -248,12 +250,15 @@ export function Header() {
               asChild
               variant="ghost"
               size="icon"
-              className="relative h-9 w-9 rounded-full text-stone-700 hover:text-rani hover:bg-stone-200/50 transition-transform active:scale-95"
+              className="relative h-9 w-9 rounded-full text-stone-800 hover:text-[#BE185D] hover:bg-stone-200/70 transition-transform active:scale-95"
             >
               <Link href="/wishlist" aria-label="Wishlist" data-testid="header-wishlist-button">
-                <Heart className={`h-4 w-4 transition-colors ${wishlistCount > 0 ? 'fill-rani text-rani stroke-[2.2]' : ''}`} />
+                <Heart className={`h-4 w-4 transition-colors ${wishlistCount > 0 ? 'fill-[#BE185D] text-[#BE185D] stroke-[2.2]' : 'text-stone-800'}`} />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[18px] px-1 items-center justify-center rounded-full bg-rani text-[9px] font-black text-white shadow-sm ring-2 ring-white animate-in zoom-in-50 duration-200">
+                  <span
+                    className="absolute -top-1 -right-1 flex h-4 min-w-[18px] px-1 items-center justify-center rounded-full text-[9px] font-black shadow-md ring-2 ring-[#FAF8F5] animate-in zoom-in-50 duration-200"
+                    style={{ backgroundColor: '#BE185D', color: '#ffffff' }}
+                  >
                     {wishlistCount > 99 ? '99+' : wishlistCount}
                   </span>
                 )}
@@ -266,13 +271,16 @@ export function Header() {
               variant="ghost"
               size="icon"
               onClick={() => setIsCartDrawerOpen(true)}
-              className="relative h-9 w-9 rounded-full text-stone-700 hover:text-rani hover:bg-stone-200/50 transition-transform active:scale-95"
+              className="relative h-9 w-9 rounded-full text-stone-800 hover:text-stone-950 hover:bg-stone-200/70 transition-transform active:scale-95"
               aria-label="Shopping Bag"
               data-testid="header-cart-button"
             >
-              <ShoppingBag className={`h-4 w-4 transition-colors ${cartCount > 0 ? 'text-stone-900 stroke-[2.2]' : ''}`} />
+              <ShoppingBag className={`h-4 w-4 transition-colors ${cartCount > 0 ? 'text-stone-900 stroke-[2.4]' : 'text-stone-800'}`} />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 min-w-[18px] px-1 items-center justify-center rounded-full bg-stone-900 text-amber-300 font-black text-[9px] shadow-sm border border-amber-400/40 ring-2 ring-white animate-in zoom-in-50 duration-200">
+                <span
+                  className="absolute -top-1 -right-1 flex h-4 min-w-[18px] px-1 items-center justify-center rounded-full font-black text-[9px] shadow-md border border-amber-400/50 ring-2 ring-[#FAF8F5] animate-in zoom-in-50 duration-200"
+                  style={{ backgroundColor: '#181716', color: '#FCD34D' }}
+                >
                   {cartCount > 99 ? '99+' : cartCount}
                 </span>
               )}
@@ -287,7 +295,7 @@ export function Header() {
                   asChild
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 rounded-full text-stone-700 hover:text-rani hover:bg-stone-200/50"
+                  className="h-9 w-9 rounded-full text-stone-800 hover:text-[#BE185D] hover:bg-stone-200/70"
                 >
                   <Link href="/profile" aria-label="My Account">
                     <User className="h-4 w-4" />
@@ -297,19 +305,19 @@ export function Header() {
                   variant="ghost"
                   size="sm"
                   onClick={() => signOut()}
-                  className="text-xs text-stone-600 hover:text-stone-900 font-semibold"
+                  className="text-xs text-stone-700 hover:text-stone-950 font-semibold"
                 >
                   Sign Out
                 </Button>
               </div>
             ) : (
-              <Button
-                asChild
-                size="sm"
-                className="hidden sm:inline-flex rounded-full bg-stone-900 text-xs font-bold text-white hover:bg-stone-800 px-4 py-2 shadow-sm border-0 transition-all hover:scale-105 active:scale-95"
+              <Link
+                href="/auth/signin"
+                className="hidden sm:inline-flex items-center justify-center rounded-full px-5 py-2 text-xs font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                style={{ backgroundColor: '#181716', color: '#ffffff' }}
               >
-                <Link href="/auth/signin">Sign In</Link>
-              </Button>
+                Sign In
+              </Link>
             )}
 
             {/* Mobile Navigation Drawer */}

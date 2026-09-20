@@ -12,6 +12,10 @@ const adminNavItems = [
     label: 'Products',
   },
   {
+    href: '/admin/media',
+    label: 'Media & Images',
+  },
+  {
     href: '/admin/orders',
     label: 'Orders',
   },
