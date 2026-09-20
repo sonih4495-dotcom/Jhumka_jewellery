@@ -326,13 +326,13 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="lg:hidden h-9 w-9 rounded-full hover:bg-stone-200/50"
+                  className="lg:hidden h-10 w-10 rounded-full hover:bg-stone-200/50 active:scale-95"
                   aria-label="Open menu"
                 >
                   <Menu className="h-5 w-5 text-stone-800" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[360px] p-6 bg-[#FAF8F5] border-l border-stone-200 overflow-y-auto">
+              <SheetContent side="right" className="w-[88vw] max-w-[360px] p-5 sm:p-6 bg-[#FAF8F5] border-l border-stone-200 overflow-y-auto pb-safe">
                 <SheetHeader className="text-left">
                   <SheetTitle className="flex items-center gap-2 text-xl font-black text-stone-900 font-sans">
                     <Sparkles className="h-5 w-5 text-amber-500" />
@@ -341,7 +341,23 @@ export function Header() {
                   <p className="text-xs text-stone-500">Handcrafted Jewellery for Gen Z</p>
                 </SheetHeader>
 
-                <div className="mt-6 flex flex-col gap-3">
+                {/* Mobile Search Bar in Drawer */}
+                <form
+                  action="/search"
+                  method="GET"
+                  onSubmit={() => setIsMobileMenuOpen(false)}
+                  className="relative mt-4"
+                >
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+                  <input
+                    type="search"
+                    name="q"
+                    placeholder="Search jhumkas, rings, sets..."
+                    className="w-full rounded-xl bg-white border border-stone-200 pl-9 pr-4 py-2.5 text-xs font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 shadow-xs"
+                  />
+                </form>
+
+                <div className="mt-4 flex flex-col gap-3">
                   <div className="rounded-2xl bg-amber-500/10 p-3.5 border border-amber-400/30">
                     <p className="text-[11px] font-bold text-amber-900">✨ Bestie Referral Program</p>
                     <p className="text-[10px] text-amber-800/80 mt-0.5">Share with your friends and get ₹200 off!</p>

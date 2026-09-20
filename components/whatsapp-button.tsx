@@ -24,9 +24,9 @@ export function WhatsAppButton() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-20 md:bottom-6 right-3.5 sm:right-6 z-40">
       {isOpen && (
-        <div className="mb-3 w-80 rounded-2xl border border-pink-100 bg-white p-4 shadow-2xl animate-fade-in transition-all">
+        <div className="mb-3 w-[calc(100vw-2rem)] max-w-sm sm:w-80 rounded-2xl border border-pink-100 bg-white p-4 shadow-2xl animate-fade-in transition-all">
           <div className="flex items-center justify-between border-b border-gray-100 pb-3">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500 text-white shadow-sm">
@@ -83,10 +83,10 @@ export function WhatsAppButton() {
 
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-green-600 to-emerald-500 text-white shadow-xl shadow-green-500/25 hover:scale-105 transition-all focus:outline-none"
+        className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-gradient-to-tr from-green-600 to-emerald-500 text-white shadow-xl shadow-green-500/25 hover:scale-105 active:scale-95 transition-all focus:outline-none"
         aria-label="Chat with Jhumka Junction Stylist on WhatsApp"
       >
-        <MessageCircle className="h-7 w-7" />
+        <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" />
         <span className="absolute -top-1 -right-1 flex h-4 w-4">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-4 w-4 bg-pink-500 text-[8px] font-bold text-white items-center justify-center">1</span>

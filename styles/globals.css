@@ -214,6 +214,24 @@
   .gold-border-glow {
     box-shadow: 0 0 15px -3px rgba(212, 175, 55, 0.18), 0 0 6px -2px rgba(212, 175, 55, 0.12);
   }
+
+  /* Mobile Safe Area & Touch Ergonomics */
+  .pb-safe {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  }
+  .pt-safe {
+    padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+  }
+  .mb-safe {
+    margin-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  }
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+}
+
+html, body {
+  overflow-x: clip;
 }
 
 @keyframes fadeIn {

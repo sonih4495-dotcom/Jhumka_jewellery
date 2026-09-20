@@ -151,12 +151,12 @@ export function ProductCard({
           {silverPurity || 'Handcrafted'}
         </div>
 
-        {/* Slide-Up Two-Part Action Bar (Quick Add + ⚡ Buy Now) */}
+        {/* Desktop Slide-Up Two-Part Action Bar (Quick Add + ⚡ Buy Now) */}
         <div
-          className={`absolute inset-x-2 bottom-2 z-20 transition-all duration-300 ease-out ${
+          className={`hidden sm:block absolute inset-x-2 bottom-2 z-20 transition-all duration-300 ease-out ${
             inCartQty > 0
               ? 'translate-y-0 opacity-100'
-              : 'translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 sm:translate-y-2 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100'
+              : 'translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100'
           }`}
         >
           <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-stone-950/85 backdrop-blur-md border border-white/20 shadow-xl">
@@ -189,11 +189,11 @@ export function ProductCard({
       </div>
 
       {/* Card Details */}
-      <CardContent className="flex flex-1 flex-col p-3.5 sm:p-4 bg-white">
+      <CardContent className="flex flex-1 flex-col p-3 sm:p-4 bg-white">
         {/* Category & Material Line */}
-        <div className="mb-1 flex items-center justify-between text-[11px] text-stone-500 font-sans">
-          <span className="truncate max-w-[120px]">{category?.name || 'Handcrafted'}</span>
-          <span className="font-semibold text-rani truncate">{material || 'Oxidised'}</span>
+        <div className="mb-1 flex items-center justify-between text-[10px] sm:text-[11px] text-stone-500 font-sans">
+          <span className="truncate max-w-[90px] sm:max-w-[120px]">{category?.name || 'Handcrafted'}</span>
+          <span className="font-semibold text-rani truncate max-w-[80px] sm:max-w-none">{material || 'Oxidised'}</span>
         </div>
 
         {/* Product Title */}
@@ -205,7 +205,7 @@ export function ProductCard({
 
         {/* Ratings */}
         {rating > 0 && (
-          <div className="mt-1.5 flex items-center gap-1 font-sans">
+          <div className="mt-1 flex items-center gap-1 font-sans">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star
@@ -218,32 +218,64 @@ export function ProductCard({
                 />
               ))}
             </div>
-            <span className="text-[10px] text-stone-400 font-medium">
+            <span className="text-[9px] sm:text-[10px] text-stone-400 font-medium">
               ({reviewCount || 1})
             </span>
           </div>
         )}
 
-        <div className="mt-auto pt-3 flex items-baseline justify-between font-sans border-t border-stone-100">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-sm sm:text-base font-black text-stone-900 tracking-tight">
+        {/* Price and Stock Row */}
+        <div className="mt-auto pt-2 sm:pt-3 flex items-baseline justify-between font-sans border-t border-stone-100">
+          <div className="flex items-baseline gap-1 sm:gap-1.5 flex-wrap">
+            <span className="text-xs sm:text-base font-black text-stone-900 tracking-tight">
               {formatCurrency(price)}
             </span>
             {comparePrice && comparePrice > price && (
-              <span className="text-[11px] text-stone-400 line-through">
+              <span className="text-[10px] sm:text-[11px] text-stone-400 line-through">
                 {formatCurrency(comparePrice)}
               </span>
             )}
           </div>
           {inStock ? (
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full whitespace-nowrap">
               In Stock
             </span>
           ) : (
-            <span className="text-[10px] font-bold text-stone-400">
+            <span className="text-[9px] sm:text-[10px] font-bold text-stone-400 whitespace-nowrap">
               Out of Stock
             </span>
           )}
+        </div>
+
+        {/* Mobile-Only 1-Tap Quick Action Row */}
+        <div className="sm:hidden mt-2 pt-2 border-t border-stone-100/80 flex items-center gap-1.5">
+          <div className="flex-1">
+            <AddToCart
+              productId={id}
+              productName={name}
+              price={price}
+              comparePrice={comparePrice}
+              image={image}
+              slug={slug}
+              disabled={!inStock}
+              size="sm"
+              className="w-full rounded-xl bg-stone-900 text-white hover:bg-black font-bold text-[10px] h-7.5 shadow-xs border border-stone-800"
+            />
+          </div>
+          <BuyNowButton
+            productId={id}
+            productName={name}
+            price={price}
+            comparePrice={comparePrice}
+            image={image}
+            slug={slug}
+            disabled={!inStock}
+            size="sm"
+            className="rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-stone-950 font-black text-[11px] h-7.5 px-2.5 shadow-xs border-0 shrink-0"
+            title="Buy Now"
+          >
+            ⚡
+          </BuyNowButton>
         </div>
       </CardContent>
     </Card>

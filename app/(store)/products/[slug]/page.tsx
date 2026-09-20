@@ -118,7 +118,7 @@ export default async function ProductPage(props: ProductPageProps) {
     <>
       <JsonLd data={structuredData} />
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-3.5 py-6 sm:px-6 lg:px-8 sm:py-8 pb-28 md:pb-8">
         {/* Breadcrumbs */}
         <nav className="mb-6" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-2 text-xs text-muted-foreground">

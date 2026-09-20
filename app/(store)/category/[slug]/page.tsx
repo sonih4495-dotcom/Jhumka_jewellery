@@ -11,7 +11,7 @@ import { ProductCard } from '@/components/product-card';
 import { ProductGrid } from '@/components/product-grid';
 import { ProductGridSkeleton } from '@/components/product-grid-skeleton';
 import { SortSelect } from '@/components/sort-select';
-import { FilterSidebar } from '@/components/filter-sidebar';
+import { FilterSidebar, MobileFilterDrawer } from '@/components/filter-sidebar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -60,7 +60,7 @@ async function CategoryProductCount({ categoryId }: { categoryId: string }) {
   });
 
   return (
-    <Badge variant="secondary" className="ml-4">
+    <Badge variant="secondary" className="ml-2 sm:ml-4 text-[10px] sm:text-xs">
       {result.total || 0} products
     </Badge>
   );
@@ -93,12 +93,12 @@ async function CategoryProducts({
 
   if (!result.products.length) {
     return (
-      <div className="py-12 text-center">
-        <p className="text-lg text-muted-foreground">
-          No products found in this category.
+      <div className="py-12 text-center rounded-2xl bg-white border border-stone-200 p-8 shadow-xs">
+        <p className="text-sm font-semibold text-stone-700">
+          No products found in this category matching your filters.
         </p>
-        <Button asChild className="mt-4">
-          <Link href="/products">Browse All Products</Link>
+        <Button asChild className="mt-4 rounded-xl bg-stone-900 text-white text-xs font-bold">
+          <Link href="/products">Browse All Silver Drops</Link>
         </Button>
       </div>
     );
@@ -106,21 +106,24 @@ async function CategoryProducts({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <p className="text-xs sm:text-sm text-stone-500 font-sans">
           Showing {(page - 1) * 12 + 1}-{Math.min(page * 12, result.total)} of{' '}
-          {result.total} products
+          {result.total} drops
         </p>
-        <SortSelect />
+        <div className="flex items-center gap-2 ml-auto">
+          <MobileFilterDrawer />
+          <SortSelect />
+        </div>
       </div>
 
       <ProductGrid products={result.products} />
 
       {/* Pagination */}
       {result.totalPages > 1 && (
-        <div className="flex justify-center space-x-2">
+        <div className="flex justify-center space-x-2 pt-4">
           {page > 1 && (
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" size="sm" className="rounded-xl text-xs">
               <Link
                 href={`/category/${categoryId}?${new URLSearchParams({
                   ...searchParams,
@@ -132,7 +135,7 @@ async function CategoryProducts({
             </Button>
           )}
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5">
             {Array.from({ length: Math.min(5, result.totalPages) }, (_, i) => {
               const pageNum = i + 1;
               const isCurrentPage = pageNum === page;
@@ -143,6 +146,7 @@ async function CategoryProducts({
                   asChild
                   variant={isCurrentPage ? 'default' : 'outline'}
                   size="sm"
+                  className="rounded-xl text-xs h-8 w-8 p-0"
                 >
                   <Link
                     href={`/category/${categoryId}?${new URLSearchParams({
@@ -158,7 +162,7 @@ async function CategoryProducts({
           </div>
 
           {page < result.totalPages && (
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" size="sm" className="rounded-xl text-xs">
               <Link
                 href={`/category/${categoryId}?${new URLSearchParams({
                   ...searchParams,
@@ -184,46 +188,43 @@ export default async function CategoryPage(props: CategoryPageProps) {
     notFound();
   }
 
-  // Get product count for this category
-  const productCount = 0; // This will be shown in CategoryProducts component instead
-
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-3.5 py-6 sm:px-6 lg:px-8 sm:py-8">
       {/* Breadcrumb */}
-      <nav className="mb-8" aria-label="Breadcrumb">
-        <ol className="flex items-center space-x-2 text-sm text-muted-foreground">
+      <nav className="mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center space-x-2 text-xs text-stone-500">
           <li>
-            <Link href="/" className="hover:text-foreground">
+            <Link href="/" className="hover:text-stone-900 transition-colors">
               Home
             </Link>
           </li>
           <li>/</li>
           <li>
-            <Link href="/products" className="hover:text-foreground">
-              Products
+            <Link href="/products" className="hover:text-stone-900 transition-colors">
+              Drops
             </Link>
           </li>
           <li>/</li>
-          <li className="font-medium text-foreground">{category.name}</li>
+          <li className="font-semibold text-stone-900 truncate max-w-[200px]">{category.name}</li>
         </ol>
       </nav>
 
       {/* Category Header */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900 font-display">
               {category.name}
             </h1>
             {category.description && (
-              <p className="mt-2 text-lg text-muted-foreground">
+              <p className="mt-1 text-xs sm:text-sm text-stone-500 font-sans">
                 {category.description}
               </p>
             )}
           </div>
           <Suspense
             fallback={
-              <Badge variant="secondary" className="ml-4">
+              <Badge variant="secondary" className="ml-2 text-xs">
                 Loading...
               </Badge>
             }
@@ -234,13 +235,13 @@ export default async function CategoryPage(props: CategoryPageProps) {
       </div>
 
       <div className="flex gap-8">
-        {/* Filters Sidebar */}
-        <aside className="w-64 flex-shrink-0">
+        {/* Filters Sidebar - Desktop Only */}
+        <aside className="hidden lg:block w-64 flex-shrink-0">
           <FilterSidebar />
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1">
+        <main className="flex-1 min-w-0">
           <Suspense fallback={<ProductGridSkeleton />}>
             <CategoryProducts
               categoryId={category.id}

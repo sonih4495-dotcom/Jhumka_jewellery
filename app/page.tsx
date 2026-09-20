@@ -218,56 +218,56 @@ export default function HomePage() {
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
 
             {/* Hero Left Content */}
-            <div className="text-center lg:text-left lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-white/10 backdrop-blur-xl px-4 py-1.5 text-xs font-semibold text-amber-300 shadow-lg">
+            <div className="text-center lg:text-left lg:col-span-7 space-y-5 sm:space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-white/10 backdrop-blur-xl px-3.5 py-1.5 text-xs font-semibold text-amber-300 shadow-lg">
                 <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
                 Premium Handcrafted • Anti-Tarnish Finish
               </div>
 
-              <h1 className="font-display text-4xl font-black tracking-tight sm:text-6xl md:text-7xl leading-[1.06]">
+              <h1 className="font-display text-3xl xs:text-4xl font-black tracking-tight sm:text-6xl md:text-7xl leading-[1.08] sm:leading-[1.06]">
                 Drip in Statement <br className="hidden sm:inline" />
                 <span className="text-gold-foil">
                   Jewellery ✨
                 </span>
               </h1>
 
-              <p className="mx-auto lg:mx-0 max-w-xl text-sm sm:text-base text-stone-300 leading-relaxed font-sans font-normal">
+              <p className="mx-auto lg:mx-0 max-w-xl text-xs sm:text-base text-stone-300 leading-relaxed font-sans font-normal">
                 Handcrafted oxidised statement pieces, aesthetic stackable rings, and viral charm chains. Made for Dandiya nights, everyday college glow, and matching with your besties.
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
                 <Link
                   href="/products"
-                  className="inline-flex items-center justify-center w-full sm:w-auto rounded-full bg-gradient-to-r from-rose-600 via-pink-600 to-rani px-8 py-4 text-sm font-bold text-white shadow-xl shadow-rose-950/40 hover:scale-105 active:scale-95 transition-all border-0 text-center"
+                  className="inline-flex items-center justify-center w-full sm:w-auto rounded-full bg-gradient-to-r from-rose-600 via-pink-600 to-rani px-7 py-3.5 sm:px-8 sm:py-4 text-sm font-bold text-white shadow-xl shadow-rose-950/40 hover:scale-105 active:scale-95 transition-all border-0 text-center"
                 >
                   Shop New Drops <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
 
                 <Link
                   href="/category/combos"
-                  className="inline-flex items-center justify-center w-full sm:w-auto rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 hover:text-white px-8 py-4 text-sm font-semibold transition-all text-center hover:scale-105 active:scale-95"
+                  className="inline-flex items-center justify-center w-full sm:w-auto rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 hover:text-white px-7 py-3.5 sm:px-8 sm:py-4 text-sm font-semibold transition-all text-center hover:scale-105 active:scale-95"
                 >
                   Explore Gift Combos 🎁
                 </Link>
               </div>
 
               {/* Trust strip */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-4 text-xs text-stone-300">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-4 pt-2 sm:pt-4 text-[11px] sm:text-xs text-stone-300">
                 <span className="flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 px-3 py-1 backdrop-blur-md">
-                  <ShieldCheck className="h-4 w-4 text-amber-400" /> Premium Quality Assured
+                  <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-400" /> Premium Quality Assured
                 </span>
                 <span className="flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 px-3 py-1 backdrop-blur-md">
-                  <Truck className="h-4 w-4 text-rose-400" /> FREE Shipping — Always 🚚
+                  <Truck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-rose-400" /> FREE Shipping — Always 🚚
                 </span>
                 <span className="flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 px-3 py-1 backdrop-blur-md">
-                  <Sparkles className="h-4 w-4 text-amber-300" /> Cash on Delivery (COD)
+                  <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-300" /> Cash on Delivery (COD)
                 </span>
               </div>
             </div>
 
             {/* Hero Right Visual Showcase */}
             <div className="lg:col-span-5 relative">
-              <div className="relative mx-auto max-w-sm rounded-3xl border border-amber-400/30 bg-stone-900/60 p-3 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.6)] gold-border-glow">
+              <div className="relative mx-auto max-w-sm rounded-3xl border border-amber-400/30 bg-stone-900/60 p-2.5 sm:p-3 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.6)] gold-border-glow">
                 <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
                   <Image
                     src={`${SUPABASE_BUCKET_URL}/products/royal-chandbali-1.jpg?v=2`}
@@ -296,49 +296,49 @@ export default function HomePage() {
 
       {/* ── SHOP BY VIBE: Large Editorial Visual Image Tiles ── */}
       <section className="container mx-auto px-4">
-        <div className="mb-8 text-center max-w-2xl mx-auto">
+        <div className="mb-6 sm:mb-8 text-center max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-rani/10 px-3 py-1 text-xs font-bold text-rani mb-2 border border-rani/20">
             <Sparkles className="h-3.5 w-3.5 text-rani" />
             Curated Aesthetics
           </div>
-          <h2 className="font-display text-3xl font-black tracking-tight text-stone-900 sm:text-4xl">
+          <h2 className="font-display text-2xl font-black tracking-tight text-stone-900 sm:text-4xl">
             Shop by Vibe ✨
           </h2>
-          <p className="mt-1 text-sm text-stone-500 font-sans">
+          <p className="mt-1 text-xs sm:text-sm text-stone-500 font-sans">
             Whatever your mood today, we've got the matching silver sparkle.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-3 sm:pb-0 sm:grid sm:grid-cols-2 lg:grid-cols-5 scrollbar-hide snap-x snap-mandatory">
           {JEWELLERY_VIBES.map(vibe => {
             const bgImage = VIBE_BACKGROUNDS[vibe.id] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop&q=80';
             return (
               <Link
                 key={vibe.id}
                 href={`/products?search=${encodeURIComponent(vibe.name)}`}
-                className="group relative flex flex-col justify-end overflow-hidden rounded-2xl border border-stone-200/90 shadow-sm transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl hover:border-amber-500/50 min-h-[300px] p-5"
+                className="group relative flex-none w-[70vw] sm:w-auto snap-center flex flex-col justify-end overflow-hidden rounded-2xl border border-stone-200/90 shadow-sm transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl hover:border-amber-500/50 min-h-[250px] sm:min-h-[300px] p-4 sm:p-5"
               >
                 {/* Background Image with Hover Zoom */}
                 <Image
                   src={bgImage}
                   alt={vibe.name}
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
+                  sizes="(max-width: 640px) 70vw, (max-width: 1024px) 50vw, 20vw"
                   className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                 />
                 {/* Dark Vignette Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-950/95 via-stone-950/40 to-stone-950/20 group-hover:via-stone-950/50 transition-all duration-300" />
 
                 {/* Card Content on Top */}
-                <div className="relative z-10 space-y-2">
-                  <span className="text-3xl block drop-shadow-md">{vibe.icon}</span>
-                  <h3 className="font-display text-lg font-bold text-white group-hover:text-amber-300 transition-colors drop-shadow">
+                <div className="relative z-10 space-y-1.5 sm:space-y-2">
+                  <span className="text-2xl sm:text-3xl block drop-shadow-md">{vibe.icon}</span>
+                  <h3 className="font-display text-base sm:text-lg font-bold text-white group-hover:text-amber-300 transition-colors drop-shadow">
                     {vibe.name}
                   </h3>
-                  <p className="text-xs text-stone-300 leading-snug font-sans line-clamp-2">
+                  <p className="text-[11px] sm:text-xs text-stone-300 leading-snug font-sans line-clamp-2">
                     {vibe.description}
                   </p>
-                  <div className="pt-2 flex items-center gap-1 text-xs font-bold text-amber-300 font-sans">
+                  <div className="pt-1.5 flex items-center gap-1 text-[11px] sm:text-xs font-bold text-amber-300 font-sans">
                     <span>Explore Vibe</span>
                     <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1.5" />
                   </div>
